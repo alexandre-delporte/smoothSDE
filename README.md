@@ -1,5 +1,6 @@
 # smoothSDE
 
+
 The R package smoothSDE implements varying-coefficient stochastic differential equations, as described in this paper:
 
 Michelot, T., Glennie, R., Harris, C., Thomas, L. (2021)  
