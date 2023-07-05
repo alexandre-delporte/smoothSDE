@@ -933,6 +933,7 @@ SDE <- R6Class(
             #if all intercepts are fixed, set all posterior draws to fixed values
             if (!("coeff_fe" %in% names(post_list))) {
               post_list$coeff_fe <- post_fe
+            }
             #else, change only parameters that are estimated
             else {
               post_fe[,ind_est_fe] <- post_list$coeff_fe
