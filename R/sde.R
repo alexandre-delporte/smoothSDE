@@ -43,10 +43,11 @@ SDE <- R6Class(
         #' 
         #' @return A new SDE object
         initialize = function(formulas = NULL, data, type, response, par0 = NULL, 
-                              fixpar = NULL, other_data = NULL) {
+                              fixpar = NULL, other_data = NULL,map=NULL) {
             private$type_ <- type
             private$response_ <- response
             private$fixpar_ <- fixpar
+            private$map_ <- map
             
             if(any(!response %in% colnames(data)))
                 stop("'response' not found in 'data'")
@@ -198,6 +199,9 @@ SDE <- R6Class(
         
         #' @description Name(s) of fixed parameter(s)
         fixpar = function() {return(private$fixpar_)},
+        
+        #' @description Map for fixed coefficient(s)
+        map = function() {return(private$map_)},
         
         #' @description List of model matrices (X_fe, X_re, and S)
         mats = function() {return(private$mats_)},
@@ -488,7 +492,7 @@ SDE <- R6Class(
         #' 
         #' @param silent Logical. If TRUE, all tracing outputs are hidden (default).
         #' @param map List passed to MakeADFun to fix parameters. (See TMB documentation.)
-        setup = function(silent = TRUE, map = NULL) {
+        setup = function(silent = TRUE) {
             # Number of time steps
             n <- nrow(self$data())
             
@@ -498,6 +502,9 @@ SDE <- R6Class(
             S <- self$mats()$S
             ncol_fe <- self$terms()$ncol_fe
             ncol_re <- self$terms()$ncol_re
+            
+            #map for TMB
+            map=self$map()
             
             # Format initial parameters for TMB
             # (First fixed effects, then random effects)
@@ -680,13 +687,13 @@ SDE <- R6Class(
         #' 
         #' @param silent Logical. If TRUE, all tracing outputs are hidden (default).
         #' @param map List passed to MakeADFun to fix parameters. See TMB documentation.
-        fit = function(silent = TRUE, map = NULL) {
+        fit = function(silent = TRUE) {
             # Print model formulation
             self$message()
             
             # Setup if necessary
             if(is.null(private$tmb_obj_)) {
-                self$setup(silent = silent, map = map)
+                self$setup(silent = silent)
             }
             
             sys_time <- system.time({
@@ -863,9 +870,10 @@ SDE <- R6Class(
         #' 
         #' @return Matrix with one column for each coefficient and one row for each
         #' posterior draw
-        post_coeff = function(n_post) {
+        post_coeff = function(n_post)  {
             # Number of SDE parameters
             n_par <- length(self$formulas())
+            
             # TMB report
             rep <- self$tmb_rep()
             
@@ -876,6 +884,10 @@ SDE <- R6Class(
                 # If there are no random effects
                 jointCov <- rep$cov.fixed
             }
+            
+            #map for fixed coefficients in TMB
+            map=self$map()
+        
             
             # Vector of all parameters
             par_all <- c(rep$par.fixed, rep$par.random)
@@ -906,12 +918,26 @@ SDE <- R6Class(
             fe_cols <- rep(1:n_par, self$terms()$ncol_fe)
             ind_est_fe <- which(fe_cols %in% ind_estpar)
             
+            #Deal with fixed intercepts in coeff_fe in the map argument
+            if (!(is.null(map)) & "coeff_fe" %in% names(map)) {
+              #indices of intercept that are not fixed in map
+              ind_est_intercept=which(!is.na(map$coeff_fe))
+              ind_est_fe=intersect(ind_est_fe,ind_est_intercept)
+            }
+            
+            
             # In post_fe, set columns for fixed parameters to fixed value,
             # and use posterior draws for non-fixed parameters
             post_fe <- matrix(rep(self$coeff_fe(), each = n_post),
                               nrow = n_post, ncol = sum(self$terms()$ncol_fe))
-            post_fe[,ind_est_fe] <- post_list$coeff_fe
-            post_list$coeff_fe <- post_fe
+            #if all intercepts are fixed, set all posterior draws to fixed values
+            if (!("coeff_fe" %in% names(post_list))) {
+              post_list$coeff_fe <- post_fe
+            #else, change only parameters that are estimated
+            else {
+              post_fe[,ind_est_fe] <- post_list$coeff_fe
+              post_list$coeff_fe <- post_fe
+            }
             
             # Set column names
             colnames(post_list$coeff_fe) <- self$terms()$names_fe
