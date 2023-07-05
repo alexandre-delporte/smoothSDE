@@ -43,7 +43,7 @@ SDE <- R6Class(
         #' 
         #' @return A new SDE object
         initialize = function(formulas = NULL, data, type, response, par0 = NULL, 
-                              fixpar = NULL, other_data = NULL,map=NULL) {
+                              fixpar = NULL, other_data = NULL,map = NULL) {
             private$type_ <- type
             private$response_ <- response
             private$fixpar_ <- fixpar
@@ -162,16 +162,14 @@ SDE <- R6Class(
             }
             
             if (is.null(map)) {
-              private$map_ <- list()
+              map=list()
             }
             else if (any(names(map) != c("coeff_fe","coeff_re","log_lambda"))){
               err <- paste0("'map' should be a list with components ", 
                             paste(c("coeff_fe","coeff_re","log_lambda"), collapse = ", "))
               stop(err)
             }
-            else {
-              private$map_ <- map
-            }
+            private$map_ <- map
             
             # Process decay terms
             if(!is.null(other_data$t_decay)) {
