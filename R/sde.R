@@ -164,7 +164,7 @@ SDE <- R6Class(
             if (is.null(map)) {
               map=list()
             }
-            else if (any(names(map) != c("coeff_fe","coeff_re","log_lambda"))){
+            else if (!(all(names(map) %in% c("coeff_fe","coeff_re","log_lambda")))){
               err <- paste0("'map' should be a list with components ", 
                             paste(c("coeff_fe","coeff_re","log_lambda"), collapse = ", "))
               stop(err)
