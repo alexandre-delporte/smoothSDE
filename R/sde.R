@@ -47,7 +47,8 @@ SDE <- R6Class(
             private$type_ <- type
             private$response_ <- response
             private$fixpar_ <- fixpar
-            private$map_ <- map
+            
+           
             
             if(any(!response %in% colnames(data)))
                 stop("'response' not found in 'data'")
@@ -158,6 +159,18 @@ SDE <- R6Class(
                 private$coeff_fe_[i0] <- sapply(1:n_par, function(i) {
                     self$link()[[i]](par0[i])
                 })
+            }
+            
+            if (is.null(map)) {
+              private$map_ <- list()
+            }
+            else if (any(names(map) != c("coeff_fe","coeff_re","log_lambda")){
+              err <- paste0("'map' should be a list with components ", 
+                            paste(c("coeff_fe","coeff_re","log_lambda"), collapse = ", "))
+              stop(err)
+            }
+            else {
+              private$map_ <- map
             }
             
             # Process decay terms
