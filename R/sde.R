@@ -1838,6 +1838,7 @@ SDE <- R6Class(
         type_ = NULL,
         response_ = NULL,
         fixpar_ = NULL,
+        map_=NULL,
         mats_ = NULL,
         other_data_ = NULL,
         link_ = NULL,
