@@ -931,7 +931,7 @@ SDE <- R6Class(
                 post_list$coeff_re <- matrix(NA, nrow = n_post, ncol = 0)
             }
             
-            # Deal with fixed SDE parameters
+            # Deal with fixed SDE parameters in argument fixpar
             ind_estpar <- which(!names(self$formulas()) %in% self$fixpar())
             # Indices of estimated coefficients in coeff_fe
             fe_cols <- rep(1:n_par, self$terms()$ncol_fe)
@@ -959,6 +959,25 @@ SDE <- R6Class(
               post_list$coeff_fe <- post_fe
             }
             
+            #Deal with fixed coefficients in coeff_re in the map argument
+            if (!(is.null(map)) & "coeff_re" %in% names(map)) {
+              #indices of coefficients that are not fixed in map
+              ind_est_re=which(!is.na(map$coeff_re))
+            }
+            
+            # In post_re, set columns for fixed coefficients to fixed value,
+            # and use posterior draws for non-fixed coefficients
+            post_re <- matrix(rep(self$coeff_re(), each = n_post),
+                              nrow = n_post, ncol = sum(self$terms()$ncol_re))
+            #if all coefficients are fixed, set all posterior draws to fixed values
+            if (!("coeff_re" %in% names(post_list))) {
+              post_list$coeff_re <- post_re
+            }
+            #else, change only parameters that are estimated
+            else {
+              post_re[,ind_est_re] <- post_list$coeff_re
+              post_list$coeff_re <- post_re
+            }
             # Set column names
             colnames(post_list$coeff_fe) <- self$terms()$names_fe
             colnames(post_list$coeff_re) <- self$terms()$names_re_all
