@@ -959,6 +959,7 @@ SDE <- R6Class(
               post_list$coeff_fe <- post_fe
             }
             
+            ind_est_re=1:sum(self$terms()$ncol_re))
             #Deal with fixed coefficients in coeff_re in the map argument
             if (!(is.null(map)) & "coeff_re" %in% names(map)) {
               #indices of coefficients that are not fixed in map
