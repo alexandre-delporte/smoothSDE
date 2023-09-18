@@ -538,7 +538,15 @@ SDE <- R6Class(
                 # If there are random effects, 
                 # set initial values for coeff_re and log_lambda
                 random <- c(random, "coeff_re")
-                tmb_par$coeff_re <- self$coeff_re()
+                #initialize to 0
+                coeff_re0=self$coeff_re()
+                #change to specific values according to 
+                #coeff_re0 in other_data if provided
+                if ("coeff_re0" in other_data) {
+                  coeff_names=rownames(coeff_re0)
+                  coeff_re0[coeff_names,]=other_data$coeff_re0
+                }
+                tmb_par$coeff_re <- coeff_re0
                 tmb_par$log_lambda <- log(self$lambda())
             }
             
