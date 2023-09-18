@@ -543,7 +543,7 @@ SDE <- R6Class(
                 #change to specific values according to 
                 #coeff_re0 in other_data if provided
                 if ("coeff_re0" %in% names(other_data)) {
-                  coeff_names=rownames(coeff_re0)
+                  coeff_names=rownames(other_data$coeff_re0)
                   coeff_re0[coeff_names,]=other_data$coeff_re0
                 }
                 tmb_par$coeff_re <- coeff_re0
