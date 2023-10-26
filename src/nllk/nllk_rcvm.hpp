@@ -8,27 +8,13 @@ using namespace R_inla;
 using namespace density;
 using namespace Eigen;
 
-//' Matrix determinant
-template<class Type>
-Type det(matrix<Type> M) {
-    int n_dim = M.cols();
-    Type det = 0;
-    if(n_dim == 1) {
-        det = M(0, 0);
-    } else if(n_dim == 2) {
-        det = M(0,0) * M(1,1) - M(1,0) * M(0,1);
-    } else {
-        det = exp(atomic::logdet(M));
-    }
-    return det;
-}
 
 //' Make H matrix for Kalman filter
 //'
 //' @param sigma_obs SD of measurement error
 //' @param n_dim Number of dimensions
 template<class Type>
-matrix<Type> makeH_ctcrw(Type sigma_obs, int n_dim) {
+matrix<Type> makeH_rcvm(Type sigma_obs, int n_dim) {
     matrix<Type> H(n_dim, n_dim);
     H.setZero();
     for(int i = 0; i < n_dim; i ++) {
@@ -221,7 +207,7 @@ Type nllk_rcvm(objective_function<Type>* obj) {
     Z.setZero();
     Z(0,0)=1;
     Z(1,1)=1;
-    matrix<Type> H = makeH_ctcrw(sigma_obs, n_dim);
+    matrix<Type> H = makeH_rcvm(sigma_obs, n_dim);
     matrix<Type> T(4, 4);
     matrix<Type> Q(4, 4);
     matrix<Type> F(2, 2);
