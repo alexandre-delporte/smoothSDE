@@ -65,8 +65,8 @@ matrix<Type> makeT_rcvm(Type beta, Type omega, Type delta) {
     R << cos(omega*delta),sin(omega*delta),-sin(omega*delta),cos(omega*delta);
     matrix<Type> expAdelta(2,2);
     expAdelta<<exp(-beta*delta)*R;
-    matrix<Type> IntexpAdelta
-    IntexpAdelta << invA*(I-expAdelta)
+    matrix<Type> IntexpAdelta(2,2);
+    IntexpAdelta << invA*(I-expAdelta);
 
     // Combine the matrices into T
     // Top-left block
