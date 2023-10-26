@@ -51,7 +51,7 @@ matrix<Type> makeT_rcvm(Type beta, Type omega, Type delta) {
     matrix<Type> A(2,2);
     A << beta,-omega,omega,beta;
 
-    double C = beta^2+omega^2;
+    double C = beta*beta+omega*omega;
     matrix<Type> invA(2,2);
     invA <<beta/C,omega/C,-omega/C,beta/C;
 
@@ -65,12 +65,33 @@ matrix<Type> makeT_rcvm(Type beta, Type omega, Type delta) {
     R << cos(omega*delta),sin(omega*delta),-sin(omega*delta),cos(omega*delta);
     matrix<Type> expAdelta(2,2);
     expAdelta<<exp(-beta*delta)*R;
+    matrix<Type> IntexpAdelta
+    IntexpAdelta << invA*(I-expAdelta)
 
     // Combine the matrices into T
-    T.block<2, 2>(0, 0) = I; // Top-left block
-    T.block<2, 2>(0, 2) = invA*(I-expAdelta); // Top-right block
-    T.block<2, 2>(2, 0) = O; // Bottom-left block
-    T.block<2, 2>(2, 2) = expAdelta; // Bottom-right block
+    // Top-left block
+    T(0,0) = 1;
+    T(1,1)=1;
+    T(1,0)=0;
+    T(0,1)=0
+
+    //// Top-right block
+    T(0,2)=IntexpAdelta(0,0)
+    T(0,3)=IntexpAdelta(0,1)
+    T(1,2)=IntexpAdelta(1,0)
+    T(1,3)=IntexpAdelta(1,1)
+
+    // Bottom-left block
+    T(2,0) = 0;
+    T(2,1)=0;
+    T(3,0)=0;
+    T(3,1)=0;
+
+    // Bottom-right block
+    T(2,2) = expAdelta(0,0);
+    T(2,3)=expAdelta(0,1);
+    T(3,2)=expAdelta(1,0);
+    T(3,3)=expAdelta(1,1);
 
     return T;
 }
@@ -89,17 +110,17 @@ matrix<Type> makeQ_rcvm(Type beta, Type sigma,Type omega, Type delta) {
     Q.setZero();
 
     //constants
-    double tau=1/beta;
-    double C=beta^2+omega^2;
+    Type tau=1/beta;
+    Type C=beta*beta+omega*omega;
 
     // variances and covariances values
-    double var_xi=sigma^2/C*(delta+(omega^2-3/tau^2)/(2/tau*C)-exp(-2*delta/tau)/(2/tau)+
+    double var_xi=sigma*sigma/C*(delta+(omega*omega-3/(tau*tau))/(2/tau*C)-exp(-2*delta/tau)/(2/tau)+
                         2*exp(-delta/tau)*(1/tau*cos(omega*delta)-omega*sin(omega*delta))/C);
-    double var_zeta=sigma^2*tau/2*(1-exp(-2*delta/tau));
+    double var_zeta=sigma*sigma*tau/2*(1-exp(-2*delta/tau));
 
-    double cov1=sigma^2/(2*C)*(1+exp(-2*delta/tau)-2*exp(-delta/tau)*cos(omega*delta));
+    double cov1=sigma*sigma/(2*C)*(1+exp(-2*delta/tau)-2*exp(-delta/tau)*cos(omega*delta));
 
-    double cov2=sigma^2/C*(exp(-delta/tau)*sin(omega*delta)-omega/(2/tau)*(1-exp(-2*delta/tau)));
+    double cov2=sigma*sigma/C*(exp(-delta/tau)*sin(omega*delta)-omega/(2/tau)*(1-exp(-2*delta/tau)));
 
     // diagonal elements
     Q(0,0)=var_xi;
