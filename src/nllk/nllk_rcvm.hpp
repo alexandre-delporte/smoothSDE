@@ -239,7 +239,7 @@ Type nllk_rcvm(objective_function<Type>* obj) {
             if(H_array.size() > 1) {
                 H = H_array.col(i).matrix();
             }
-            matrix<Type> T = makeT_rcvm(beta(i),omega(i) dtimes(i));
+            matrix<Type> T = makeT_rcvm(beta(i),omega(i),dtimes(i));
             matrix<Type> Q = makeQ_rcvm(beta(i), sigma(i), omega(i), dtimes(i));
 
 
