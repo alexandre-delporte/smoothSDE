@@ -51,7 +51,7 @@ matrix<Type> makeT_rcvm(Type beta, Type omega, Type delta) {
     matrix<Type> A(2,2);
     A << beta,-omega,omega,beta;
 
-    double C = beta*beta+omega*omega;
+    Type C = beta*beta+omega*omega;
     matrix<Type> invA(2,2);
     invA <<beta/C,omega/C,-omega/C,beta/C;
 
@@ -73,13 +73,13 @@ matrix<Type> makeT_rcvm(Type beta, Type omega, Type delta) {
     T(0,0) = 1;
     T(1,1)=1;
     T(1,0)=0;
-    T(0,1)=0
+    T(0,1)=0;
 
     //// Top-right block
-    T(0,2)=IntexpAdelta(0,0)
-    T(0,3)=IntexpAdelta(0,1)
-    T(1,2)=IntexpAdelta(1,0)
-    T(1,3)=IntexpAdelta(1,1)
+    T(0,2)=IntexpAdelta(0,0);
+    T(0,3)=IntexpAdelta(0,1);
+    T(1,2)=IntexpAdelta(1,0);
+    T(1,3)=IntexpAdelta(1,1);
 
     // Bottom-left block
     T(2,0) = 0;
@@ -114,13 +114,13 @@ matrix<Type> makeQ_rcvm(Type beta, Type sigma,Type omega, Type delta) {
     Type C=beta*beta+omega*omega;
 
     // variances and covariances values
-    double var_xi=sigma*sigma/C*(delta+(omega*omega-3/(tau*tau))/(2/tau*C)-exp(-2*delta/tau)/(2/tau)+
+    Type var_xi=sigma*sigma/C*(delta+(omega*omega-3/(tau*tau))/(2/tau*C)-exp(-2*delta/tau)/(2/tau)+
                         2*exp(-delta/tau)*(1/tau*cos(omega*delta)-omega*sin(omega*delta))/C);
-    double var_zeta=sigma*sigma*tau/2*(1-exp(-2*delta/tau));
+    Type var_zeta=sigma*sigma*tau/2*(1-exp(-2*delta/tau));
 
-    double cov1=sigma*sigma/(2*C)*(1+exp(-2*delta/tau)-2*exp(-delta/tau)*cos(omega*delta));
+    Type cov1=sigma*sigma/(2*C)*(1+exp(-2*delta/tau)-2*exp(-delta/tau)*cos(omega*delta));
 
-    double cov2=sigma*sigma/C*(exp(-delta/tau)*sin(omega*delta)-omega/(2/tau)*(1-exp(-2*delta/tau)));
+    Type cov2=sigma*sigma/C*(exp(-delta/tau)*sin(omega*delta)-omega/(2/tau)*(1-exp(-2*delta/tau)));
 
     // diagonal elements
     Q(0,0)=var_xi;
