@@ -64,11 +64,11 @@ matrix<Type> makeT_rcvm(Type beta, Type omega, Type delta) {
     matrix<Type> R(2,2);
     R << cos(omega*delta),sin(omega*delta),-sin(omega*delta),cos(omega*delta);
     matrix<Type> expAdelta(2,2);
-    expAdelta<<exp(-beta*delta)*R
+    expAdelta<<exp(-beta*delta)*R;
 
     // Combine the matrices into T
     T.block<2, 2>(0, 0) = I; // Top-left block
-    T.block<2, 2>(0, 2) = Ainv*(I-expAdelta); // Top-right block
+    T.block<2, 2>(0, 2) = invA*(I-expAdelta); // Top-right block
     T.block<2, 2>(2, 0) = O; // Bottom-left block
     T.block<2, 2>(2, 2) = expAdelta; // Bottom-right block
 
@@ -137,7 +137,7 @@ matrix<Type> makeQ_rcvm(Type beta, Type sigma,Type omega, Type delta) {
 //' habitat selection. PhD thesis, University of Sheffield.
 //' (etheses.whiterose.ac.uk/23688/1/TheoMichelot_PhD_thesis_April2019.pdf)
 template <class Type>
-Type nllk_ctcrw(objective_function<Type>* obj) {
+Type nllk_rcvm(objective_function<Type>* obj) {
     //======//
     // DATA //
     //======//
