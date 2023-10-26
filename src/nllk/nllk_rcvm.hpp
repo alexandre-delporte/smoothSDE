@@ -1,5 +1,5 @@
-#ifndef _CTCRW_
-#define _CTCRW_
+#ifndef _RCVM_
+#define _RCVM_
 
 #undef TMB_OBJECTIVE_PTR
 #define TMB_OBJECTIVE_PTR obj
