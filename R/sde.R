@@ -594,7 +594,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type() %in% c("CTCRW", "RCVM")) {
+            } else if(self$type()=="CTCRW") {
                 # Number of dimensions
                 n_dim <- ncol(self$obs())
                 # Define initial state and covariance for Kalman filter
@@ -624,7 +624,37 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type() == "ESEAL_SSM") {
+            } else if(self$type()=="RCVM") {
+              # Number of dimensions
+              n_dim <- ncol(self$obs())
+              # Define initial state and covariance for Kalman filter
+              # First index for each ID
+              i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
+              # Initial state = (x1, x2, v1,v2.), one row per individual
+              a0 <- matrix(0, length(i0), 4)
+              a0[, 1] <- self$obs()[i0, 1]
+              a0[,2] <- self$obs()[i0,2]
+            
+              tmb_dat$a0 <- a0
+              # Initial state covariance
+              if(is.null(self$other_data()$P0)) {
+                # Default if P0 not provided by user
+                tmb_dat$P0 <- diag(c(1,1,10,10), 2)                    
+              } else {
+                tmb_dat$P0 <- self$other_data()$P0
+              }
+              
+              # Initialise model-specific parameter (measurement error SD)
+              tmb_par <- c(log_sigma_obs =  0, tmb_par)
+              
+              # Check whether observation error is provided by user
+              if(!is.null(self$other_data()$H)) {
+                tmb_dat$H_array <- self$other_data()$H
+                map <- c(map, list(log_sigma_obs = factor(NA)))
+              } else {
+                tmb_dat$H_array <- array(0)
+            
+            else if(self$type() == "ESEAL_SSM") {
                 # Define initial state and covariance for Kalman filter
                 # Initial state = initial lipid mass
                 tmb_dat$a0 <- cbind(1, rle(self$data()$dep_fat)$values)
