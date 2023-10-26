@@ -653,8 +653,8 @@ SDE <- R6Class(
                 map <- c(map, list(log_sigma_obs = factor(NA)))
               } else {
                 tmb_dat$H_array <- array(0)
-            
-            else if(self$type() == "ESEAL_SSM") {
+              }
+            } else if(self$type() == "ESEAL_SSM") {
                 # Define initial state and covariance for Kalman filter
                 # Initial state = initial lipid mass
                 tmb_dat$a0 <- cbind(1, rle(self$data()$dep_fat)$values)
