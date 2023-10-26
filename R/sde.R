@@ -69,7 +69,8 @@ SDE <- R6Class(
                                               beta = log, sigma = log)),
                             "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log)),
-                            "ESEAL_SSM" = list(mu = identity, sigma = log))
+                            "ESEAL_SSM" = list(mu = identity, sigma = log),
+                            "RCVM" = as.list(c(tau = log, nu = log,omega=identity)))
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -86,7 +87,8 @@ SDE <- R6Class(
                                                  beta = exp, sigma = exp)),
                                "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp)),
-                               "ESEAL_SSM" = list(mu = identity, sigma = exp))
+                               "ESEAL_SSM" = list(mu = identity, sigma = exp),
+                               "RCVM" = list(tau=exp,nu=exp,omega=identity))
             
             private$link_ <- link
             private$invlink_ <- invlink
@@ -592,7 +594,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type() == "CTCRW") {
+            } else if(self$type() %in% c("CTCRW", "RCVM")) {
                 # Number of dimensions
                 n_dim <- ncol(self$obs())
                 # Define initial state and covariance for Kalman filter

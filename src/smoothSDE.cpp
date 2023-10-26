@@ -10,7 +10,7 @@ template<class Type>
 Type objective_function<Type>::operator() () {
     // SDE type
     DATA_STRING(type);
-    
+
     if (type == "BM" || type == "BM_t" || type == "OU" || type == "CIR") {
         return nllk_sde(this);
     } else if (type == "BM_SSM") {
@@ -21,6 +21,8 @@ Type objective_function<Type>::operator() () {
         return nllk_ctcrw(this);
     } else if (type == "ESEAL_SSM") {
         return nllk_eseal_ssm(this);
+    } else if (type=="RCVM") {
+        return nllk_rcvm(this);
     } else {
         error ("Unknown SDE type");
     }
