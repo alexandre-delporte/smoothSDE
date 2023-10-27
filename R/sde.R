@@ -127,6 +127,11 @@ SDE <- R6Class(
             }
             private$data_ <- data
             
+            #If it is RCVM model, check that dimension of response is 2
+            if (self$type()=="RCVM" && n_dim!=2) {
+              stop("For 'RCVM', dimension of response must be 2")
+            }
+            
             # Save terms of model formulas and model matrices
             mats <- self$make_mat()
             ncol_fe <- mats$ncol_fe
@@ -625,8 +630,6 @@ SDE <- R6Class(
                     tmb_dat$H_array <- array(0)
                 }
             } else if(self$type()=="RCVM") {
-              # Number of dimensions
-              n_dim <- ncol(self$obs())
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
@@ -639,7 +642,7 @@ SDE <- R6Class(
               # Initial state covariance
               if(is.null(self$other_data()$P0)) {
                 # Default if P0 not provided by user
-                tmb_dat$P0 <- diag(c(1,1,10,10), 2)                    
+                tmb_dat$P0 <- diag(c(1,1,10,10))                    
               } else {
                 tmb_dat$P0 <- self$other_data()$P0
               }

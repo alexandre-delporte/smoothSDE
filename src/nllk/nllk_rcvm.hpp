@@ -44,9 +44,6 @@ matrix<Type> makeT_rcvm(Type beta, Type omega, Type delta) {
     matrix<Type> I(2,2);
     I << 1,0,0,1;
 
-    matrix<Type> O(2,2);
-    O.setZero();
-
     matrix<Type> R(2,2);
     R << cos(omega*delta),sin(omega*delta),-sin(omega*delta),cos(omega*delta);
     matrix<Type> expAdelta(2,2);
