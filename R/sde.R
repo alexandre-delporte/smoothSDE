@@ -70,7 +70,8 @@ SDE <- R6Class(
                             "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log)),
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
-                            "RCVM" = as.list(c(tau = log, nu = log,omega=identity)))
+                            "RCVM" = as.list(c(tau = log, nu = log,omega=identity)),
+                            "CRCVM"=as.list(c(lambda=log,D0=log,tau0=log,nu=log)))
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -88,7 +89,8 @@ SDE <- R6Class(
                                "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp)),
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
-                               "RCVM" = list(tau=exp,nu=exp,omega=identity))
+                               "RCVM" = list(tau=exp,nu=exp,omega=identity),
+                               "CRCVM"=as.list(c(lambda=exp,D0=exp,tau0=exp,nu=exp))
             
             private$link_ <- link
             private$invlink_ <- invlink
@@ -128,8 +130,8 @@ SDE <- R6Class(
             private$data_ <- data
             
             #If it is RCVM model, check that dimension of response is 2
-            if (self$type()=="RCVM" && n_dim!=2) {
-              stop("For 'RCVM', dimension of response must be 2")
+            if (self$type() %in% c("RCVM","CRCVM") && n_dim!=2) {
+              stop("For 'RCVM' and 'CRCVM', dimension of response must be 2")
             }
             
             # Save terms of model formulas and model matrices
@@ -629,7 +631,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type()=="RCVM") {
+            } else if(self$type() %in% c("RCVM","CRCVM")) {
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
@@ -656,6 +658,17 @@ SDE <- R6Class(
                 map <- c(map, list(log_sigma_obs = factor(NA)))
               } else {
                 tmb_dat$H_array <- array(0)
+              }
+              if (self$type=="CRCVM") {
+                if (is.null(self$other_data()$phi) || is.null(self$other_data()$Dshore)) {
+                  stop("Deviation angles 'phi' and distance to the boundary 'Dshore' must be provided in 'other_data' for CRCVM")
+                }
+                else {
+                  tmb_dat$phi=self$other_data()$phi
+                  tmb_dat$Dshore=self$other_data()$Dshore
+                  n=nrow(self$data())
+                  tmb_data$delta0=min(self$data()$time[2:n]-self$data()$time[1:n-1])
+                }
               }
             } else if(self$type() == "ESEAL_SSM") {
                 # Define initial state and covariance for Kalman filter
@@ -1005,6 +1018,9 @@ SDE <- R6Class(
             # and use posterior draws for non-fixed coefficients
             post_re <- matrix(rep(self$coeff_re(), each = n_post),
                               nrow = n_post, ncol = sum(self$terms()$ncol_re))
+            
+            print(ind_est_re)
+            print(post_re)
             #if all coefficients are fixed, set all posterior draws to fixed values
             if (!("coeff_re" %in% names(post_list))) {
               post_list$coeff_re <- post_re
