@@ -659,7 +659,7 @@ SDE <- R6Class(
               } else {
                 tmb_dat$H_array <- array(0)
               }
-              if (self$type=="CRCVM") {
+              if (self$type()=="CRCVM") {
                 if (is.null(self$other_data()$phi) || is.null(self$other_data()$Dshore)) {
                   stop("Deviation angles 'phi' and distance to the boundary 'Dshore' must be provided in 'other_data' for CRCVM")
                 }
