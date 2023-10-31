@@ -55,6 +55,14 @@ SDE <- R6Class(
             
             # Link functions for SDE parameters
             n_dim <- length(response)
+            
+            
+            #If it is RCVM model, check that dimension of response is 2
+            if (self$type() %in% c("RACVM","CRCVM") && n_dim!=2) {
+              stop("For 'RACVM' and 'CRCVM', dimension of response must be 2")
+            }
+            
+            
             link <- switch (type,
                             "BM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                              sigma = log)),
@@ -70,8 +78,9 @@ SDE <- R6Class(
                             "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log)),
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
-                            "RACVM" = as.list(c(mu1=identity,mu2=identity,tau = log, nu = log,omega=identity)),
-                            "CRCVM"=as.list(c(lambda=log,D0=log,tau0=log,nu=log)))
+                            "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                                                tau = log, nu = log,omega=identity)),
+                            "CRCVM"=list(lambda=log,D0=log,tau0=log,nu=log))
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -89,7 +98,8 @@ SDE <- R6Class(
                                "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp)),
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
-                               "RACVM" = list(mu1=identity,mu2=identity,tau=exp,nu=exp,omega=identity),
+                               "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                                                   tau = exp, nu = exp,omega=identity)),
                                "CRCVM"= list(lambda=exp,D0=exp,tau0=exp,nu=exp))
             
             private$link_ <- link
@@ -128,11 +138,6 @@ SDE <- R6Class(
                 stop("'data' should have a time column")
             }
             private$data_ <- data
-            
-            #If it is RCVM model, check that dimension of response is 2
-            if (self$type() %in% c("RACVM","CRCVM") && n_dim!=2) {
-              stop("For 'RACVM' and 'CRCVM', dimension of response must be 2")
-            }
             
             # Save terms of model formulas and model matrices
             mats <- self$make_mat()
