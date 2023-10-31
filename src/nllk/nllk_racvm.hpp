@@ -15,7 +15,7 @@ using namespace Eigen;
 //' @param n_dim Number of dimensions
 template<class Type>
 matrix<Type> makeH_racvm(Type sigma_obs) {
-    matrix<Type> H(n_dim, n_dim);
+    matrix<Type> H(2, 2);
     H.setZero();
     for(int i = 0; i < 2; i ++) {
         H(i, i) = sigma_obs * sigma_obs;
@@ -136,7 +136,6 @@ matrix<Type> makeQ_racvm(Type beta, Type sigma,Type omega, Type delta) {
 //'
 //' @param beta Parameter beta of OU velocity process
 //' @param dt Length of time interval
-//' @param n_dim Number of dimensions of CTCRW process
 template<class Type>
 matrix<Type> makeB_racvm(Type beta,Type omega, Type delta) {
     matrix<Type> B(4,2);
