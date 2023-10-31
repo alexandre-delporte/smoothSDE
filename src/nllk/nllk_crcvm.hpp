@@ -211,7 +211,7 @@ Type nllk_crcvm(objective_function<Type>* obj) {
     Z.setZero();
     Z(0,0)=1;
     Z(1,1)=1;
-    matrix<Type> H = makeH_rcvm(sigma_obs, n_dim);
+    matrix<Type> H = makeH_crcvm(sigma_obs, n_dim);
     matrix<Type> T(4, 4);
     matrix<Type> Q(4, 4);
     matrix<Type> F(2, 2);
@@ -250,8 +250,8 @@ Type nllk_crcvm(objective_function<Type>* obj) {
             if(H_array.size() > 1) {
                 H = H_array.col(i).matrix();
             }
-            matrix<Type> T = makeT_rcvm(beta(i),omega(i),dtimes(i));
-            matrix<Type> Q = makeQ_rcvm(beta(i), sigma(i), omega(i), dtimes(i));
+            matrix<Type> T = makeT_crcvm(beta(i),omega(i),dtimes(i));
+            matrix<Type> Q = makeQ_crcvm(beta(i), sigma(i), omega(i), dtimes(i));
 
 
             if(R_IsNA(asDouble(obs(i,0)))) {
