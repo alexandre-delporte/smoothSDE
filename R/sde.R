@@ -70,7 +70,7 @@ SDE <- R6Class(
                             "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log)),
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
-                            "RCVM" = as.list(c(tau = log, nu = log,omega=identity)),
+                            "RACVM" = as.list(c(mu1=identity,mu2=identity,tau = log, nu = log,omega=identity)),
                             "CRCVM"=as.list(c(lambda=log,D0=log,tau0=log,nu=log)))
             
             # Inverse link functions for SDE parameters
@@ -89,7 +89,7 @@ SDE <- R6Class(
                                "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp)),
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
-                               "RCVM" = list(tau=exp,nu=exp,omega=identity),
+                               "RACVM" = as.list(c(mu1=identity,mu2=identity,tau=exp,nu=exp,omega=identity)),
                                "CRCVM"=as.list(c(lambda=exp,D0=exp,tau0=exp,nu=exp))
             
             private$link_ <- link
@@ -130,8 +130,8 @@ SDE <- R6Class(
             private$data_ <- data
             
             #If it is RCVM model, check that dimension of response is 2
-            if (self$type() %in% c("RCVM","CRCVM") && n_dim!=2) {
-              stop("For 'RCVM' and 'CRCVM', dimension of response must be 2")
+            if (self$type() %in% c("RACVM","CRCVM") && n_dim!=2) {
+              stop("For 'RACVM' and 'CRCVM', dimension of response must be 2")
             }
             
             # Save terms of model formulas and model matrices
@@ -631,7 +631,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type() %in% c("RCVM","CRCVM")) {
+            } else if(self$type() %in% c("RACVM","CRCVM")) {
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
