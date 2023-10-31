@@ -156,7 +156,7 @@ Type nllk_crcvm(objective_function<Type>* obj) {
     DATA_IVECTOR(ncol_re); // Number of columns of S and X_re for each random effect
     DATA_MATRIX(a0); // Initial state estimate for Kalman filter
     DATA_MATRIX(P0); // Initial state covariance for Kalman filter
-    DATA(delta0);
+    DATA_VECTOR(delta0);
 
     DATA_ARRAY(H_array); // Covariance matrices for observation error
 
