@@ -672,7 +672,7 @@ SDE <- R6Class(
                   tmb_dat$phi=self$data()$phi
                   tmb_dat$Dshore=self$data()$Dshore
                   n=nrow(self$data())
-                  tmb_data$delta0=min(self$data()$time[2:n]-self$data()$time[1:n-1])
+                  tmb_dat$delta0=min(self$data()$time[2:n]-self$data()$time[1:n-1])
                 }
               }
             } else if(self$type() == "ESEAL_SSM") {
