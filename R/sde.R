@@ -665,12 +665,12 @@ SDE <- R6Class(
                 tmb_dat$H_array <- array(0)
               }
               if (self$type()=="CRCVM") {
-                if (is.null(self$other_data()$phi) || is.null(self$other_data()$Dshore)) {
-                  stop("Deviation angles 'phi' and distance to the boundary 'Dshore' must be provided in 'other_data' for CRCVM")
+                if (is.null(self$data()$phi) || is.null(self$data()$Dshore)) {
+                  stop("There must be columns 'phi' and 'Dshore' for deviation angles and Distance to boundary in 'data' for CRCVM")
                 }
                 else {
-                  tmb_dat$phi=self$other_data()$phi
-                  tmb_dat$Dshore=self$other_data()$Dshore
+                  tmb_dat$phi=self$data()$phi
+                  tmb_dat$Dshore=self$data()$Dshore
                   n=nrow(self$data())
                   tmb_data$delta0=min(self$data()$time[2:n]-self$data()$time[1:n-1])
                 }
