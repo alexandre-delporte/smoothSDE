@@ -156,8 +156,6 @@ Type nllk_crcvm(objective_function<Type>* obj) {
     DATA_IVECTOR(ncol_re); // Number of columns of S and X_re for each random effect
     DATA_MATRIX(a0); // Initial state estimate for Kalman filter
     DATA_MATRIX(P0); // Initial state covariance for Kalman filter
-    DATA_VECTOR(delta0);
-
     DATA_ARRAY(H_array); // Covariance matrices for observation error
 
     // Number of observations
@@ -197,6 +195,7 @@ Type nllk_crcvm(objective_function<Type>* obj) {
     vector<Type> D0 = exp(par_mat.col(1).array());
     vector<Type> tau0 = par_mat.col(2).array();
     vector<Type> sigma = par_mat.col(3).array();
+    Type delta0=min(dtimes);
     vector<Type> tau = delta0+(tau0-delta0)/2*(1+tanh(lambda*(Dshore-D0)));
     vector<Type> tau_tilde=tau;
     vector<Type> omega=-sin(phi)/tau;
