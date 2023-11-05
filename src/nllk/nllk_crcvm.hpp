@@ -197,8 +197,8 @@ Type nllk_crcvm(objective_function<Type>* obj) {
     vector<Type> D0 = exp(par_mat.col(1).array());
     vector<Type> tau0 = par_mat.col(2).array();
     vector<Type> sigma = par_mat.col(3).array();
-    vector<Type> tau = delta0+(tau0-delta0)/2*(1+tanh(lambda*(Dshore-D0)));
-    vector<Type> tau_tilde=tau/(1-cos(phi)) ;
+    vector<Type> tau = 0.1+(tau0-0.1)/2*(1+tanh(lambda*(Dshore-D0)));
+    vector<Type> tau_tilde=tau;
     vector<Type> omega=-sin(phi)/tau;
     vector<Type> beta = 1/tau_tilde;
 
