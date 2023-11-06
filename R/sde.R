@@ -665,7 +665,7 @@ SDE <- R6Class(
                 tmb_dat$H_array <- array(0)
               }
               if (self$type()=="CRCVM") {
-                if (is.null(self$data()$phi) || is.null(self$data()$Dshore)) {
+                if (is.null(self$data()$phi)) {
                   stop("There must be columns 'phi' for deviation angles in 'data' for CRCVM")
                 }
                 else {
