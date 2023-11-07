@@ -1021,8 +1021,6 @@ SDE <- R6Class(
             post_re <- matrix(rep(self$coeff_re(), each = n_post),
                               nrow = n_post, ncol = sum(self$terms()$ncol_re))
             
-            print(ind_est_re)
-            print(post_re)
             #if all coefficients are fixed, set all posterior draws to fixed values
             if (!("coeff_re" %in% names(post_list))) {
               post_list$coeff_re <- post_re
