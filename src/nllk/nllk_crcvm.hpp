@@ -148,6 +148,7 @@ Type nllk_crcvm(objective_function<Type>* obj) {
     DATA_VECTOR(ID); // Time series ID
     DATA_VECTOR(times); // Observation times
     DATA_VECTOR(phi); // computed deviation angle
+    DATA_VECTOR(Dshore); // computed deviation angle
     DATA_MATRIX(obs); // Response variables
     DATA_SPARSE_MATRIX(X_fe); // Design matrix for fixed effects
     DATA_SPARSE_MATRIX(X_re); // Design matrix for random effects

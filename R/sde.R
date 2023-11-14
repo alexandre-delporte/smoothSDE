@@ -666,10 +666,11 @@ SDE <- R6Class(
               }
               if (self$type()=="CRCVM") {
                 if (is.null(self$data()$phi)) {
-                  stop("There must be columns 'phi' for deviation angles in 'data' for CRCVM")
+                  stop("There must be columns 'phi' and 'DistanceShore' for deviation angles and distance to boundary in 'data' for CRCVM")
                 }
                 else {
                   tmb_dat$phi=self$data()$phi
+                  tmb_dat$Dshore=self$data()$DistanceShore
                 }
               }
             } else if(self$type() == "ESEAL_SSM") {
