@@ -80,7 +80,7 @@ SDE <- R6Class(
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
                             "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log,omega=identity)),
-                            "CRCVM"=list(tau=log,sigma=log))
+                            "CRCVM"=list(tau0=log,tau1=log,kappa=log,lambda=log,D0=log,sigma=log))
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -100,7 +100,7 @@ SDE <- R6Class(
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
                                "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp,omega=identity)),
-                               "CRCVM"= list(tau=exp,sigma=exp))
+                               "CRCVM"= list(tau0=exp,tau1=exp,kappa=exp,lambda=exp,D0=exp,sigma=exp))
             
             private$link_ <- link
             private$invlink_ <- invlink

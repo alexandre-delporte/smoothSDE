@@ -190,11 +190,17 @@ Type nllk_crcvm(objective_function<Type>* obj) {
     }
 
     // Parameters of velocity process
-    vector<Type> tau = exp(par_mat.col(0).array());
-    vector<Type> sigma = exp(par_mat.col(1).array());
-    vector<Type> tau_tilde=tau/(1-cos(phi));
-    vector<Type> omega=-sin(phi)/tau;
-    vector<Type> beta = 1/tau_tilde;
+    vector<Type> tau0 = exp(par_mat.col(0).array());
+    vector<Type> tau1 = exp(par_mat.col(1).array());
+    vector<Type> kappa = exp(par_mat.col(2).array());
+    vector<Type> lambda = exp(par_mat.col(3).array());
+    vector<Type> D0 = exp(par_mat.col(4).array());
+    vector<Type> sigma = exp(par_mat.col(5).array());
+    vector<Type> coeff = 1/2*(1+tanh(lambda*(Dshore-D0)));
+    Type delta0 = min(dtimes);
+    vector<Type> tau=delta0+(tau0-delta0)/(exp(kappa)-1)*(exp(kappa*coeff*phi)-1);
+    vector<Type> omega=-sin(coeff*phi)/tau;
+    vector<Type> beta = 1/tau;
 
     //================================//
     // Likelihood using Kalman filter //
