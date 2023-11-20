@@ -1541,7 +1541,7 @@ SDE <- R6Class(
                 z0 <- rep(z0, n_dim)
             }
             
-            if (self_type()=="RACVM") {
+            if (self$type()=="RACVM") {
               
               # Initialize vector of simulated observations
               obs <- rep(NA, nrow(data))
