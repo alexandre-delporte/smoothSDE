@@ -1552,7 +1552,7 @@ SDE <- R6Class(
                 ind <- which(data$ID == unique(data$ID)[id])
                 dtimes <- diff(data$time[ind])
                 sub_n <- length(ind)
-                sub_obs <- data.frame("z1"=rep(z0[1],sub-n),"z2"=rep(z0[2],sub_n))
+                sub_obs <- data.frame("z1"=rep(z0[1],sub_n),"z2"=rep(z0[2],sub_n))
                 sub_par <- par[ind,]
                 
                 
