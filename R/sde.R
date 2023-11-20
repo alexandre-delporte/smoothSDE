@@ -1517,8 +1517,6 @@ SDE <- R6Class(
             if(is.null(data$ID)) {
                 data$ID <- factor(1)
             }
-    
-          }
             
             # Create SDE parameters
             if(posterior) {
