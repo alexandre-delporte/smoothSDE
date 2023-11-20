@@ -1533,7 +1533,7 @@ SDE <- R6Class(
             # replicate z0 if it is scalar
             n_dim <- length(self$response())
             
-            if (!(length(z0) %in% c(1,n_dim)) {
+            if (!(length(z0) %in% c(1,n_dim))) {
               stop("z0 must be scalar or have same dimension as the response")
             }
             
