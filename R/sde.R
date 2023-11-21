@@ -1626,8 +1626,8 @@ SDE <- R6Class(
                 # Update observation vector
                 obs[ind] <- sub_obs
               }
-              # Add simulated variable to data frame
-              data[[self$response()[d]]] <- obs
+              # Add simulated variable to data frame]
+              data[[self$response()] <- obs
             }
             
             else {
