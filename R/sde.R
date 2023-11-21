@@ -1608,7 +1608,6 @@ SDE <- R6Class(
                   mean=Ti%*%alpha+Bi%*%mu
                   
                   print(mean)
-                  
                   # Covariance of next state vector
                   var_xi=sigma^2/C*(delta+(omega^2-3*beta^2)/(2*beta*C)-exp(-2*delta*beta)/(2*beta)+
                                       2*exp(-delta*beta)*(beta*cos(omega*delta)-omega*sin(omega*delta))/C)
@@ -1627,7 +1626,7 @@ SDE <- R6Class(
                 obs[ind] <- sub_obs
               }
               # Add simulated variable to data frame]
-              data[[self$response()] <- obs
+              data[,self$response()] <- obs
             }
             
             else {
