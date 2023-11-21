@@ -1574,8 +1574,6 @@ SDE <- R6Class(
                 #loop over time steps
                 for(i in 2:sub_n) {
                   
-                  print(i)
-                  
                   #parameters values on this time step
                   mu=matrix(c(mu1s[i-1],mu2s[i-1]),ncol=1,nrow=2,byrow=TRUE)
                   beta=betas[i-1]
@@ -1619,17 +1617,13 @@ SDE <- R6Class(
                   sub_dat[i,] <- rmvn(1, mu =c(mean), V = V)
                 }
                 
-                print(sub_dat)
-                
                 # Only return location (and not velocity)
                 sub_obs <- sub_dat[,c("z1","z2")]
-                
-                print(sub_obs)
                 
                 # Update observation vector
                 obs[ind,] <- sub_obs
               }
-              # Add simulated variable to data frame]
+              # Add simulated variable to data frame
               data[,self$response()] <- obs
             }
             
