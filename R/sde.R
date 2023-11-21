@@ -1579,6 +1579,7 @@ SDE <- R6Class(
                   beta=betas[i-1]
                   sigma=sigmas[i-1]
                   omega=omegas[i-1]
+                  delta=dtimes[i-1]
                   
                   # Last state vector alpha=(z1,z2,v1,v2)
                   alpha=sub_dat[i-1,]
