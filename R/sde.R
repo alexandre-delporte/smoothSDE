@@ -1605,6 +1605,8 @@ SDE <- R6Class(
                   
                   #mean of next state vector 
                   mean=Ti%*%alpha+Bi%*%mu
+                  print(dim(mean))
+                  print(mean)
                   
                   # Covariance of next state vector
                   var_xi=sigma^2/C*(delta+(omega^2-3*beta^2)/(2*beta*C)-exp(-2*delta*beta)/(2*beta)+
