@@ -1544,7 +1544,8 @@ SDE <- R6Class(
             if (self$type()=="RACVM") {
               
               # Initialize vector of simulated observations
-              obs <- rep(NA, nrow(data))
+              n=length(data$time)
+              obs <- data.frame("z1"=rep(z0[1],n),"z2"=rep(z0[2],n))
               
               # Loop over IDs
               for(id in seq_along(unique(data$ID))) {
@@ -1623,8 +1624,10 @@ SDE <- R6Class(
                 # Only return location (and not velocity)
                 sub_obs <- sub_dat[,c("z1","z2")]
                 
+                print(sub_obs)
+                
                 # Update observation vector
-                obs[ind] <- sub_obs
+                obs[ind,] <- sub_obs
               }
               # Add simulated variable to data frame]
               data[,self$response()] <- obs
