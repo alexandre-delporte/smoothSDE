@@ -1573,6 +1573,8 @@ SDE <- R6Class(
                 #loop over time steps
                 for(i in 2:sub_n) {
                   
+                  print(i)
+                  
                   #parameters values on this time step
                   mu=matrix(c(mu1s[i-1],mu2s[i-1]),ncol=1,nrow=2,byrow=TRUE)
                   beta=betas[i-1]
