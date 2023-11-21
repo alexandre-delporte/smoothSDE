@@ -1617,7 +1617,7 @@ SDE <- R6Class(
                   cov2=sigma^2/C*(exp(-delta*beta)*sin(omega*delta)-omega/(2*beta)*(1-exp(-2*delta*beta)))
                   V=matrix(c(var_xi,0,cov1,cov2,0,var_xi,cov2,cov1,cov1,cov2,var_zeta,0,cov2,cov1,0,var_zeta),nrow=4,byrow=TRUE)
                   
-                  sub_dat[i,] <- mu+rmvn(1, mu =0, V = V)
+                  sub_dat[i,] <- mu+rmvn(1, mu =rep(0,ncol(V)), V = V)
                 }
                 
                 # Only return location (and not velocity)
