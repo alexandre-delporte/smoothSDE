@@ -1581,6 +1581,7 @@ SDE <- R6Class(
                   sigma=sigmas[i-1]
                   omega=omegas[i-1]
                   delta=dtimes[i-1]
+                  cat("beta=",beta;"sigma=",sigma,"omega=",omega)
                   
                   # Last state vector alpha=(z1,z2,v1,v2)
                   alpha=sub_dat[i-1,]
@@ -1607,7 +1608,6 @@ SDE <- R6Class(
                   #mean of next state vector 
                   mean=Ti%*%alpha+Bi%*%mu
                   
-                  print(mean)
                   # Covariance of next state vector
                   var_xi=sigma^2/C*(delta+(omega^2-3*beta^2)/(2*beta*C)-exp(-2*delta*beta)/(2*beta)+
                                       2*exp(-delta*beta)*(beta*cos(omega*delta)-omega*sin(omega*delta))/C)
@@ -1616,8 +1616,10 @@ SDE <- R6Class(
                   cov2=sigma^2/C*(exp(-delta*beta)*sin(omega*delta)-omega/(2*beta)*(1-exp(-2*delta*beta)))
                   V=matrix(c(var_xi,0,cov1,cov2,0,var_xi,cov2,cov1,cov1,cov2,var_zeta,0,cov2,cov1,0,var_zeta),nrow=4,byrow=TRUE)
                   
-                  sub_dat[i,] <- mean+rmvn(1, mu =rep(0,ncol(V)), V = V)
+                  sub_dat[i,] <- rmvn(1, mu =c(mean), V = V)
                 }
+                
+                print(sub_dat)
                 
                 # Only return location (and not velocity)
                 sub_obs <- sub_dat[,c("z1","z2")]
