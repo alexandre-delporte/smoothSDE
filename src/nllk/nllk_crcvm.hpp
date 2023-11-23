@@ -196,7 +196,7 @@ Type nllk_crcvm(objective_function<Type>* obj) {
     vector<Type> tau_tilde=tau/(1-cos(phi));
     vector<Type> omega=-sin(phi)/tau;
     vector<Type> beta = 1/tau_tilde;
-    vector<Type> beta = 2 * nu / sqrt(M_PI * tau);
+    vector<Type> sigma = 2 * nu / sqrt(M_PI * tau);
 
     //================================//
     // Likelihood using Kalman filter //
