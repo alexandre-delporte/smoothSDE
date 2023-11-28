@@ -674,7 +674,6 @@ SDE <- R6Class(
               if (self$type() %in% c("CRCVM1","CRCVM2")) {
                   tmb_dat$phi=self$data()$phi
                   tmb_dat$Dshore=self$data()$DistanceShore
-                }
               }
             } else if(self$type() == "ESEAL_SSM") {
                 # Define initial state and covariance for Kalman filter
