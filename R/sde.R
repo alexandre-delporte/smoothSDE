@@ -1914,15 +1914,15 @@ SDE <- R6Class(
                     "ESEAL_SSM" = paste0("    dL(t) = mu dt + sigma dW(t)\n", 
                                          "    Z(i) ~ N(a1 + a2 L(i)/R(i), tau^2/h(i))"),
                     "RACVM"=paste0("    dV(t) = -A (V(t) - mu) dt + sigma dW(t)\n ",
-                                  "dX(t)=V(t) dt", "tau=1/beta \n","nu=sqrt(pi*beta)/sigma/2"),
+                                  "dX(t)=V(t) dt \n", "tau=1/beta \n","nu=sqrt(pi*beta)/sigma/2"),
                       "CRCVM1"=paste0("    dV(t) = -AV(t) dt + sigma dW(t)\n ",
                                       "dX(t)=V(t) dt \n",
                                       "tau(DistanceShore,phi)=delta0+(taum(DistanceShore)-delta0)/(exp(kappa)-1)*(exp(kappa*cos(c(DistanceShore)*phi))-1) \n",
-                                      "omega(DistanceShore,phi)=-sin(c(DistanceShore)*phi)/tau(DistanceShore,phi)"
+                                      "omega(DistanceShore,phi)=-sin(c(DistanceShore)*phi)/tau(DistanceShore,phi) \n",
                                       "taum(DistanceShore)=tau0+(tau1-tau0)/2*(1-tanh(lambda(DistanceShore-D0)))\n",
                                       "c(DistanceShore)=(1-tanh(lambda(DistanceShore-D0)))/2"),
-                    "CRCVM2"=paste0("    dV(t) = -1/tau(I-Rphi)V(t) dt + sigma dW(t)\n ",/
-                                    "dX(t)=V(t) dt \n","")
+                    "CRCVM2"=paste0("    dV(t) = -1/tau(I-Rphi)V(t) dt + sigma dW(t)\n ",
+                                    "dX(t)=V(t) dt"))
             
         },
         
