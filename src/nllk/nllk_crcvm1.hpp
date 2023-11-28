@@ -198,7 +198,7 @@ Type nllk_crcvm1(objective_function<Type>* obj) {
     vector<Type> lambda = exp(par_mat.col(4).array());
     vector<Type> kappa = exp(par_mat.col(5).array());
     vector<Type> sigma = exp(par_mat.col(6).array());
-    vector<Type> coeff=(1-tanh(lambda*(D0-Dshore)))/2;
+    vector<Type> coeff=(1-tanh(lambda*(Dshore-D0)))/2;
     vector <Type> taum=tau0+(tau1-tau0)*(1-tanh(lambda*(Dshore-D0)))/2;
     vector<Type> tau=delta0+(taum-tau0)*(exp(kappa*cos(coeff*phi))-1)/(exp(kappa)-1);
     vector<Type> omega=-sin(coeff*phi)/tau;
