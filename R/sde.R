@@ -58,7 +58,7 @@ SDE <- R6Class(
             
             
             #If it is RCVM model, check that dimension of response is 2
-            if (self$type() %in% c("RACVM","CRCVM") && n_dim!=2) {
+            if (self$type() %in% c("RACVM","CRCVM1","CRCVM2") && n_dim!=2) {
               stop("For 'RACVM' and 'CRCVM', dimension of response must be 2")
             }
             
@@ -80,7 +80,8 @@ SDE <- R6Class(
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
                             "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log,omega=identity)),
-                            "CRCVM"=list(tau=log,sigma=log))
+                            "CRCVM1"=list(delta0=log,tau0=log,tau1=log,D0=log,lambda=log,kappa=log,sigma=log),
+                            "CRCVM2"=list(tau=log,sigma=log))
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -100,7 +101,8 @@ SDE <- R6Class(
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
                                "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp,omega=identity)),
-                               "CRCVM"= list(tau=exp,sigma=exp))
+                               "CRCVM1"=list(delta0=exp,tau0=exp,tau1=exp,D0=exp,lambda=exp,kappa=exp,sigma=exp),
+                               "CRCVM2"= list(tau=exp,sigma=exp))
             
             private$link_ <- link
             private$invlink_ <- invlink
@@ -136,6 +138,11 @@ SDE <- R6Class(
             # Check that data has a "time" column
             if(!any(colnames(data) == "time")) {
                 stop("'data' should have a time column")
+            }
+            
+            #check data has colums "phi" and "DistanceShore" for constrained models
+            if(!any(colnames(data) == "phi") || !any(colnames(data) == "DistanceShore") ) {
+              stop("'data' should have a column 'phi' and a column 'DistanceShore' for constrained models")
             }
             private$data_ <- data
             
@@ -636,7 +643,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type() %in% c("RACVM","CRCVM")) {
+            } else if(self$type() %in% c("RACVM","CRCVM1","CRCVM2")) {
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
@@ -664,11 +671,7 @@ SDE <- R6Class(
               } else {
                 tmb_dat$H_array <- array(0)
               }
-              if (self$type()=="CRCVM") {
-                if (is.null(self$data()$phi)) {
-                  stop("There must be columns 'phi' and 'DistanceShore' for deviation angles and distance to boundary in 'data' for CRCVM")
-                }
-                else {
+              if (self$type() %in% c("CRCVM1","CRCVM2")) {
                   tmb_dat$phi=self$data()$phi
                   tmb_dat$Dshore=self$data()$DistanceShore
                 }
@@ -1910,7 +1913,17 @@ SDE <- R6Class(
                                      "* tau = 1/beta\n",
                                      "* nu = sqrt(pi/beta)*sigma/2"),
                     "ESEAL_SSM" = paste0("    dL(t) = mu dt + sigma dW(t)\n", 
-                                         "    Z(i) ~ N(a1 + a2 L(i)/R(i), tau^2/h(i))"))
+                                         "    Z(i) ~ N(a1 + a2 L(i)/R(i), tau^2/h(i))"),
+                    "RACVM"=paste0("    dV(t) = -A (V(t) - mu) dt + sigma dW(t)\n ",
+                                  "dX(t)=V(t) dt", "tau=1/beta \n","nu=sqrt(pi*beta)/sigma/2"),
+                      "CRCVM1"=paste0("    dV(t) = -AV(t) dt + sigma dW(t)\n ",
+                                      "dX(t)=V(t) dt \n",
+                                      "tau(DistanceShore,phi)=delta0+(taum(DistanceShore)-delta0)/(exp(kappa)-1)*(exp(kappa*cos(c(DistanceShore)*phi))-1) \n",
+                                      "omega(DistanceShore,phi)=-sin(c(DistanceShore)*phi)/tau(DistanceShore,phi)"
+                                      "taum(DistanceShore)=tau0+(tau1-tau0)/2*(1-tanh(lambda(DistanceShore-D0)))\n",
+                                      "c(DistanceShore)=(1-tanh(lambda(DistanceShore-D0)))/2"),
+                    "CRCVM2"=paste0("    dV(t) = -1/tau(I-Rphi)V(t) dt + sigma dW(t)\n ",/
+                                    "dX(t)=V(t) dt \n","")
             
         },
         
