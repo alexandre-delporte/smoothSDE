@@ -182,6 +182,7 @@ SDE <- R6Class(
                 })
             }
             
+            #check that map is of the right form as required by TMB
             if (is.null(map)) {
               map=list()
             }
@@ -1944,7 +1945,7 @@ SDE <- R6Class(
                 if(names(f)[i] %in% self$fixpar()) {
                     this_form <- "fixed"
                 } else {
-                    this_form <- as.character(f[[i]])[2]
+                    this_form <- as.character(f[[i]][2])
                     this_form <- gsub("\\+", "+\n\t", this_form)
                 }
                 message("* ", names(f)[i], " ~ ", this_form)
