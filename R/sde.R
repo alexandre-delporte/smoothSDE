@@ -141,7 +141,7 @@ SDE <- R6Class(
             }
             
             #check data has colums "phi" and "DistanceShore" for constrained models
-            if(!any(colnames(data) == "phi") || !any(colnames(data) == "DistanceShore") ) {
+            if(self$type() %in% c("CRCVM1","CRCVM2") && !(all(c("phi","DistanceShore") %in% colnames(data))) ) {
               stop("'data' should have a column 'phi' and a column 'DistanceShore' for constrained models")
             }
             private$data_ <- data
