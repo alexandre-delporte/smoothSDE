@@ -58,7 +58,7 @@ SDE <- R6Class(
             
             
             #If it is RCVM model, check that dimension of response is 2
-            if (self$type() %in% c("RACVM","CRCVM1","CRCVM2") && n_dim!=2) {
+            if (self$type() %in% c("RACVM1","RACVM2","CRCVM1","CRCVM2") && n_dim!=2) {
               stop("For 'RACVM' and 'CRCVM', dimension of response must be 2")
             }
             
@@ -104,7 +104,7 @@ SDE <- R6Class(
                                "RACVM1" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp,omega=identity)),
                                "RACVM2" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                    tau = exp, sigma = exp,omega=identity))
+                                                    tau = exp, sigma = exp,omega=identity)),
                                "CRCVM1"=list(delta0=exp,tau0=exp,tau1=exp,D0=exp,lambda=exp,kappa=exp,sigma=exp),
                                "CRCVM2"= list(tau=exp,sigma=exp))
             
@@ -777,7 +777,7 @@ SDE <- R6Class(
                 # Fit model
                 private$out_ <- optim(par = private$tmb_obj_$par,
                                       fn = private$tmb_obj_$fn, 
-                                      gr = private$tmb_obj_$gr,control=list(trace=1),method="BFGS")
+                                      gr = private$tmb_obj_$gr,control=list(trace=1))
                 # private$out_ <- do.call(optim, private$tmb_obj_)
             })
             private$out_$systime <- sys_time
