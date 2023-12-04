@@ -78,8 +78,10 @@ SDE <- R6Class(
                             "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log)),
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
-                            "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                            "RACVM1" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log,omega=identity)),
+                            "RACVM2" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                                                 tau = log, sigma = log,omega=identity)),
                             "CRCVM1"=list(delta0=log,tau0=log,tau1=log,D0=log,lambda=log,kappa=log,sigma=log),
                             "CRCVM2"=list(tau=log,sigma=log))
             
@@ -99,8 +101,10 @@ SDE <- R6Class(
                                "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp)),
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
-                               "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                               "RACVM1" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp,omega=identity)),
+                               "RACVM2" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                                                    tau = exp, sigma = exp,omega=identity))
                                "CRCVM1"=list(delta0=exp,tau0=exp,tau1=exp,D0=exp,lambda=exp,kappa=exp,sigma=exp),
                                "CRCVM2"= list(tau=exp,sigma=exp))
             
@@ -644,7 +648,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type() %in% c("RACVM","CRCVM1","CRCVM2")) {
+            } else if(self$type() %in% c("RACVM1","RACVM2","CRCVM1","CRCVM2")) {
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
@@ -1544,7 +1548,7 @@ SDE <- R6Class(
                 z0 <- rep(z0, n_dim)
             }
             
-            if (self$type()=="RACVM") {
+            if (self$type()=="RACVM1") {
               
               # Initialize vector of simulated observations
               n=length(data$time)
@@ -1914,9 +1918,13 @@ SDE <- R6Class(
                                      "* nu = sqrt(pi/beta)*sigma/2"),
                     "ESEAL_SSM" = paste0("    dL(t) = mu dt + sigma dW(t)\n", 
                                          "    Z(i) ~ N(a1 + a2 L(i)/R(i), tau^2/h(i))"),
-                    "RACVM"=paste0("    dV(t) = -A (V(t) - mu) dt + sigma dW(t)\n ",
+                    "RACVM1"=paste0("     dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau) dW1(t)\n ",
+                                    "     dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau)  dW2(t)\n",
                                   "dX(t)=V(t) dt \n", "tau=1/beta \n","nu=sqrt(pi*beta)/sigma/2"),
-                      "CRCVM1"=paste0("    dV(t) = -AV(t) dt + sigma dW(t)\n ",
+                    "RACVM2"=paste0("    dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ sigma dW1(t)\n ",
+                                    "dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ sigma dW2(t)\n",
+                                    "    dX(t)=V(t) dt \n", "tau=1/beta \n"),
+                    "CRCVM1"=paste0("    dV(t) = -AV(t) dt + sigma dW(t)\n ",
                                       "dX(t)=V(t) dt \n",
                                       "tau(DistanceShore,phi)=delta0+(taum(DistanceShore)-delta0)/(exp(kappa)-1)*(exp(kappa*cos(c(DistanceShore)*phi))-1) \n",
                                       "omega(DistanceShore,phi)=-sin(c(DistanceShore)*phi)/tau(DistanceShore,phi) \n",
