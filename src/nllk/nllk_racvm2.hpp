@@ -195,7 +195,7 @@ Type nllk_racvm2(objective_function<Type>* obj) {
     DATA_SPARSE_MATRIX(X_fe); // Design matrix for fixed effects
     DATA_SPARSE_MATRIX(X_re); // Design matrix for random effects
     DATA_SPARSE_MATRIX(S); // Penalty matrix
-    DATA_IMATRIX(col_re); // Start and end indexes of columns of S and X_re for each random effect
+    DATA_IMATRIX(ncol_re); // Start and end indexes of columns of S and X_re for each random effect
     DATA_MATRIX(a0); // Initial state estimate for Kalman filter
     DATA_MATRIX(P0); // Initial state covariance for Kalman filter
 
