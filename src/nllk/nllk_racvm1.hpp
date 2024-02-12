@@ -195,8 +195,7 @@ Type nllk_racvm1(objective_function<Type>* obj) {
     DATA_SPARSE_MATRIX(X_fe); // Design matrix for fixed effects
     DATA_SPARSE_MATRIX(X_re); // Design matrix for random effects
     DATA_SPARSE_MATRIX(S); // Penalty matrix
-    DATA_IMATRIX(start_ncol_re); // Number of columns of S and X_re for each random effect
-    DATA_IMATRIX(end_ncol_re); // Number of columns of S and X_re for each random effect
+    DATA_IMATRIX(ncol_re); // Start and end indexes of S and X_re for each random effect
     DATA_MATRIX(a0); // Initial state estimate for Kalman filter
     DATA_MATRIX(P0); // Initial state covariance for Kalman filter
 
@@ -338,20 +337,20 @@ Type nllk_racvm1(objective_function<Type>* obj) {
     // ===================//
     Type nllk = -llk;
     // Are there random effects?
-       if(start_ncol_re(0) > 0) {
+       if(ncol_re(0,0) > 0) {
         // Index in matrix S
         int S_start = 0;
         
         // Loop over smooths
-        for(int i = 0; i < start_ncol_re.size(); i++) {
+        for(int i = 0; i < ncol_re.cols(); i++) {
             // Size of penalty matrix for this smooth
-            int Sn = end_ncol_re(i) - start_ncol_re(i) + 1;
+            int Sn = ncol_re(1,i) - ncol_re(0,i) + 1;
             
             // Penalty matrix for this smooth
             Eigen::SparseMatrix<Type> this_S = S.block(S_start, S_start, Sn, Sn);
             
             // Coefficients for this smooth
-            vector<Type> this_coeff_re = coeff_re.segment(start_ncol_re(i) - 1, Sn);
+            vector<Type> this_coeff_re = coeff_re.segment(ncol_re(0,i) - 1, Sn);
             
             // Add penalty
             nllk = nllk -

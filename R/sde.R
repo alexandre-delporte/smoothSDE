@@ -163,20 +163,18 @@ SDE <- R6Class(
             # Save terms of model formulas and model matrices
             mats <- self$make_mat()
             ncol_fe <- mats$ncol_fe
-            start_ncol_re <- mats$start_ncol_re
-            end_ncol_re <- mats$end_ncol_re
+            ncol_re <- mats$ncol_re
             private$terms_ <- list(ncol_fe = ncol_fe,
-                                   start_ncol_re = start_ncol_re,
-                                   end_ncol_re=end_ncol_re,
+                                   ncol_re = ncol_re,
                                    names_fe = colnames(mats$X_fe),
                                    names_re_all = colnames(mats$X_re),
-                                   names_re = names(start_ncol_re))
+                                   names_re = colnames(ncol_re))
             private$mats_ <- list(X_fe = mats$X_fe, X_re = mats$X_re, S = mats$S)
             
             # Initial parameters (zero if par0 not provided)
             self$update_coeff_fe(rep(0, sum(ncol_fe)))
             self$update_coeff_re(rep(0, ncol(mats$X_re)))
-            self$update_lambda(rep(1,length(start_ncol_re)))
+            self$update_lambda(ifelse(is.null(ncol_re),0,rep(1,ncol(ncol_re))))
           
             
             # Set initial fixed effect coefficients if provided (par0)
@@ -521,24 +519,12 @@ SDE <- R6Class(
             colnames(X_re) <- names_re
             S <- bdiag_check(S_list)
             
-
-            #vectors with start and end indexes for random effects
-            if (is.null(ncol_re)){
-              start_ncol_re=NULL
-              end_ncol_re=NULL
-            }
-            else {
-              start_ncol_re=c(ncol_re[1,])
-              names(start_ncol_re)=names_ncol_re
-              end_ncol_re=c(ncol_re[2,])
-              names(end_ncol_re)=names_ncol_re
-            }
+            colnames(ncol_re)=names_ncol_re
             
             return(list(X_fe = X_fe, X_re = X_re, S = S,
                         X_list_re = X_list_re, S_list = S_list,
                         ncol_fe = ncol_fe,
-                        start_ncol_re = start_ncol_re,
-                        end_ncol_re=end_ncol_re))
+                        ncol_re = ncol_re))
         },
         
         #' Design matrices for grid of covariates
@@ -584,8 +570,7 @@ SDE <- R6Class(
             X_re <- self$mats()$X_re
             S <- self$mats()$S
             ncol_fe <- self$terms()$ncol_fe
-            start_ncol_re <- self$terms()$start_ncol_re
-            end_ncol_re <- self$terms()$end_ncol_re
+            ncol_re <- self$terms()$ncol_re
             
             #map for TMB
             map=self$map()
@@ -605,8 +590,7 @@ SDE <- R6Class(
                 map <- c(map, list(coeff_re = factor(NA),
                                    log_lambda = factor(NA)))
                 S <- as_sparse(matrix(0, 1, 1))
-                start_ncol_re <- 0
-                end_ncol_re <- 0
+                ncol_re <- 0
                 X_re <- as_sparse(rep(0, nrow(X_fe)))
             } else {
                 # If there are random effects, 
@@ -632,8 +616,7 @@ SDE <- R6Class(
                             X_fe = as_sparse(X_fe),
                             X_re = as_sparse(X_re),
                             S = as_sparse(S),
-                            start_ncol_re = start_ncol_re,
-                            end_ncol_re=end_ncol_re,
+                            ncol_re = ncol_re,
                             include_penalty = 1)
             
             # Model-specific data objects
