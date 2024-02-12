@@ -13,7 +13,7 @@ template<class Type>
 Type det(matrix<Type> M) {
     int n_dim = M.cols();
     Type det = 0;
-    if(n_dim == 1) {a
+    if(n_dim == 1) {
         det = M(0, 0);
     } else if(n_dim == 2) {
         det = M(0,0) * M(1,1) - M(1,0) * M(0,1);        
