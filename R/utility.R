@@ -195,6 +195,100 @@ CTCRW_cov <- function(beta, sigma, dt) {
     return(Q)   
 }
 
+
+#' Covariance matrix of RACVM transition density
+#' 
+#' 
+#' @param beta Parameter beta of RACVM model (mean reversion)
+#' @param sigma Parameter sigma of RACVM model (diffusion)
+#' @param omega Parameter omega of RACVM (angular speed)
+#' @param dt Time interval
+#' 
+#' @return Covariance matrix of position/velocity joint 
+#' process
+#' 
+#' @export
+RACVM_cov <- function(beta, sigma,omega,dt) {
+  
+  #relevant matrices
+  C=beta^2+omega^2
+  A=matrix(c(beta,-omega,omega,beta),nrow=2,byrow=TRUE)
+  invA=1/C*matrix(c(beta,omega,-omega,beta),nrow=2,byrow=TRUE)
+  R=matrix(c(cos(omega*dt),sin(omega*dt),-sin(omega*dt),cos(omega*dt)),byrow=TRUE,nrow=2)
+  expAdt=exp(-beta*dt)*R
+  
+  # Covariance of next state vector
+  var_xi=sigma^2/C*(dt+(omega^2-3*beta^2)/(2*beta*C)-exp(-2*dt*beta)/(2*beta)+
+                      2*exp(-dt*beta)*(beta*cos(omega*dt)-omega*sin(omega*dt))/C)
+  var_zeta=sigma^2/(2*beta)*(1-exp(-2*dt*beta))
+  cov1=sigma^2/(2*C)*(1+exp(-2*dt*beta)-2*exp(-dt*beta)*cos(omega*dt))
+  cov2=sigma^2/C*(exp(-dt*beta)*sin(omega*dt)-omega/(2*beta)*(1-exp(-2*dt*beta)))
+  Q=matrix(c(var_xi,0,cov1,cov2,0,var_xi,cov2,cov1,cov1,cov2,var_zeta,0,cov2,cov1,0,var_zeta),nrow=4,byrow=TRUE)
+  
+  return(Q)   
+}
+
+
+#' Link matrix of RACVM transition density
+#' 
+#' 
+#' @param beta Parameter beta of RACVM model (mean reversion)
+#' @param sigma Parameter sigma of RACVM model (diffusion)
+#' @param omega Parameter omega of RACVM (angular speed)
+#' @param dt Time interval
+#' 
+#' @return Link matrix of position/velocity joint 
+#' process
+#' 
+#' @export
+RACVM_link <- function(beta,omega,dt) {
+  
+  #relevant matrices
+  C=beta^2+omega^2
+  A=matrix(c(beta,-omega,omega,beta),nrow=2,byrow=TRUE)
+  invA=1/C*matrix(c(beta,omega,-omega,beta),nrow=2,byrow=TRUE)
+  R=matrix(c(cos(omega*dt),sin(omega*dt),-sin(omega*dt),cos(omega*dt)),byrow=TRUE,nrow=2)
+  expAdt=exp(-beta*dt)*R
+  
+  # link matrix
+  L <- matrix(0, nrow = 4, ncol = 4)
+  L[1:2, 1:2] <- diag(2)
+  L[1:2, 3:4] <- invA%*%(diag(2)-expAdt)
+  L[3:4, 1:2] <- matrix(c(0,0,0,0),nrow=2)
+  L[3:4, 3:4] <- expAdt
+  return(L)   
+}
+
+#' Drift matrix of RACVM transition density
+#' 
+#' 
+#' @param beta Parameter beta of RACVM model (mean reversion)
+#' @param sigma Parameter sigma of RACVM model (diffusion)
+#' @param omega Parameter omega of RACVM (angular speed)
+#' @param dt Time interval
+#' 
+#' @return Link matrix for drift term of position/velocity joint 
+#' process
+#' 
+#' @export
+RACVM_drift <- function(beta,omega,dt) {
+  
+  #relevant matrices
+  C=beta^2+omega^2
+  A=matrix(c(beta,-omega,omega,beta),nrow=2,byrow=TRUE)
+  invA=1/C*matrix(c(beta,omega,-omega,beta),nrow=2,byrow=TRUE)
+  R=matrix(c(cos(omega*dt),sin(omega*dt),-sin(omega*dt),cos(omega*dt)),byrow=TRUE,nrow=2)
+  expAdt=exp(-beta*dt)*R
+  
+  #matrix for drift term
+  B<- matrix(0, nrow = 4, ncol = 2)
+  B[1:2, 1:2] <- dt*diag(2)-invA%*%(diag(2)-expAdt)
+  B[3:4,1:2] <- diag(2)-expAdt
+  
+  return(B)   
+}
+
+
 #' Transforms matrix to dgTMatrix
 #' 
 #' @param x Matrix or vector. If this is a vector, it is formatted into
@@ -211,3 +305,113 @@ as_sparse <- function(x) {
     mat <- suppressMessages(as(x, "dgTMatrix"))
     return(mat)
 }
+
+
+
+#' Get covariable names from a formula
+#' @param formula a formula (usually for one parameter of the SDE) 
+#'
+#'@return Vector of names of the covariables in the formula
+get_variables=function(formula) {
+  
+  #list of strings for each term in the formula
+  terms=colnames(attr(terms(formula),which="factors"))
+  
+  #initialize vector of covariates
+  covariates=c()
+  
+  #loop over the formula terms
+  for (term in  terms) {
+      
+    # Regular expression pattern to match covariate names within parentheses
+    pattern <- "\\((.*?)\\)"
+      
+    # Find the substring within parentheses (ex : "(X,k=5,bs='cs')" )
+    match <- regmatches(term, regexpr(pattern, term))
+      
+    if (length(match) > 0) {
+        covariates_string <- gsub("[()]", "", match) #remove parenthesis
+        new_covs <- strsplit(covariates_string, ",\\s*")[[1]]
+        # Filter out terms containing "="
+        new_covs <- new_covs[!grepl("=", new_covs)]
+        covariates=c(covariates,new_covs)
+    }
+  }
+
+  return (unique(covariates))
+}
+
+
+
+#' @description Compute signed angle in [-pi,pi] that rotates first vector into second vector
+#' 
+#' @param u matrice of bivariate vectors with 2 columns
+#' @param v matrice of bivariate vectors with 2 columns
+#' @return vector of signed angles in [-pi,pi] that rotates first vector into second vector
+#' # https://math.stackexchange.com/questions/529555/signed-angle-between-2-vectors
+signed_angle <- function(u, v) {
+  # u, v: matrices of bivariate vectors with 2 columns
+  u <- matrix(u, ncol = 2)
+  v <- matrix(v, ncol = 2)
+  if (nrow(u) != nrow(v)) stop("u and v must have the same number of 
+                                  rows")
+  result <- as.numeric(atan2(v[,2], v[,1]) - atan2(u[,2], u[,1]))
+  ind1 <- which(result > pi)
+  ind2 <- which(result <= -pi)
+  result[ind1] <- result[ind1] - 2*pi
+  result[ind2] <- result[ind2] + 2*pi
+  return(result) 
+} 
+
+
+
+
+#' @description Compute nearest point on the land (shoreline) 
+#' 
+#' @param point the location from which wa want to find the nearest point on land
+#' @param land sf object (list of polygons) defining the land
+#' @return matrix with on row and two columns that are the coordinates of the nearest point
+#' 
+nearest_shore_point=function(point,coastline) {
+  #find the nearest shorepoints on the coastline
+  
+  # Initialize variables to store the minimum distance and nearest point
+  min_distance <- Inf
+  nearest_point <- NULL
+  
+  
+  # Iterate over each polygon in coastline_utm
+  for (j in 1:length(coastline$geometry)) {
+    
+    # Get the current polygon
+    polygon <- coastline$geometry[[j]]
+    
+    
+    distance <- st_distance(point, polygon)
+    
+    candidate=st_nearest_points(point,polygon)
+    if (!st_is_empty(candidate)) {
+      coordinates=st_coordinates(candidate)[2,c("X","Y")]
+      
+      if (distance < min_distance) {
+        min_distance=distance
+        nearest_point=coordinates
+      }
+    }
+  }
+  return (as.matrix(nearest_point))
+}
+
+#' @description check if two columns of a dataframe are orthogonal
+#' @param data dataframe
+#' @param C1 column name
+#' @param C2 column name
+#' 
+#' @return boolean
+#' 
+are_orthogonals=function(data,C1,C2){
+    inner_product=data[,C1]*data[,C2]
+    return (all(inner_product==0))
+}
+
+

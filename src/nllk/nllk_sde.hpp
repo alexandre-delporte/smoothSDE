@@ -24,7 +24,8 @@ Type nllk_sde(objective_function<Type>* obj) {
     DATA_SPARSE_MATRIX(X_fe); // Design matrix for fixed effects
     DATA_SPARSE_MATRIX(X_re); // Design matrix for random effects
     DATA_SPARSE_MATRIX(S); // Penalty matrix
-    DATA_IVECTOR(ncol_re); // Number of columns of S and X_re for each random effect
+    DATA_IVECTOR(start_ncol_re); // Number of columns of S and X_re for each random effect
+    DATA_IVECTOR(end_ncol_re);
     DATA_INTEGER(include_penalty); // If this is 0, don't include penalty
     DATA_VECTOR(other_data); // Optional extra data needed to evaluate the likelihood
     DATA_VECTOR(t_decay);
@@ -83,45 +84,36 @@ Type nllk_sde(objective_function<Type>* obj) {
         }
     }
     
-    //===================//
+ //===================//
     // Smoothing penalty //
-    //===================//
+    // ===================//
     Type nllk = -llk;
     // Are there random effects?
-    if(ncol_re(0) > 0 & include_penalty) {
+       if(start_ncol_re(0) > 0) {
         // Index in matrix S
         int S_start = 0;
         
         // Loop over smooths
-        for(int i = 0; i < ncol_re.size(); i++) {
+        for(int i = 0; i < start_ncol_re.size(); i++) {
             // Size of penalty matrix for this smooth
-            int Sn = ncol_re(i);
+            int Sn = end_ncol_re(i) - start_ncol_re(i) + 1;
             
             // Penalty matrix for this smooth
-            // (dense matrix for matinvpd and sparse matrix for Quadform)
-            matrix<Type> this_S_dense = S.block(S_start, S_start, Sn, Sn);
-            Eigen::SparseMatrix<Type> this_S = asSparseMatrix(this_S_dense);
+            Eigen::SparseMatrix<Type> this_S = S.block(S_start, S_start, Sn, Sn);
             
             // Coefficients for this smooth
-            vector<Type> this_coeff_re = coeff_re.segment(S_start, Sn);
-            
-            // Get log-determinant of S^(-1) for additive constant
-            Type log_det = 0;
-            matrix<Type> inv_this_S = atomic::matinvpd(this_S_dense, log_det);
-            log_det = - log_det; // det(S^(-1)) = 1/det(S)
+            vector<Type> this_coeff_re = coeff_re.segment(start_ncol_re(i) - 1, Sn);
             
             // Add penalty
-            nllk = nllk +
-                Type(0.5) * Sn * log(2*M_PI) +
-                Type(0.5) * log_det -
+            nllk = nllk -
                 Type(0.5) * Sn * log_lambda(i) +
-                Type(0.5) * exp(log_lambda(i)) *
+                Type(0.5) * exp(log_lambda(i)) * 
                 density::GMRF(this_S).Quadform(this_coeff_re);
             
             // Increase index
             S_start = S_start + Sn;
         }
-    }
+    }  
     
     return nllk;
 }
