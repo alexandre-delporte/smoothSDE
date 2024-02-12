@@ -254,7 +254,7 @@ Type nllk_ctcrw(objective_function<Type>* obj) {
     // ===================//
     Type nllk = -llk;
     // Are there random effects?
-       if(ncol_re(0,0) > 0) {
+       if(ncol_re(0,0) > -1) {
         // Index in matrix S
         int S_start = 0;
         

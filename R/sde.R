@@ -590,7 +590,7 @@ SDE <- R6Class(
                 map <- c(map, list(coeff_re = factor(NA),
                                    log_lambda = factor(NA)))
                 S <- as_sparse(matrix(0, 1, 1))
-                ncol_re <- 0
+                ncol_re <- matrix(-1,nrow=1,ncol=1)
                 X_re <- as_sparse(rep(0, nrow(X_fe)))
             } else {
                 # If there are random effects, 
