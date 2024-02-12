@@ -174,7 +174,7 @@ SDE <- R6Class(
             # Initial parameters (zero if par0 not provided)
             self$update_coeff_fe(rep(0, sum(ncol_fe)))
             self$update_coeff_re(rep(0, ncol(mats$X_re)))
-            self$update_lambda(ifelse(is.null(ncol_re),0,rep(1,ncol(ncol_re))))
+            self$update_lambda(rep(1, ifelse(is.null(ncol_re), 0, ncol(ncol_re))))
           
             
             # Set initial fixed effect coefficients if provided (par0)
