@@ -824,7 +824,7 @@ SDE <- R6Class(
             # Save parameter estimates
             par_list <- as.list(private$tmb_rep_, "Estimate")
             self$update_coeff_fe(par_list$coeff_fe)
-            if(!is.null(self$terms()$start_ncol_re)) {
+            if(!is.null(self$terms()$ncol_re)) {
                 # Only save coeff_re and lambda if there are random effects
                 self$update_coeff_re(par_list$coeff_re)
                 self$update_lambda(exp(par_list$log_lambda))
@@ -932,7 +932,7 @@ SDE <- R6Class(
         #' @param coeff_re Optional vector of random effect parameters
         #' @param resp Logical (default: TRUE). Should the output be on 
         #' the response scale? If FALSE, the output is on the linear 
-        #' predictor scale.
+        #' predictor scale
         #' @param term Name of model term as character string, e.g., "time", 
         #' or "s(time)". Use \code{$coeff_fe()} and \code{$coeff_re()} methods
         #' to find names of model terms. This uses fairly naive substring 
@@ -2123,6 +2123,9 @@ SDE <- R6Class(
             est$X=link[[var]](new_data[,var])
             colnames(est)=c("par",var,"X")
             
+            print(est$X)
+            print(est$par)
+            
             #if there is a baseline, add its values to the df
             if (!(is.null(baseline))) {
                 
@@ -2524,6 +2527,8 @@ SDE <- R6Class(
             est$X1=link[[var1]](new_data[,var1])
             est$X2=link[[var2]](new_data[,var2])
             colnames(est)=c("par",var1,var2,"X1","X2")
+            
+            print(est)
             
             p <- plot_ly(est,type = "mesh3d",
                          x = ~X1,y = ~X2,z=~par,intensity=~par,
