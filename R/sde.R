@@ -2394,9 +2394,7 @@ SDE <- R6Class(
                 var=vars[i]
                 term=terms[i]
                 
-                
-                
-                new_data[,var]=seq(from=xmins[[var]],to=xmaxs[[var]],length.out=npoints)
+                new_data[,var]=seq(from=xmin[[var]],to=xmax[[var]],length.out=npoints)
                 
                 #get model matrices 
                 mats=self$make_mat(new_data=new_data)
