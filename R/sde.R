@@ -2123,8 +2123,6 @@ SDE <- R6Class(
             est$X=link[[var]](new_data[,var])
             colnames(est)=c("par",var,"X")
             
-            print(est$X)
-            print(est$par)
             
             #if there is a baseline, add its values to the df
             if (!(is.null(baseline))) {
@@ -2528,7 +2526,6 @@ SDE <- R6Class(
             est$X2=link[[var2]](new_data[,var2])
             colnames(est)=c("par",var1,var2,"X1","X2")
             
-            print(est)
             
             p <- plot_ly(est,type = "mesh3d",
                          x = ~X1,y = ~X2,z=~par,intensity=~par,
