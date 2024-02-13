@@ -1,6 +1,6 @@
 
 #' R6 class for stochastic differential equation
-#' 
+#'
 #' Contains the model formulas and data.
 #' 
 #' @importFrom R6 R6Class
@@ -2423,7 +2423,7 @@ SDE <- R6Class(
                 #dataframe for fixed effects estimations
                 est=as.data.frame(par_mat[,par])
                 est$cov=new_data[,i]
-                est$X=links[[var]](new_data[,var])
+                est$X=link[[var]](new_data[,var])
                 colnames(est)=c("par","cov","X")
                 
                 #add baseline intercept value to the plot
@@ -2455,7 +2455,7 @@ SDE <- R6Class(
                 est_diff=est[2:(npoints-1),]
                 est_diff$par=par_diff
                 est_diff$X=X_diff
-                pdiff=ggplot()+geom_line(data=est_diff,aes(X,par),col="black")+xlab(xlabels[[var]])+ylab(paste("derivative of",par))
+                pdiff=ggplot()+geom_line(data=est_diff,aes(X,par),col="black")+xlab(xlabel[[var]])+ylab(paste("derivative of",par))
                 
                 
                 #if we are given posterior draws of the parameters, we can plot the CIs
@@ -2494,13 +2494,13 @@ SDE <- R6Class(
                 #only parameter estimates
                 if (is.null(baseline) & (is.null(all_coeff_fe_post)) & (is.null(all_coeff_re_post))) {
                     
-                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabels[[var]])+ylab(par)
+                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)
                 }
                 
                 #parameter estimates and baseline
                 if (!(is.null(baseline)) & (is.null(all_coeff_fe_post)) & (is.null(all_coeff_re_post))) {
                     
-                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabels[[var]])+ylab(par)+
+                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)+
                         geom_line(aes(X,par_baseline),linetype="dashed",col="black")+
                         geom_ribbon(aes(x=X,ymin=lowpar_baseline,ymax=uppar_baseline),fill="grey",alpha=0.4)
                 }
@@ -2508,7 +2508,7 @@ SDE <- R6Class(
                 #parameter estimates and CIs
                 if (is.null(baseline) & !(is.null(all_coeff_fe_post)) & !(is.null(all_coeff_re_post))) {
                     
-                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabels[[var]])+ylab(par)+
+                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)+
                         geom_ribbon(aes(x=X,ymin=lowpar,ymax=uppar),fill="red",alpha=0.2)
                     
                 }
@@ -2516,7 +2516,7 @@ SDE <- R6Class(
                 #parameter estimates, baseline and CIs
                 else {
                     
-                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabels[[var]])+ylab(par)+
+                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)+
                         geom_line(aes(X,par_baseline),linetype="dashed",col="black")+
                         geom_ribbon(aes(x=X,ymin=lowpar_baseline,ymax=uppar_baseline),fill="grey",alpha=0.4)+
                         geom_ribbon(aes(x=X,ymin=lowpar,ymax=uppar),fill="red",alpha=0.2)
