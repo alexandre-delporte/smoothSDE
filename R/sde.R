@@ -2221,7 +2221,10 @@ SDE <- R6Class(
                 ggsave(paste(paste("fe",model_name,par,var,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
             }
             
-            res=list("data"=est,"plot"=p)
+            res=list()
+            res[[paste("data",par,var,sep="_")]]=est
+            res[[paste("plot",par,var,sep="_")]]=est
+            
             return (res)
         },
         
@@ -2533,8 +2536,8 @@ SDE <- R6Class(
                     ggsave(paste(paste("diff_fe",model_name,par,var,sep="_"),".png",sep=""),plot=pdiff,width=10,height=5,path=model_name)
                 }
                 
-                res[[paste("plot",var,sep="_")]]=p
-                res[[paste("data",var,sep="_")]]=est
+                res[[paste("plot",par,var,sep="_")]]=p
+                res[[paste("data",par,var,sep="_")]]=est
                 
             }
             return (res)
@@ -2806,7 +2809,9 @@ SDE <- R6Class(
                 saveWidget(p, file =file_path)
             }
             
-            res=list("plot"=p,"data"=est)
+            res=list()
+            res[[paste("data",par,var1,var2,sep="_")]]=est
+            res[[paste("plot",par,var1,var2,sep="_")]]=p
             return (res)
         },
         
@@ -2903,7 +2908,7 @@ SDE <- R6Class(
                 
                 #if there is no fixed effect
                 if (ncovs==0) {
-                    res=self$plot_re_par(par=par,model_name=model_name,npost=npost,level=level,save=TRUE)
+                    res=c(res,self$plot_re_par(par=par,model_name=model_name,npost=npost,level=level,save=TRUE))
                 }
                 
                 #if there are fixed effects
@@ -2912,9 +2917,9 @@ SDE <- R6Class(
                     #if there is only one fixed effect covariable
                     if (ncovs==1){
                         
-                        
-                        res=self$plot_fe_par_2D(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
-                                       all_coeff_re_post,all_coeff_fe_post,level,save=TRUE)
+                        #add result to the list
+                        res=c(res,self$plot_fe_par_2D(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
+                                       all_coeff_re_post,all_coeff_fe_post,level,save=TRUE))
                         self$plot_me_par_2D(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,npost,level,save=TRUE)
                     }
                     
@@ -2923,8 +2928,9 @@ SDE <- R6Class(
                         
                         #if the covariates are orthogonal
                         if (are_orthogonals(data,vars[1],vars[2])) {
-                            res=self$plot_fe_par_2D_ortho(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
-                                                 all_coeff_re_post,all_coeff_fe_post,level,save=TRUE)
+                            #add result to the list
+                            res=c(res,self$plot_fe_par_2D_ortho(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
+                                                 all_coeff_re_post,all_coeff_fe_post,level,save=TRUE))
                             
                             self$plot_me_par_2D_ortho(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
                                                  npost,level)
@@ -2932,8 +2938,9 @@ SDE <- R6Class(
                         
                         #else, plot in 3D
                         else {
-                            res=self$plot_fe_par_3D(baseline,model_name,par,npoints=200,xmin=xmin,xmax=xmax,link=link,
-                                           xlabel=xlabel,all_coeff_re_post=NULL,all_coeff_fe_post=NULL,level=0.95,save=TRUE)
+                            #add result to the list
+                            res=c(res,self$plot_fe_par_3D(baseline,model_name,par,npoints=200,xmin=xmin,xmax=xmax,link=link,
+                                           xlabel=xlabel,all_coeff_re_post=NULL,all_coeff_fe_post=NULL,level=0.95,save=TRUE))
                         }
                     }
                 }
