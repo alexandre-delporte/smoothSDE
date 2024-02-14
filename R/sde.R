@@ -2533,7 +2533,7 @@ SDE <- R6Class(
                     ggsave(paste(paste("diff_fe",model_name,par,var,sep="_"),".png",sep=""),plot=pdiff,width=10,height=5,path=model_name)
                 }
                 
-                res[[paste("plot",var,sep"_")]]=p
+                res[[paste("plot",var,sep="_")]]=p
                 res[[paste("data",var,sep="_")]]=est
                 
             }
