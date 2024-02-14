@@ -2889,6 +2889,8 @@ SDE <- R6Class(
                 }
             }
             
+            #initialize an empty list to store the result
+            res=list()
             
             #loop over the formulas of each parameter 
             for (j in seq_along(formulas)) {
