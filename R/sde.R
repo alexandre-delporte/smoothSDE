@@ -2221,7 +2221,7 @@ SDE <- R6Class(
                 ggsave(paste(paste("fe",model_name,par,var,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
             }
             
-            res=list("data"=est,"plot"=p
+            res=list("data"=est,"plot"=p)
             return (res)
         },
         
