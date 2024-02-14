@@ -2221,7 +2221,8 @@ SDE <- R6Class(
                 ggsave(paste(paste("fe",model_name,par,var,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
             }
             
-            return (p)
+            res=list("data"=est,"plot"=p
+            return (res)
         },
         
         
@@ -2386,7 +2387,7 @@ SDE <- R6Class(
             # Assign column names to the data frame
             colnames(new_data) <- all_vars
             
-            list_plots=list()
+            res=list()
             
             #loop over the two orthogonal covariates
             for (i in 1:2) {
@@ -2532,7 +2533,9 @@ SDE <- R6Class(
                     ggsave(paste(paste("diff_fe",model_name,par,var,sep="_"),".png",sep=""),plot=pdiff,width=10,height=5,path=model_name)
                 }
                 
-                list_plots[[var]]=p
+                res[[paste("plot",var,sep"_")]]=p
+                res[[paste("data",var,sep="_")]]=est
+                
             }
             return (list_plots)
         },
@@ -2803,16 +2806,16 @@ SDE <- R6Class(
                 saveWidget(p, file =file_path)
             }
             
-            return (p)
+            res=list("plot"=p,"data"=est)
+            return (res)
         },
         
         
         #' @description get all the plots of the estimates of the parameters according to the model formulas
-        #' only handle terms specified with s() in the formulas for the moment
         #' for each parameter :
-        #' - if there are no fixed effects (only random effect),we only plot the value of the parameter for each ID
+        #' - if there are no fixed effects (only random effect), we only plot the value of the parameter for each ID
         #'  with its confidence interval
-        #'  - If there is only one spline fixed effect, we plot the fixed effect estimates and the mixed effects on two different plots
+        #'  - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects on two different plots
         #'  - If there are two covariates, two cases are possible :
         #'       . either the covariates are orthogonal, in which case we plot the fixed effects and 
         #'         the mixed effects for each covariate while forcing the other to 0
@@ -2910,7 +2913,7 @@ SDE <- R6Class(
                     if (ncovs==1){
                         
                         
-                        self$plot_fe_par_2D(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
+                        res=self$plot_fe_par_2D(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
                                        all_coeff_re_post,all_coeff_fe_post,level,save=TRUE)
                         self$plot_me_par_2D(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,npost,level,save=TRUE)
                     }
@@ -2920,7 +2923,7 @@ SDE <- R6Class(
                         
                         #if the covariates are orthogonal
                         if (are_orthogonals(data,vars[1],vars[2])) {
-                            self$plot_fe_par_2D_ortho(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
+                            res=self$plot_fe_par_2D_ortho(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
                                                  all_coeff_re_post,all_coeff_fe_post,level,save=TRUE)
                             
                             self$plot_me_par_2D_ortho(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
@@ -2929,12 +2932,13 @@ SDE <- R6Class(
                         
                         #else, plot in 3D
                         else {
-                            self$plot_fe_par_3D(baseline,model_name,par,npoints=200,xmin=xmin,xmax=xmax,link=link,
+                            res=self$plot_fe_par_3D(baseline,model_name,par,npoints=200,xmin=xmin,xmax=xmax,link=link,
                                            xlabel=xlabel,all_coeff_re_post=NULL,all_coeff_fe_post=NULL,level=0.95,save=TRUE)
                         }
                     }
                 }
             }
+            return (res)
         },
         
         
