@@ -2537,7 +2537,7 @@ SDE <- R6Class(
                 res[[paste("data",var,sep="_")]]=est
                 
             }
-            return (list_plots)
+            return (res)
         },
         
         #' @description plot mixed effects of a parameter when there are two orthogonal covariates
@@ -2903,7 +2903,7 @@ SDE <- R6Class(
                 
                 #if there is no fixed effect
                 if (ncovs==0) {
-                    self$plot_re_par(par=par,model_name=model_name,npost=npost,level=level,save=TRUE)
+                    res=self$plot_re_par(par=par,model_name=model_name,npost=npost,level=level,save=TRUE)
                 }
                 
                 #if there are fixed effects
