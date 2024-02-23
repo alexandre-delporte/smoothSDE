@@ -1697,9 +1697,9 @@ SDE <- R6Class(
                       if (var %in% names(atw)) {
                         #function to compute new covariate value
                         fn=atw[[var]]
-                        cat(var,"=",round(fn(as.numeric(sub_obs[i-1,c("z1","z2")]),as.numeric(sub_obs[i-1,c("v1","v2")]),p),2))
+                        cat(var,"=",round(fn(as.numeric(sub_dat[i-1,c("z1","z2")]),as.numeric(sub_dat[i-1,c("v1","v2")]),p),2))
                         #adjust covariate value
-                        new_data[,var]=fn(as.numeric(sub_obs[i-1,c("z1","z2")]),as.numeric(sub_obs[i-1,c("v1","v2")]),p)
+                        new_data[,var]=fn(as.numeric(sub_dat[i-1,c("z1","z2")]),as.numeric(sub_dat[i-1,c("v1","v2")]),p)
                       }
                     }
                     
