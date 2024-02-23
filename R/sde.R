@@ -1579,7 +1579,7 @@ SDE <- R6Class(
         #' @param noise standard deviation to ass gaussian noise in the observations. Default: NULL (no noise)
         #' 
         #' @return Input data frame with extra column for simulated time series
-        simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,omega_times=1) {
+        simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,omega_times=1,verbose=FALSE) {
           
             # Check that data includes times of observations
             if(is.null(data$time)) {
@@ -1635,6 +1635,10 @@ SDE <- R6Class(
               
               # Loop over IDs
               for(id in seq_along(unique(data$ID))) {
+                  
+                  if (verbose) {
+                      cat("Track simulation for",unique(data$ID)[id],"\n")
+                  }
                 
                 # Get relevant rows of data
                 ind <- which(data$ID == unique(data$ID)[id])
@@ -1700,6 +1704,11 @@ SDE <- R6Class(
                     omega=omega_times*new_par[1,"omega"]
                     beta<- 1/tau
                     sigma <- 2 * nu / sqrt(tau * pi)
+                    
+                    if (verbose) {
+                        cat("Covariates update :",new_data[,var],"\n")
+                        cat("Parameters update :"," omega=",round(omega,2)," tau=",round(tau,2))
+                    }
                   }
                   
                   #time step length
