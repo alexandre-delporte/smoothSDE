@@ -1706,7 +1706,8 @@ SDE <- R6Class(
                     sigma <- 2 * nu / sqrt(tau * pi)
                     
                     if (verbose) {
-                        cat("Covariates update :",new_data[,var],"\n")
+                        cat("Covariates update :")
+                        print(new_data)
                         cat("Parameters update :"," omega=",round(omega,2)," tau=",round(tau,2))
                     }
                   }
