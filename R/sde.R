@@ -1579,7 +1579,7 @@ SDE <- R6Class(
         #' @param noise standard deviation to ass gaussian noise in the observations. Default: NULL (no noise)
         #' 
         #' @return Input data frame with extra column for simulated time series
-        simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL) {
+        simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,omega_times=1) {
           
             # Check that data includes times of observations
             if(is.null(data$time)) {
@@ -1655,7 +1655,7 @@ SDE <- R6Class(
                 nus <- sub_par[, 4]
                 betas<- 1/taus
                 sigmas <- 2 * nus / sqrt(taus * pi)
-                omegas<- sub_par[, 5]
+                omegas<- omega_times*sub_par[, 5]
                 
         
                 #loop over time steps
@@ -1697,7 +1697,7 @@ SDE <- R6Class(
                     mu=matrix(c(new_par[1,"mu1"],new_par[1,"mu2"]),ncol=1,nrow=2,byrow=TRUE)
                     tau=new_par[1,"tau"]
                     nu=new_par[1,"nu"]
-                    omega=new_par[1,"omega"]
+                    omega=omega_times*new_par[1,"omega"]
                     beta<- 1/tau
                     sigma <- 2 * nu / sqrt(tau * pi)
                   }
