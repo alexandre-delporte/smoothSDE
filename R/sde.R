@@ -1678,6 +1678,11 @@ SDE <- R6Class(
                     
                     #new covariate data
                     new_data=data[ind,][i-1,]
+                       
+                    if (verbose) {
+                        cat("Covariates before update : \n")
+                        print(new_data)
+                    }
                     
                     #covariate names
                     all_vars=unique(unlist(lapply(self$formulas(),get_variables)))
@@ -1706,9 +1711,9 @@ SDE <- R6Class(
                     sigma <- 2 * nu / sqrt(tau * pi)
                     
                     if (verbose) {
-                        cat("Covariates update :")
+                        cat("\n Covariates after update : \n")
                         print(new_data)
-                        cat("Parameters update :"," omega=",round(omega,2)," tau=",round(tau,2))
+                        cat("\n Parameters update :"," omega=",round(omega,2)," tau=",round(tau,2),"\n")
                     }
                   }
                   
