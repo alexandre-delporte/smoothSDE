@@ -1453,7 +1453,6 @@ SDE <- R6Class(
             dimnames(stats)[[1]] <- stat_names
             
             for (i in 1:n_stats) {
-                print(i)
                 
                 df_stats=data.frame("stat"=c(as.matrix(stats[i,,])),"ID"=rep(unique(self$data()$ID),n_sims))
                 df_obs=data.frame("stat"=c(as.matrix(obs_stat[i,])),"ID"=unique(self$data()$ID))
@@ -1678,11 +1677,6 @@ SDE <- R6Class(
                     
                     #new covariate data
                     new_data=data[ind,][i-1,]
-                       
-                    if (verbose) {
-                        cat("Covariates before update : \n")
-                        print(new_data)
-                    }
                     
                     #covariate names
                     all_vars=unique(unlist(lapply(self$formulas(),get_variables)))
@@ -1697,7 +1691,6 @@ SDE <- R6Class(
                       if (var %in% names(atw)) {
                         #function to compute new covariate value
                         fn=atw[[var]]
-                        cat(var,"=",round(fn(as.numeric(sub_dat[i-1,c("z1","z2")]),as.numeric(sub_dat[i-1,c("v1","v2")]),p),2))
                         #adjust covariate value
                         new_data[,var]=fn(as.numeric(sub_dat[i-1,c("z1","z2")]),as.numeric(sub_dat[i-1,c("v1","v2")]),p)
                       }

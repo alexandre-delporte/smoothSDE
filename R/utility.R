@@ -365,7 +365,6 @@ signed_angle <- function(u, v) {
 
 
 
-
 #' @description Compute nearest point on the land (shoreline) 
 #' 
 #' @param point the location from which wa want to find the nearest point on land
