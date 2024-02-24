@@ -1681,9 +1681,16 @@ SDE <- R6Class(
                     #covariate names
                     all_vars=unique(unlist(lapply(self$formulas(),get_variables)))
                     
+                    #get last position and velocity
+                    z=as.numeric(sub_dat[i-1,c("z1","z2")])
+                    v=as.numeric(sub_dat[i-1,c("v1","v2")])
+                    
                     #compute nearest shore point
-                    z=as.numeric(sub_obs[i-1,c("z1","z2")])
                     p=nearest_shore_point(st_point(z)*1000,land)/1000
+                    
+                    if (verbose) {
+                        cat("Distance to shore :",sqrt((p[1]-z[1])^2+(p[2]-z[2])^2),"\n")
+                    }
                     
                     #loop over covariates
                     for (var in all_vars) {
@@ -1692,10 +1699,7 @@ SDE <- R6Class(
                         #function to compute new covariate value
                         fn=atw[[var]]
                         #adjust covariate value
-                        if (verbose) {
-                            cat("Distance to shore :",sqrt((p[1]-sub_dat[i-1,"z1"])^2+(p[2]-sub_dat[i-1,"z2"])^2),"\n")
-                        }
-                        new_data[,var]=fn(as.numeric(sub_dat[i-1,c("z1","z2")]),as.numeric(sub_dat[i-1,c("v1","v2")]),p)
+                        new_data[,var]=fn(z,v,p)
                       }
                     }
                     
