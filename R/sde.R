@@ -641,7 +641,12 @@ SDE <- R6Class(
                 }
                 
                 # Initialise model-specific parameter (measurement error SD)
-                tmb_par <- c(log_sigma_obs =  0, tmb_par)
+                if (!(is.null(other_data$log_sigma_obs0))) {
+                    tmb_par <- c(log_sigma_obs =  other_data$log_sigma_obs0, tmb_par)
+                    }
+                else {
+                    tmb_par <- c(log_sigma_obs = 0, tmb_par)
+                }
                 
                 # Check whether observation error is provided by user
                 if(!is.null(self$other_data()$H)) {
@@ -671,7 +676,12 @@ SDE <- R6Class(
                 }
                 
                 # Initialise model-specific parameter (measurement error SD)
-                tmb_par <- c(log_sigma_obs =  0, tmb_par)
+                if (!(is.null(other_data$log_sigma_obs0))) {
+                    tmb_par <- c(log_sigma_obs =  other_data$log_sigma_obs0, tmb_par)
+                }
+                else {
+                    tmb_par <- c(log_sigma_obs = 0, tmb_par)
+                }
                 
                 # Check whether observation error is provided by user
                 if(!is.null(self$other_data()$H)) {
@@ -700,7 +710,12 @@ SDE <- R6Class(
               }
               
               # Initialise model-specific parameter (measurement error SD)
-              tmb_par <- c(log_sigma_obs =  0, tmb_par)
+              if (!(is.null(other_data$log_sigma_obs0))) {
+                  tmb_par <- c(log_sigma_obs =  other_data$log_sigma_obs0, tmb_par)
+              }
+              else {
+                  tmb_par <- c(log_sigma_obs = 0, tmb_par)
+              }
               
               # Check whether observation error is provided by user
               if(!is.null(self$other_data()$H)) {
