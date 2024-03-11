@@ -676,8 +676,8 @@ SDE <- R6Class(
                 }
                 
                 # Initialise model-specific parameter (measurement error SD)
-                if (!(is.null(other_data$log_sigma_obs0))) {
-                    tmb_par <- c(log_sigma_obs =  other_data$log_sigma_obs0, tmb_par)
+                if (!(is.null(self$other_data()$log_sigma_obs0))) {
+                    tmb_par <- c(log_sigma_obs =  self$other_data()$log_sigma_obs0, tmb_par)
                 }
                 else {
                     tmb_par <- c(log_sigma_obs = 0, tmb_par)
