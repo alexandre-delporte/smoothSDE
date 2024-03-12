@@ -2810,19 +2810,25 @@ SDE <- R6Class(
                 
                 # Create the initial 3D scatter plot
                 
+                df1=sde_ci_df[,c("X1","X2","lowpar")]
+                colnames(df1)=c("x","y","z")
+                df2=sde_ci_df[,c("X1","X2","uppar")]
+                colnames(df2)=c("x","y","z")
                 
-                p <- plot_ly(sde_ci_df,type = "scatter3d",mode="markers",
+                df_volume=rbind(df1,df2)
+                
+                p <- plot_ly()
+                p <- p %>%
+                    add_trace(data = df, type = "volume", x = ~x, y = ~y, z = ~z,value=~2,
+                              opacity = 0.5, showscale=FALSE,showlegend=FALSE)
+                
+                p<- p %>% add_trace(data=sde_ci_df,type = "mesh3d",
+                                    x = ~X1,y = ~X2,z=~par,intensity=~par,
+                                    colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))%>%
+                    layout(title=paste("Par estimation"),scene=list(xaxis = list(title = "X1",showgrid = F)))
+                
+                p <- plot_ly(sde_ci_df,type = "mesh3d",mode="markers",
                              x = ~X1,y = ~X2,z=~par,color=~par)
-                
-                
-                # Add the lower and higher estimation traces
-                p %>% add_trace(x = ~X1,y = ~X2,z=~lowpar,
-                                name = paste(par,"lower","estimation",sep=" "),
-                                mode = "markers") %>%
-                    
-                    add_trace(x = ~X1,y = ~X2,z=~uppar,
-                              name = paste(par,"higher","estimation",sep=" "),
-                              mode = 'markers')
                 
                 
                 # Layout adjustments for the 3D scene
@@ -2890,7 +2896,7 @@ SDE <- R6Class(
             postcoeff=self$post_coeff(npost)
             all_coeff_re_post=postcoeff$coeff_re
             all_coeff_fe_post=postcoeff$coeff_fe
-            
+
             #get all covariates in the model
             all_vars=unique(unlist(lapply(formulas,get_variables)))
             
@@ -2974,7 +2980,7 @@ SDE <- R6Class(
                         else {
                             #add result to the list
                             res=c(res,self$plot_fe_par_3D(baseline,model_name,par,npoints=200,xmin=xmin,xmax=xmax,link=link,
-                                           xlabel=xlabel,all_coeff_re_post=NULL,all_coeff_fe_post=NULL,level=0.95,save=TRUE))
+                                           xlabel=xlabel,all_coeff_re_post,all_coeff_fe_post,level=0.95,save=TRUE))
                         }
                     }
                 }
@@ -3041,7 +3047,7 @@ SDE <- R6Class(
                                          "    Z(i) ~ N(a1 + a2 L(i)/R(i), tau^2/h(i))"),
                     "RACVM1"=paste0("     dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau) dW1(t)\n ",
                                     "     dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau)  dW2(t)\n",
-                                  "dX(t)=V(t) dt \n", "tau=1/beta \n","nu=sqrt(pi*beta)/sigma/2"),
+                                  "     dX(t)=V(t) dt \n", "     tau=1/beta \n","     nu=sqrt(pi*beta)/sigma/2"),
                     "RACVM2"=paste0("    dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ sigma dW1(t)\n ",
                                     "dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ sigma dW2(t)\n",
                                     "    dX(t)=V(t) dt \n", "tau=1/beta "),
@@ -3049,7 +3055,7 @@ SDE <- R6Class(
                                     "dV2(t)=-(1/tau) (V1(t) - mu1) dt - phi/tau*(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau) dW2(t)\n",
                                     "    dX(t)=V(t) dt \n", "tau=1/beta \n","omega=phi/tau"),
                     "VM_CRCVM"=paste0("    dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ sigma dW1(t)\n ",
-                                    "dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ sigma dW2(t)\n",
+                                    "    dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ sigma dW2(t)\n",
                                     "    dX(t)=V(t) dt \n",
                                       "tau(DistanceShore,phi)=delta0+(taum(DistanceShore)-delta0)/(exp(kappa)-1)*(exp(kappa*cos(c(DistanceShore)*phi))-1) \n",
                                       "omega(DistanceShore,phi)=-sin(c(DistanceShore)*phi)/tau(DistanceShore,phi) \n",
