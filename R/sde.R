@@ -2827,9 +2827,6 @@ SDE <- R6Class(
                                     colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))
                     
                 
-                p <- plot_ly(sde_ci_df,type = "mesh3d",mode="markers",
-                             x = ~X1,y = ~X2,z=~par,color=~par)
-                
                 
                 # Layout adjustments for the 3D scene
                 p %>%layout(title=paste(par,"estimations"),scene=list(xaxis = list(title = xlabel[[var1]],showgrid = F),       
