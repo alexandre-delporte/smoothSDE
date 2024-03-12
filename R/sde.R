@@ -2819,13 +2819,13 @@ SDE <- R6Class(
                 
                 p <- plot_ly()
                 p <- p %>%
-                    add_trace(data = df, type = "volume", x = ~x, y = ~y, z = ~z,value=~2,
+                    add_trace(data = df_volume, type = "volume", x = ~x, y = ~y, z = ~z,value=~2,
                               opacity = 0.5, showscale=FALSE,showlegend=FALSE)
                 
                 p<- p %>% add_trace(data=sde_ci_df,type = "mesh3d",
                                     x = ~X1,y = ~X2,z=~par,intensity=~par,
-                                    colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))%>%
-                    layout(title=paste("Par estimation"),scene=list(xaxis = list(title = "X1",showgrid = F)))
+                                    colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))
+                    
                 
                 p <- plot_ly(sde_ci_df,type = "mesh3d",mode="markers",
                              x = ~X1,y = ~X2,z=~par,color=~par)
