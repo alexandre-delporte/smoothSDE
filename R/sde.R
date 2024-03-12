@@ -2822,7 +2822,7 @@ SDE <- R6Class(
                     add_trace(data = df_volume, type = "volume", x = ~x, y = ~y, z = ~z,value=~2,
                               opacity = 0.5, showscale=FALSE,showlegend=FALSE)
                 
-                p<- p %>% add_trace(data=sde_ci_df,type = "mesh3d",
+                p<- p %>% add_trace(data=est,type = "mesh3d",
                                     x = ~X1,y = ~X2,z=~par,intensity=~par,
                                     colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))
                     
@@ -2878,7 +2878,7 @@ SDE <- R6Class(
         #' @return NULL plots are saved in a folder "model name" in the working directory
         
         
-        get_all_plots = function(baseline=NULL,model_name,link=list(),xmin=list(),xmax=list(),xlabel=list(),npost=1000,level=0.95) {
+        get_all_plots = function(baseline=NULL,model_name,link=list(),xmin=list(),xmax=list(),xlabel=list(),npost=1000,level=0.95,show_CI=FALSE) {
             
             
             #get data
@@ -2890,9 +2890,15 @@ SDE <- R6Class(
             
             #draw coeff from posterior distribution once and for all 
             # to get confidence intervals later
-            postcoeff=self$post_coeff(npost)
-            all_coeff_re_post=postcoeff$coeff_re
-            all_coeff_fe_post=postcoeff$coeff_fe
+            if (show_CI) {
+                postcoeff=self$post_coeff(npost)
+                all_coeff_re_post=postcoeff$coeff_re
+                all_coeff_fe_post=postcoeff$coeff_fe
+            }
+            else {
+                all_coeff_re_post=NULL
+                all_coeff_fe_post=NULL
+            }
 
             #get all covariates in the model
             all_vars=unique(unlist(lapply(formulas,get_variables)))
