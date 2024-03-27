@@ -31,7 +31,8 @@ SDE <- R6Class(
         #' Uhlenbeck process), "CTCRW" (continuous-time correlated random walk, a.k.a.
         #' integrated Ornstein-Uhlenbeck process), "CIR" (Cox-Ingersoll-Ross process),
         #' "BM_SSM" (BM with measurement error), "OU_SSM" (OU with measurement error),
-        #' "BM_t" (BM with Student's t-distributed increments)
+        #' "BM_t" (BM with Student's t-distributed increments) and "RACVM" (Rotational correlated
+        #' velocity model with drift).
         #' @param response Name of response variable, correspond to a column name in
         #' \code{data}. Can be a vector of names if multiple response variables
         #' @param par0 Vector of initial values for SDE parameters, with one value
@@ -57,9 +58,9 @@ SDE <- R6Class(
             n_dim <- length(response)
             
             
-            #If it is RCVM model, check that dimension of response is 2
-            if (self$type() %in% c("RACVM1","RACVM2","CRCVM1","CRCVM2") && n_dim!=2) {
-              stop("For 'RACVM' and 'CRCVM', dimension of response must be 2")
+            #If it is RACVM model, check that dimension of response is 2
+            if (self$type()=="RACVM" && n_dim!=2) {
+              stop("For 'RACVM', dimension of response must be 2")
             }
             
             
@@ -78,17 +79,8 @@ SDE <- R6Class(
                             "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log)),
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
-                            "RACVM1" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                tau = log, nu = log,omega=identity)),
-                            "RACVM2" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                 tau = log, sigma = log,omega=identity)),
-                            "RACVM3" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                 tau = log, nu = log,phi=identity)),
-                            "VM_CRCVM"=list(delta0=log,tau0=log,tau1=log,D0=log,lambda=log,kappa=log,sigma=log),
-                            "S_CRCVM1"=list(tau=log,sigma=log),
-                            "I_CRCVM"=list(delta0=log,tau0=log,tau1=log,D0=log,kappa=log,sigma=log),
-                            "S_CRCVM2"=list(delta0=log,tau0=log,D0=log,lambda=log,sigma=log),
-                            "SI_CRCVM"=list(delta0=log,tau0=log,tau1=log,D0=log,lambda=log,kappa=log,sigma=log))
+                            "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                                                tau = log, nu = log,omega=identity)))
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -106,17 +98,8 @@ SDE <- R6Class(
                                "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp)),
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
-                               "RACVM1" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                   tau = exp, nu = exp,omega=identity)),
-                               "RACVM2" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                    tau = exp, sigma = exp,omega=identity)),
-                               "RACVM3" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                    tau = log, nu = log,phi=identity)),
-                               "VM_CRCVM"=list(delta0=exp,tau0=exp,tau1=exp,D0=exp,lambda=exp,kappa=exp,sigma=exp),
-                               "S_CRCVM1"= list(tau=exp,sigma=exp),
-                               "I_CRCVM"=list(delta0=exp,tau0=exp,tau1=exp,D0=exp,kappa=exp,sigma=exp),
-                               "S_CRCVM2"=list(delta0=exp,tau0=exp,D0=exp,lambda=exp,sigma=exp),
-                               "SI_CRCVM"=list(delta0=exp,tau0=exp,tau1=exp,D0=exp,lambda=exp,kappa=exp,sigma=exp))
+                               "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                                                   tau = exp, nu = exp,omega=identity)))
             
             private$link_ <- link
             private$invlink_ <- invlink
@@ -154,10 +137,6 @@ SDE <- R6Class(
                 stop("'data' should have a time column")
             }
             
-            #check data has colums "phi" and "DistanceShore" for constrained models
-            if(self$type() %in% c("VM_CRCVM","S_CRCVM1","I_CRCVM","S_CRCVM2","SI_CRCVM") && !(all(c("phi","DistanceShore") %in% colnames(data))) ) {
-              stop("'data' should have a column 'phi' and a column 'DistanceShore' for constrained models")
-            }
             private$data_ <- data
             
             # Save terms of model formulas and model matrices
@@ -690,8 +669,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type() %in% c("RACVM1","RACVM2","RACVM3",
-                                         "VM_CRCVM","S_CRCVM1","I_CRCVM","S_CRCVM2","SI_CRCVM")) {
+            } else if(self$type()=="RACVM") {
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
@@ -723,10 +701,6 @@ SDE <- R6Class(
                 map <- c(map, list(log_sigma_obs = factor(NA)))
               } else {
                 tmb_dat$H_array <- array(0)
-              }
-              if (self$type() %in% c("VM_CRCVM","S_CRCVM1","I_CRCVM","S_CRCVM2","SI_CRCVM")) {
-                  tmb_dat$phi=self$data()$phi
-                  tmb_dat$Dshore=self$data()$DistanceShore
               }
             } else if(self$type() == "ESEAL_SSM") {
                 # Define initial state and covariance for Kalman filter
@@ -1413,7 +1387,7 @@ SDE <- R6Class(
         #' @param model_name string for the name of the sde model to be checked. 
         #' Used when save=TRUE. Need to exist a folder with name model_name in the working
         #' directory
-        #' @param save whether or not to save the plots
+        #' @param save whether or not to save the plots in folder model_name
         #' 
         #' @details This applies \code{check_fn} to the observed data (returned by 
         #' \code{data()} method) to obtain observed statistics. It then repeatedly
@@ -1585,12 +1559,13 @@ SDE <- R6Class(
         #' therefore accounting for uncertainty.
         #' @param atw (along the way) Covariates to recompute along the way using the previous velocity and position.
         #' This should be a list with names matching some covariates in self$formulas() and with elements that 
-        #' are functions to compute the covariate value from the last position, velocity and land polygons.
+        #' are functions to compute the covariate value from the last position, velocity and nearest point on the boundary (if needed).
         #' If some covariate is not in the list, values in argument "data" are used.
         #' If NULL, covariate values in "data" are used.
         #' @param land polygon data for defining the land (or any constrained domain)
-        #' Coordinates should be projected in UTM with units in meters
-        #' @param noise standard deviation to ass gaussian noise in the observations. Default: NULL (no noise)
+        #' WARNING : For the moment, coordinates should be projected in UTM with units in metres for land polygons and km for initial position
+        #' @param noise standard deviation to add gaussian noise in the observations. Default: NULL (no noise)
+        #'@param omega_times coefficient to multiply omega in RACVM.Default: 1
         #' 
         #' @return Input data frame with extra column for simulated time series
         simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,omega_times=1,verbose=FALSE) {
@@ -1636,12 +1611,12 @@ SDE <- R6Class(
           
             #else, check that is has the right number of rows and columns
             else if (nrow(z0)!=n_id | ncol(z0)!=n_dim) {
-              stop("z0 must be scalar or a matrix with one initial position for each ID")
+              stop("z0 must be scalar or a matrix with rows containing an initial position for each ID")
             }
             
             
             
-            if (self$type()=="RACVM1") {
+            if (self$type()=="RACVM") {
               
               # Initialize vector of simulated observations
               n=length(data$time)
@@ -1651,7 +1626,7 @@ SDE <- R6Class(
               for(id in seq_along(unique(data$ID))) {
                   
                   if (verbose) {
-                      cat("Track simulation for",unique(data$ID)[id],"\n")
+                      cat("Track simulation for",unique(data$ID)[id],"...","\n")
                   }
                 
                 # Get relevant rows of data
@@ -2860,7 +2835,8 @@ SDE <- R6Class(
         #'       . either the covariates are orthogonal, in which case we plot the fixed effects and 
         #'         the mixed effects for each covariate while forcing the other to 0
         #'       . or they are not orthogonal, in which case we plot the fixed effects in 3D
-        #' other cases are not handled yet
+        #' other cases are not handled yet.
+        #' Extraction of the covariate names from the formula may not work for some specific formulas (ex: te(theta,ExpShore,k=c(7,5),bs="cs"))
         
         
         #' @param baseline baseline sde model to be compared to (default is NULL). 
