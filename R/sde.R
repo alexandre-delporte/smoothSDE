@@ -5,6 +5,7 @@
 #' 
 #' @importFrom R6 R6Class
 #' @importFrom mgcv gam rmvn
+#' @importFrom stringr
 #' @importFrom ggplot2 ggplot aes theme_light geom_line theme scale_colour_manual
 #' facet_wrap label_bquote xlab ylab ggtitle element_blank element_text geom_point
 #' geom_ribbon scale_size_manual geom_histogram geom_vline
@@ -856,7 +857,7 @@ SDE <- R6Class(
         linear_predictor = function(new_data = NULL, t = "all",
                                     X_fe = NULL, X_re = NULL,
                                     coeff_fe = NULL, coeff_re = NULL,
-                                    term = NULL) {
+                                    term = NULL,re_index=NULL,ignore_re=FALSE) {
             # Get design matrices (X_fe/X_re) if not provided
             if(is.null(X_fe) | is.null(X_re)) {
                 mats <- self$make_mat(new_data = new_data)
@@ -889,8 +890,17 @@ SDE <- R6Class(
                 coeff_re <- coeff_re_term
             }
             
+            #if index is null, keep all columns
+            if (is.null(re_index)){
+                re_index=1:ncol(X_re)
+            }
+            #set all random effect coefficients to 0
+            if (ignore_re) {
+                coeff_re=rep(0,length(coeff_re))
+            }
+            
             # Get linear predictor and format into matrix
-            lp <- X_fe %*% coeff_fe + X_re %*% coeff_re
+            lp <- X_fe %*% coeff_fe + X_re[,re_index] %*% coeff_re[re_index]
             lp_mat <- matrix(lp, ncol = length(self$formulas()))
             colnames(lp_mat) <- names(self$formulas())
             
@@ -927,13 +937,14 @@ SDE <- R6Class(
         #' to find names of model terms. This uses fairly naive substring 
         #' matching, and may not work if one covariate's name is a 
         #' substring of another one.
-        #' 
+        #' @re_cols_index index of terms we want to keep in the random effects matrix and coeffs
+        #' May creat conflicts with param "term" if it is not null.
         #' @return Matrix with one row for each time point in t, and one
         #' column for each SDE parameter
         par = function(t = NULL, new_data = NULL, 
                        X_fe = NULL, X_re = NULL,
                        coeff_fe = NULL, coeff_re = NULL, 
-                       resp = TRUE, term = NULL) {
+                       resp = TRUE, term = NULL,re_index=NULL,ignore_re=FALSE) {
             # Default t = 1, unless new data are provided (then t = all)
             if(is.null(t)) {
                 if(!is.null(new_data) | !is.null(X_fe) | !is.null(X_re)) {
@@ -943,12 +954,13 @@ SDE <- R6Class(
                 }
             }
             
+            
             # Get linear predictor
             lp_mat <- self$linear_predictor(new_data = new_data, t = t, 
                                             X_fe = X_fe, X_re = X_re,
                                             coeff_fe = coeff_fe, 
                                             coeff_re = coeff_re, 
-                                            term = term)
+                                            term = term,ignore_re=ignore_re)
             
             # Apply inverse link to get parameters on response scale
             if(resp) {
@@ -1086,7 +1098,7 @@ SDE <- R6Class(
         #' 
         #' @return Array with one row for each time step, one column for
         #' each SDE parameter, and one layer for each posterior draw
-        post_par = function(X_fe, X_re, n_post = 100, resp = TRUE, term = NULL) {
+        post_par = function(X_fe, X_re, n_post = 1000, resp = TRUE, term = NULL,re_index=NULL,ignore_re=FALSE) {
             # Number of SDE parameters
             n_par <- length(self$formulas())
             # Number of time steps
@@ -1095,6 +1107,11 @@ SDE <- R6Class(
             # Generate posterior draws of coeff_fe and coeff_re
             post_coeff <- self$post_coeff(n_post = n_post)
             
+            #If index is null, keep all coefficients
+            if (is.null(re_index)){
+                re_index=1:ncol(X_re)
+            }
+            
             # Get corresponding SDE parameters
             par_array <- array(sapply(1:n_post, function(i) {
                 self$par(t = "all", 
@@ -1102,7 +1119,7 @@ SDE <- R6Class(
                          coeff_fe = post_coeff$coeff_fe[i,], 
                          coeff_re = post_coeff$coeff_re[i,],
                          resp = resp, 
-                         term = term)  
+                         term = term,re_index=re_index,ignore_re=ignore_re)  
             }), dim = c(n, n_par, n_post))
             dimnames(par_array)[[2]] <- names(self$invlink())
             
@@ -1151,7 +1168,7 @@ SDE <- R6Class(
         CI_pointwise = function(t = NULL, new_data = NULL, 
                                 X_fe = NULL, X_re = NULL, 
                                 level = 0.95, n_post = 1e3, 
-                                resp = TRUE, term = NULL) {
+                                resp = TRUE, term = NULL,re_index=NULL,ignore_re=FALSE) {
             # Default t = 1, unless new data are provided (then t = all)
             if(is.null(t)) {
                 if(!is.null(new_data) | !is.null(X_fe) | !is.null(X_re)) {
@@ -1173,10 +1190,14 @@ SDE <- R6Class(
                 X_re <- mats$X_re
             }
             
+            if (is.null(re_index)){
+                re_index=1:ncol(X_re)
+            }
+            
             # Posterior samples of SDE parameters
             post_par <- self$post_par(X_fe = X_fe, X_re = X_re, 
                                       n_post = n_post, resp = resp,
-                                      term = term)
+                                      term = term,re_index=re_index,ignore_re=ignore_re)
             
             # Get confidence intervals as quantiles of posterior samples
             alpha <- (1 - level)/2
@@ -1227,7 +1248,7 @@ SDE <- R6Class(
         CI_simultaneous = function(t = NULL, new_data = NULL, 
                                    X_fe = NULL, X_re = NULL, 
                                    level = 0.95, n_post = 1000, 
-                                   resp = TRUE, term = NULL) {
+                                   resp = TRUE, term = NULL,re_index=NULL) {
             # Default t = 1, unless new data are provided (then t = all)
             if(is.null(t)) {
                 if(!is.null(new_data) | !is.null(X_fe) | !is.null(X_re)) {
@@ -1249,17 +1270,23 @@ SDE <- R6Class(
                 X_re <- mats$X_re
             }
             
+            if (is.null(re_index)){
+                re_index=1:ncol(X_re)
+            }
+            
             # Number of parameters of this SDE model
             n_par <- length(self$formulas())
             # Number of time steps
             n <- nrow(X_fe)/n_par
             
             # Get SE of parameters on linear predictor scale
+            
             par_linpred <- self$par(t = "all", X_fe = X_fe, X_re = X_re, 
-                                    resp = FALSE, term = term)
+                                    resp = FALSE, term = term,re_index=re_index)
+            
             CIpw_linpred <- self$CI_pointwise(X_fe = X_fe, X_re = X_re, 
                                               level = level, n_post = n_post, 
-                                              resp = FALSE, term = term)
+                                              resp = FALSE, term = term,re_index=re_index)
             se_linpred <- (par_linpred - t(CIpw_linpred[,"low",]))/qnorm((1 + level)/2)
             se_linpred_vec <- as.vector(se_linpred)
             
@@ -1297,7 +1324,7 @@ SDE <- R6Class(
             }
             
             # Deviations between fitted and true parameters
-            sim_dev <- X_fe %*% diff_fe + X_re %*% diff_re
+            sim_dev <- X_fe %*% diff_fe + X_re[,re_index] %*% diff_re[re_index,]
             
             # Absolute values of the standardized deviations from the true model
             abs_dev <- abs(sweep(sim_dev, 1, se_linpred_vec, FUN = "/"))
@@ -1563,7 +1590,7 @@ SDE <- R6Class(
         #' If some covariate is not in the list, values in argument "data" are used.
         #' If NULL, covariate values in "data" are used.
         #' @param land polygon data for defining the land (or any constrained domain)
-        #' WARNING : For the moment, coordinates should be projected in UTM with units in metres for land polygons and km for initial position
+        #' WARNING : Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position
         #' @param noise standard deviation to add gaussian noise in the observations. Default: NULL (no noise)
         #'@param omega_times coefficient to multiply omega in RACVM.Default: 1
         #' 
@@ -1676,7 +1703,7 @@ SDE <- R6Class(
                     v=as.numeric(sub_dat[i-1,c("v1","v2")])
                     
                     #compute nearest shore point
-                    p=nearest_shore_point(st_point(z)*1000,land)/1000
+                    p=nearest_shore_point(st_point(z),land)
                     
                     if (verbose) {
                         cat("Distance to shore :",sqrt((p[1]-z[1])^2+(p[2]-z[2])^2),"\n")
@@ -1986,87 +2013,174 @@ SDE <- R6Class(
             return(p)
         },
         
-        #' @description plot the estimated parameter par for each individual with confidence intervals and save.
-        #' Works only for formula of the form par=~s(ID,bs="re")
+        #' @description when there are no fixed effect and a single or no random effect,
+        #' create violin plot for the posterior of the paremeter "par".
+        #' Works only for formula of the form "par=~s(ID,bs="re")" or "par=~1"
         #' 
-        #' @param model_name string to use in the filename to save the plot
-        #' @param par string matching with one parameter name in the sde
-        #' @param save boolean to save or not to save the plots
+        #' @param model_name name of the SDE model, used as the directory name where the plots should be saved
+        #' @param substring substring contained in the coeff names that we want to plot. If it is some parameter name, 
+        #' then only the coeff involved in this parameter are plotted. If NULL, all coeffs are plotted.
+        #' @param true_coeff dataframe with two columns "value" for the true value of the coeff and "name" for the name of the coeff.
+        #' @param save boolean to save the plots or not
         #' @return ggplot object
         #' 
-        plot_re_par=function(model_name,par,npost=1000,level=0.95,save=TRUE) {
+        plot_violin_coeff=function(model_name,substring=NULL,true_coeff=NULL,save=FALSE) {
+            
+            
+            post_coeff=self$post_coeff(n_post=1000)
+            post_coeff_re=post_coeff$coeff_re
+            post_coeff_fe=post_coeff$coeff_fe
+            post_coeff=cbind(post_coeff_re,post_coeff_fe)
+            coeff_names=colnames(post_coeff)
+            
+            if (is.null(substring)) {
+                sub_coeff_names=coeff_names
+                sub_post_coeff=post_coeff[,sub_coeff_names]
+            }
+            else {
+                index=sapply(coeff_names, function(name) grepl(substring,name))
+                sub_coeff_names=coeff_names[index]
+                sub_post_coeff=post_coeff[,sub_coeff_names]
+            }
+            
+            #convert in dataframe for the violinplot
+            post_coeff_df=data.frame(value=as.vector(sub_post_coeff),factor=rep(sub_coeff_names,each=1000))
+            
+            #ggplot
+            p=ggplot()+geom_violin(data=post_coeff_df,aes(x=factor,y=value,fill=factor))+
+                xlab(" ")+labs(fill = "Estimated coefficients")+
+                theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+            
+            if (!(is.null(true_coeff))) {
+                
+                true_coeff=true_coeff[true_coeff$name %in% sub_coeff_names,]
+                #Add the true coefficient values as points
+                p <- p +
+                    geom_point(data = true_coeff, aes(x = name, y = value), color = "red", size = 1,shape=4)
+            }
+            if (save) {
+                if (!(dir.exists(model_name))) {
+                    dir.create(model_name)
+                }
+                ggsave(paste(paste("violin_coeff_re",substring,model_name,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
+            }
+            return (p)
+        },
+        
+        #' @description when there are no fixed effect and a single or no random effect,
+        #' create violin plot for the posterior of the paremeter "par".
+        #' Works only for formula of the form "par=~s(ID,bs="re")" or "par=~1"
+        #' 
+        #' @param model_name name of the SDE model, used as the directory name where the plots should be saved
+        #' @param par string matching with one parameter name in the sde
+        #' @param save boolean to save the plots or not
+        #' @return ggplot object
+        #' 
+        plot_violin_par=function(model_name,par,save=FALSE) {
+            
             
             #get data and IDs
             data=self$data()
-            IDs=unique(data$ID)
-            n_id=length(IDs)
             
-            #define ID covariates to get the parameters estimate from
-            new_data=data[1:n_id,]
-            new_data$ID=IDs
+            #get the formula for the parameter of interest
+            formulas=self$formulas()
+            form=formulas[[par]]
             
-            #all parameters estimates
-            sde_par <- self$par(t = "all",new_data=new_data)
+            #get covariates for the parameter of interest
+            vars=get_variables(form)
             
-            #all parameters CIs
-            sde_CI <- self$CI_pointwise(t = "all",new_data=new_data,n_post=npost,level=level)
+            if (any(sapply(vars, function(col) !is.factor(data[[col]])))) {
+                stop("There are fixed effects in the parameter's formula : please consider using another plotting method.")
+            }
             
-            # Data frame for point estimates
-            sde_par_df <- data.frame(ID=new_data$ID,par =sde_par[, par])
+            if (length(vars)>1) {
+                stop("There are multiple randon effects covariates : please consider using another plotting method.")
+            }
             
-            # Data frame for CIs
-            sde_ci_df <- data.frame(ID=new_data$ID,lowpar = sde_CI[par, "low",],
-                                    uppar = sde_CI[par, "upp",])
-            #labels for the plot
-            labels=paste("A",1:n_id,sep="")
+            #if no random effect
+            if (is.null(vars)) {
+                new_data=data[1,]
+                
+                #design matrices
+                mats=self$make_mat(new_data=new_data)
+                X_fe=mats$X_fe
+                X_re=mats$X_re
+                
+                post_par=self$post_par(X_fe=X_fe,X_re=X_re,n_post=1000)[,par,]
+                
+                #convert in dataframe for the violinplot
+                post_par_df=data.frame(par=as.vector(post_par),factor=rep(0,each=1000))
+                
+                #ggplot
+                p=ggplot(post_par_df,aes(x=factor,y=par,fill=factor))+geom_violin()+
+                    stat_summary(fun.data=mean_sdl,geom="pointrange", color="black")+xlab(" ")+ylab(par)+
+                    theme(legend.position = "none")
+            }
+            else {
+                
+                factor_var=vars[1]
+                levels=unique(data[[factor_var]])
+                n_levels=length(levels)
+                
+                #define factor covariates to get the parameters estimate from
+                new_data=data[1:n_levels,]
+                new_data[[factor_var]]=levels
+                
+                #labels for the plot
+                labels=paste("A",1:n_levels,sep="")
+           
+                #design matrices
+                mats=self$make_mat(new_data=new_data)
+                X_fe=mats$X_fe
+                X_re=mats$X_re
             
-            #ggplot
-            plotpar=ggplot()+geom_point(data=sde_par_df, aes(ID, par)) +
-                geom_errorbar(data=sde_ci_df,aes(x=ID,ymax = uppar, ymin= lowpar), width= 0.1)+
-                scale_x_discrete(labels=labels)+
-                ylab(par)+
-                theme(axis.title.y=element_text(angle=0),axis.text=element_text(size=12),
-                      axis.title=element_text(size=16,face="bold"))
+                post_par=self$post_par(X_fe=X_fe,X_re=X_re,n_post=1000)[,par,]
+            
+                #convert in dataframe for the violinplot
+                post_par_df=data.frame(par=as.vector(post_par),factor=rep(levels,each=1000))
+            
+            
+                #ggplot
+                p=ggplot(post_par_df,aes(x=factor,y=par,fill=factor))+geom_violin()+
+                stat_summary(fun=median, geom="point", size=2, color="black")+
+                scale_fill_discrete(labels = labels)+scale_x_discrete(labels = labels)+
+                xlab(factor_var)+ylab(par)
+            }
             
             if (save) {
                 if (!(dir.exists(model_name))) {
                     dir.create(model_name)
                 }
-                ggsave(paste(paste("re",model_name,par,sep="_"),".png",sep=""),plot=plotpar,width=10,height=5,path=model_name)
+                ggsave(paste(paste("violin",model_name,par,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
             }
-            return (plotpar)
+            return (p)
         },
         
         
         
-        #' @description plot the fixed effect for a parameter that depends only on one covariate 
-        #' through splines in a sde model. Works when there is only one covariate (except ID) in the parameter 
+        #' @description plot the fixed effect for a parameter that depends only on one fixed effect covariate,
+        #' or on two orthogonal covariates in a sde model. 
+        #' The function might be extended to multiple orthogonal covariates.
         #' 
-        #' @param baseline a fitted baseline sde model without fixed effect. If not NULL, the baseline values
+        #' @param baseline a fitted baseline sde model without fixed effect. If not NULL, the baseline values with CI
         #'            appear on the plots
-        #' @param model_name  a string to put in the name of the saved plot
+        #' @param model_name  name of the SDE model, used as the directory name where the plots should be saved
         #' @param par  the name of the parameter we want to plot
         #' @param npoints number of points for the plot
-        #' @param xmin minimum value of the covariate to plot (if null, take minimum of observed values)
-        #' @param xmax maximum value of the covariate to plot (if null, take maximum of observed values)
+        #' @param xmin minimum value of the covariate to plot 
+        #' @param xmax maximum value of the covariate to plot 
         #' @param link function to link the covariate to the quantity we want to have on the x-axis in the plots
         #' @param xlabel label for the quantity in the xaxis for the plot
-        #' @param all_coeff_re_post dataframe of samples of the estimated 
-        #         re coeffs (as given by self$post_coeff())
-        #' @param all_coeff_fe_post dataframe of samples of the estimated 
-        #'         fe coeffs (as given by self$post_coeff()). If null, CIs are not plotted.
-        #' @param level level for confidence intervals
+        #' @param show_CI string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment
+        #' @param true_smooth function that takes a dataframe of covariate values and return a dataframe of true values of the parameter
         #' @param save boolean to save or not to save the plots
         #' @return ggplot object
         
         plot_fe_par_2D=function(baseline=NULL,model_name,par,npoints=200,xmin,xmax,
-                                link,xlabel="x",all_coeff_re_post=NULL,all_coeff_fe_post=NULL,level=0.95,save=TRUE) {
+                                link,xlabel,show_CI="none",true_smooth=NULL,save=FALSE) {
             
             #get data
             data=self$data()
-            
-            #number of posteriori draws for CIs
-            npost=length(all_coeff_re_post[,1])
             
             #get the formula for the parameter of interest
             formulas=self$formulas()
@@ -2078,168 +2192,129 @@ SDE <- R6Class(
             #get all covariates in the model
             all_vars=unique(unlist(lapply(formulas,get_variables)))
             
+            #get fixed effect covariates for the parameter of interest
+            vars=get_variables(form)
+            fe_vars=vars[sapply(vars, function(col) !is.factor(data[[col]]))]
+            
+            #check that ther are at most two fixed effect covariates
+            if (length(fe_vars)>2) {
+                stop("For multiple non orthogonal covariates, please consider using another plotting method.")
+            }
+            #if there are two fixed effect covariates, check that they are orthogonal
+            if (length(fe_vars)==2) {
+                if (!(are_orthogonals(data,fe_vars[1],fe_vars[2]))) {
+                    stop("The covariates are not orthogonal. Consider using another plotting method.")
+                }
+            }
+            
+            factor_var=all_vars[sapply(all_vars, function(col) is.factor(data[[col]]))]
+            
             #get index of the parameter of interest in the vector of all parameters
             j=which(names(formulas)==par)[[1]]
-            
-            #fixed effects covariates in the formula for the parameter of interest
-            vars=get_variables(form) 
-            vars=vars[vars!="ID"]
-            
-            #there is only one covariate
-            var=vars[[1]]
-            
+    
             #initialize data frame with covariate values 
             new_data<- data.frame(matrix(0, nrow = npoints, ncol = length(all_vars)))
             # Assign column names to the data frame
             colnames(new_data) <- all_vars
-            #Asssign meaningful values to the covariate that appear in the formula 
-            #for the parameter of interest
-            new_data[,var]=seq(from=xmin[[var]],to=xmax[[var]],length.out=npoints)
-            
-            #Plug in any value for ID since we don't consider random effects
-            new_data$ID=rep(data$ID[1],npoints)
-            
-            
-            #get model matrices 
-            mats=self$make_mat(new_data=new_data)
-            X_fe=mats$X_fe
-            X_re=mats$X_re
-            
-            #extract index of names for fixed effect smooths
-            fe_names=self$terms()$names_re_all
-            index=grep("ID", fe_names, invert = TRUE) #index of names that do not contain "ID"
-            
-            #keep columns matching those names in the random effects
-            X_re=X_re[,index]
-            coeff_fe=self$coeff_fe()
-            coeff_re=self$coeff_re()[index,]
-            
-            #linear predictor
-            lp=X_fe%*%coeff_fe+X_re%*%coeff_re
-            lp=matrix(lp,ncol=n_par)
-            
-            #parameters on response scale
-            par_mat <- matrix(sapply(1:ncol(lp), function(i) {
-                self$invlink()[[i]](lp[,i])
-            }), ncol = ncol(lp))
-            colnames(par_mat) <- names(self$invlink())
-            
-            #dataframe for fixed effects estimations
-            est=as.data.frame(par_mat[,par])
-            est$cov=new_data[,var]
-            est$X=link[[var]](new_data[,var])
-            colnames(est)=c("par",var,"X")
-            
-            
-            #if there is a baseline, add its values to the df
-            if (!(is.null(baseline))) {
-                
-                #get intercept value on parameter scale
-                coeff_fe_baseline=baseline$coeff_fe()[j,1]
-                link_fn=self$invlink()[[j]]
-                intercept=link_fn(coeff_fe_baseline)
-                est$par_baseline=rep(intercept,npoints)
-                
-                #draws from posterior distribution of the intercepts
-                sd_coeff_fe_baseline=as.list(baseline$tmb_rep(),what="Std")$coeff_fe[j,1]
-                if (is.nan(sd_coeff_fe_baseline)) {
-                    sd_coeff_fe_baseline=0
-                }
-                par_baseline_post=link_fn(rnorm(npost,mean=coeff_fe_baseline,sd=sd_coeff_fe_baseline))
-                alpha <- (1 - level)/2
-                quantiles=quantile(par_baseline_post,probs = c(alpha, 1 - alpha))
-                
-                est$lowpar_baseline=rep(quantiles[1],npoints)
-                est$uppar_baseline=rep(quantiles[2],npoints)
-                
-            }
-            
-            
-            #if we are given posterior draws of the parameters, add CIs to the df 
-            if (!(is.null(all_coeff_fe_post)) & !(is.null(all_coeff_re_post))) {
-                
-                #confidence intervals for the population smooth
-                coeff_re_post=all_coeff_re_post[,index]
-                coeff_fe_post=all_coeff_fe_post
-                
-                
-                n = nrow(X_fe)/n_par
-                
-                
-                #Get corresponding SDE parameters
-                post_par <- array(sapply(1:npost, function(i) {
-                    self$par(t = "all", 
-                            X_fe = X_fe, X_re = X_re, 
-                            coeff_fe =coeff_fe_post[i,],
-                            coeff_re = coeff_re_post[i,],
-                            resp = TRUE)  
-                }), dim = c(n, n_par, length(all_coeff_re_post[,1])))
-                
-                dimnames(post_par)[[2]] <- names(self$invlink())
-                
-                alpha <- (1 - level)/2
-                sde_CI <- apply(post_par, c(1, 2), quantile, probs = c(alpha, 1 - alpha))
-                
-                sde_CI <- aperm(sde_CI, c(3, 1, 2))
-                dimnames(sde_CI)[[2]] <- c("low", "upp")
-                
-                # Add 95% quantiles of posterior draws to the dataframe
-                est$lowpar <- sde_CI[par, "low",]
-                est$uppar<-sde_CI[par, "upp",]
-                
-            }
-            
-            #only parameter estimates
-            if (is.null(baseline) & (is.null(all_coeff_fe_post)) & (is.null(all_coeff_re_post))) {
-                
-                p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel)+ylab(par)
-            }
-            
-            #parameter estimates and baseline
-            if (!(is.null(baseline)) & (is.null(all_coeff_fe_post)) & (is.null(all_coeff_re_post))) {
-                
-                p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel)+ylab(par)+
-                    geom_line(aes(X,par_baseline),linetype="dashed",col="black")+
-                    geom_ribbon(aes(x=X,ymin=lowpar_baseline,ymax=uppar_baseline),fill="grey",alpha=0.4)
-            }
-            
-            #parameter estimates and CIs
-            if (is.null(baseline) & !(is.null(all_coeff_fe_post)) & !(is.null(all_coeff_re_post))) {
-                
-                p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel)+ylab(par)+
-                    geom_ribbon(aes(x=X,ymin=lowpar,ymax=uppar),fill="red",alpha=0.2)
-                
-            }
-            
-            #parameter estimates, baseline and CIs
-            else {
-                p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel)+ylab(par)+
-                    geom_line(aes(X,par_baseline),linetype="dashed",col="black")+
-                    geom_ribbon(aes(x=X,ymin=lowpar_baseline,ymax=uppar_baseline),fill="grey",alpha=0.4)+
-                    geom_ribbon(aes(x=X,ymin=lowpar,ymax=uppar),fill="red",alpha=0.2)
-                
-            }
-            
-            #save plots
-            if (save) {
-                if (!(dir.exists(model_name))) {
-                    dir.create(model_name)
-                }
-                ggsave(paste(paste("fe",model_name,par,var,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
-            }
             
             res=list()
-            res[[paste("data",par,var,sep="_")]]=est
-            res[[paste("plot",par,var,sep="_")]]=est
+            
+            for (i in 1:length(fe_vars)) {
+                
+                #covariate to plot on the x-axis
+                var=fe_vars[i]
+                
+                #Asssign meaningful values to the covariate that appear in the formula 
+                #for the parameter of interest
+                new_data[,var]=seq(from=xmin[[var]],to=xmax[[var]],length.out=npoints)
+                new_data[,factor_var]=data[1,factor_var]
+            
+            
+                #get model matrices 
+                mats=self$make_mat(new_data=new_data)
+                X_fe=mats$X_fe
+                X_re=mats$X_re
+            
+                #extract index of names for fixed effect smooths
+                fe_names=self$terms()$names_re_all
+                index=grep("ID", fe_names, invert = TRUE) #index of names that do not contain "ID"
+            
+                #coefficients
+                coeff_fe=self$coeff_fe()
+                coeff_re=self$coeff_re()
+            
+                #parameter estimates
+                par_mat=self$par(new_data=new_data,X_fe=X_fe,X_re=X_re,coeff_fe=coeff_fe,coeff_re=coeff_re,re_index=index)
+                est=as.data.frame(par_mat[,par])
+                est$cov=new_data[,var]
+                est$X=link[[var]](new_data[,var])
+                colnames(est)=c("par",var,"X")
+            
+                p=ggplot()+geom_line(data=est,aes(X,par),col="red")+xlab(xlabel)+ylab(par)
+            
+                #if there is a baseline, add its values to the df
+                if (!(is.null(baseline))) {
+                
+               
+                    #posterior draws of the intercept
+                
+                    est_intercept=baseline$par(ignore_re=TRUE)[,par]
+                    est$par_baseline=rep(est_intercept,npoints)
+                
+                    sde_CI_baseline=baseline$CI_pointwise(ignore_re=TRUE)[par,,]
+                    low_intercept= sde_CI_baseline["low"]
+                    up_intercept= sde_CI_baseline["upp"]
+                    est$lowpar_baseline=rep(low_intercept,npoints)
+                    est$uppar_baseline=rep(up_intercept,npoints)
+                
+                    p=p+geom_line(data=est,aes(X,par_baseline),linetype="dashed",col="black")+
+                    geom_ribbon(data=est,aes(x=X,ymin=lowpar_baseline,ymax=uppar_baseline),fill="grey",alpha=0.4)
+                
+                }
+            
+                if (show_CI!="none") {
+                    CI_fn <- ifelse(show_CI == "pointwise", 
+                                yes = self$CI_pointwise, 
+                                no = self$CI_simultaneous)
+                
+                    sde_CI <- CI_fn(t = "all",new_data=new_data,X_re=X_re,X_fe=X_fe,re_index=index)
+                
+                    # Add 95% quantiles of posterior draws to the dataframe
+                    est$lowpar <- sde_CI[par, "low",]
+                    est$uppar<-sde_CI[par, "upp",]
+                
+                    p=p+ geom_ribbon(data=est,aes(x=X,ymin=lowpar,ymax=uppar),fill="red",alpha=0.2)
+                }
+                
+                if (!(is.null(true_smooth))) {
+                    
+                    true_par_df=data.frame(var=new_data[,var],true_par=true_smooth(new_data))
+                    
+                    true_par_df$X=link[[var]](new_data[,var])
+                    
+                    p=p+geom_line(data=true_par_df,aes(X,true_par),col="red")
+                }
+            
+                #save plots
+                if (save) {
+                    if (!(dir.exists(model_name))) {
+                        dir.create(model_name)
+                    }
+                    ggsave(paste(paste("fe",model_name,par,var,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
+                }
+                
+            res[[paste("fe",par,var,sep="_")]]=p
+            }
             
             return (res)
-        },
+            },
         
         
         
         
-        #' @description function to plot the estimates for "par" for each individual (taking into account random effects) 
-        #' when there is only one fixed effect covariate
+        #' @description function to plot the estimates for each individual (taking into account one single random effect) 
+        #' for a parameter that depends only on one fixed effect covariate, or on two orthogonal covariates
+        #'  in a sde model. The function might be extended to multiple orthogonal covariates.
         
         #' @param baseline is a baseline model without fixed effects to be compared to (default is NULL). 
         #' @param par  name of the parameter we want to plot
@@ -2251,10 +2326,11 @@ SDE <- R6Class(
         #' of the observed values of each covariate
         #' @param xlabel the label of the x-axis in the plots
         #' @param npoints number of points where the smooth population function is plotted
+        #' @param show_CI string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment
         #' @param save boolean
         #' @return ggplot object
         
-        plot_me_par_2D=function(baseline=NULL,model_name,par,npoints=200,xmin=NULL,xmax=NULL,link=(\(x) x),xlabel="x",npost=1000,level=0.95,save=TRUE) {
+        plot_me_par_2D=function(baseline=NULL,model_name,par,npoints=200,xmin,xmax,link,xlabel,show_CI,save=TRUE) {
             
             #get data
             data=self$data()
@@ -2263,409 +2339,133 @@ SDE <- R6Class(
             formulas=self$formulas()
             form=formulas[[par]]
             
-            #get all covariables in the model
-            all_vars=unique(unlist(lapply(formulas,get_variables)))
-            
-            #fixed effects covariates/variables in the formula for the parameter of interest
-            vars=get_variables(form) 
-            vars=vars[vars!="ID"]
-            
-            #there is only one covariate
-            var=vars[[1]]
-            
-            #IDs
-            IDs=unique(data$ID)
-            n_id=length(IDs)
-            
-            #set values for current covariate
-            #if boundary values are not defined, take min and max of observations
-            if (is.null(xmin)){
-                xmin=min(data$var)
-            }
-            if (is.null(xmax)){
-                xmax=max(data$var)
-            }
-            
-            
-            #define the covariates values 
-            new_data<- data.frame(matrix(0, nrow = npoints*n_id, ncol = length(all_vars)))
-            
-            # Assign column names to the data frame
-            colnames(new_data) <- all_vars
-            
-            #Asssign meaningful values to the covariate that appear in the formula 
-            #for the parameter of interest
-            cov_values=seq(from=xmin[[var]],to=xmax[[var]],length.out=npoints)
-            cov_values=cov_values[rep(seq_len(npoints),n_id)]
-            new_data[,var]=cov_values
-            new_data$ID=IDs[rep(seq_len(n_id), each = npoints)] 
-            
-            sde_par <- self$par(t = "all",new_data=new_data)
-            sde_CI <-self$CI_pointwise(t = "all",new_data=new_data,n_post=npost,level=level)
-            
-            
-            # Data frame for point estimates
-            sde_par_df <- data.frame(ID=new_data$ID,Cov=new_data[,var],par_estimates = sde_par[, par])
-            
-            
-            # Data frame for CIs
-            sde_ci_df <- data.frame(ID=new_data$ID,Cov=new_data[,var],
-                                    lowpar = sde_CI[par, "low",],
-                                    uppar= sde_CI[par, "upp",])
-            
-            
-            sde_par_df$X=link[[var]](new_data[,var])
-            sde_ci_df$X=link[[var]](new_data[,var])
-            
-            #labels for the plot
-            labels=paste("A",1:n_id,sep="")
-            
-            p=ggplot()+geom_line(aes(X, par_estimates,col=ID),data=sde_par_df) +
-                geom_ribbon(data=sde_ci_df,aes(x=X,ymin=lowpar,ymax=uppar,fill=ID),alpha=0.2)+
-                scale_color_discrete(name="ID",labels=labels)+
-                scale_fill_discrete(name="ID",labels=labels)+xlab(xlabel)+ylab(par)
-            
-            
-            if (!(is.null(baseline))) {
-                baseline_par=baseline$par(t = "all",new_data=new_data)
-                baseline_CI=baseline$CI_pointwise(t="all",new_data=new_data)
-                baseline_par_df=data.frame(ID=new_data$ID,Cov=new_data[,var],par_baseline = baseline_par[, par])
-                baseline_par_df$X=link[[var]](new_data[,var])
-                p=p+geom_line(aes(X, par_baseline,col=ID),data=baseline_par_df,linetype="dashed")
-            }
-            
-            if (save) {
-                
-                if (!(dir.exists(model_name))) {
-                    dir.create(model_name)
-                }
-                ggsave(paste(paste("me",model_name,par,var,sep="_"),".png"),plot=p,width=10,height=5,path=model_name)
-            }
-            
-            return (p)
-        },
-        
-        
-        
-        #' @description plot the fixed effect for a parameter that depends on two orthogonal covariates through splines
-        #' a plot of the values of the parameter according to each link(covariate) is produced
-        #' random effects need to be the last term in the formulas
-        #' @param  baseline  a fitted sde without covariates to compare to. Intercepts of the baseline are displayed on the plots.
-        #' @param model_name string that appears in the name of the plot saved
-        #' @param link function that links the covariate and the quantity appearing in the x axis of the plots
-        #' @param xlabel is the label of the x-axis in the plots
-        #' @param xmin min values of the covariates to plot the parameters. If NULL, then we take the min
-        #' of the observed values of each covariate
-        #' @param xmax max values of the covariates to plot the parameters. If NULL, then we take the max
-        #' of the observed values of each covariate
-        #' @param npoints number of points where the smooth population function is plotted
-        #' @param level level of the confidence interval
-        
-        plot_fe_par_2D_ortho=function(baseline=NULL,model_name,par,npoints=200,xmin,xmax,link,xlabel,
-                                      all_coeff_re_post,all_coeff_fe_post,level=0.95,save=TRUE) {
-            
-            #get data
-            data=self$data()
-            
-            #number of posterior draws from the parameters
-            npost=length(all_coeff_re_post[,1])
-            
-            
-            #get the formula for the parameter of interest
-            formulas=self$formulas()
-            form=formulas[[par]]
-            
-            #number of parameters
+            #number of parameters 
             n_par=length(names(formulas))
             
-            #get all covariables in the model
+            #get all covariates in the model
             all_vars=unique(unlist(lapply(formulas,get_variables)))
+            
+            #get fixed effect covariates for the parameter of interest
+            vars=get_variables(form)
+            fe_vars=vars[sapply(vars, function(col) !is.factor(data[[col]]))]
+            
+            #check that there are at most two fixed effect covariates
+            if (length(fe_vars)>2) {
+                stop("For multiple non orthogonal covariates, please consider using another plotting method.")
+            }
+            #if there are two fixed effect covariates, check that they are orthogonal
+            if (length(fe_vars)==2) {
+                if (!(are_orthogonals(data,fe_vars[1],fe_vars[2]))) {
+                    stop("The covariates are not orthogonal. Consider using another plotting method.")
+                }
+            }
+            
+            factor_var=all_vars[sapply(all_vars, function(col) is.factor(data[[col]]))]
+            
+            if (length(factor_var)==0) {
+                stop("There are no random effects")
+            }
+            else if (length(factor_var)>1) {
+                stop("There are multiple random effects")
+            }
+            
+            levels=unique(data[[factor_var]])
+            n_levels=length(levels)
             
             #get index of the parameter of interest in the vector of all parameters
             j=which(names(formulas)==par)[[1]]
             
-            #list of strings for each term in the formula for the parameter of interest
-            terms=colnames(attr(terms(form),which="factors")) 
-            
-            #fixed effects covariates/variables in the formula for the parameter of interest
-            vars=get_variables(form) 
-            vars=vars[vars!="ID"]
-            
-            #initialize data frame with covariate values 
-            new_data<- data.frame(matrix(0, nrow = npoints, ncol = length(all_vars)))
+            #define the covariates values 
+            new_data<- data.frame(matrix(0, nrow = npoints*n_levels, ncol = length(all_vars)))
             
             # Assign column names to the data frame
             colnames(new_data) <- all_vars
             
             res=list()
             
-            #loop over the two orthogonal covariates
-            for (i in 1:2) {
+            for (i in 1:length(fe_vars)) {
                 
-                var=vars[i]
-                term=terms[i]
+                #covariate to plot on the x-axis
+                var=fe_vars[i]
                 
-                new_data[,var]=seq(from=xmin[[var]],to=xmax[[var]],length.out=npoints)
-                
-                #get model matrices 
-                mats=self$make_mat(new_data=new_data)
-                X_fe=mats$X_fe
-                X_re=mats$X_re
-                
-                #extract index of names for fixed effect smooths
-                fe_names=self$terms()$names_re_all
-                index=grep("ID", fe_names, invert = TRUE) #index of names that do not contain "ID"
-                
-                #keep columns matching those names in the random effects
-                X_re=X_re[,index]
-                coeff_fe=self$coeff_fe()
-                coeff_re=self$coeff_re()[index,]
-                
-                #linear predictor
-                lp=X_fe%*%coeff_fe+X_re%*%coeff_re 
-                lp=matrix(lp,ncol=n_par)
-                
-                #parameters on response scale
-                par_mat <- matrix(sapply(1:ncol(lp), function(i) {
-                    self$invlink()[[i]](lp[,i])
-                }), ncol = ncol(lp))
-                colnames(par_mat) <- names(self$invlink())
-                
-                #dataframe for fixed effects estimations
-                est=as.data.frame(par_mat[,par])
-                est$cov=new_data[,i]
-                est$X=link[[var]](new_data[,var])
-                colnames(est)=c("par","cov","X")
-                
-                #add baseline intercept value to the plot
-                if (!(is.null(baseline))) {
-                    
-                    #get intercept value on parameter scale
-                    coeff_fe_baseline=baseline$coeff_fe()[j,1]
-                    link_fn=self$invlink()[[j]]
-                    intercept=link_fn(coeff_fe_baseline)
-                    est$par_baseline=rep(intercept,npoints)
-                    
-                    #draws from posterior distribution of the intercepts
-                    sd_coeff_fe_baseline=as.list(baseline$tmb_rep(),what="Std")$coeff_fe[j,1]
-                    if (is.nan(sd_coeff_fe_baseline)) {
-                        sd_coeff_fe_baseline=0
-                    }
-                    par_baseline_post=link_fn(rnorm(npost,mean=coeff_fe_baseline,sd=sd_coeff_fe_baseline))
-                    alpha <- (1 - level)/2
-                    quantiles=quantile(par_baseline_post,probs = c(alpha, 1 - alpha))
-                    
-                    est$lowpar_baseline=rep(quantiles[1],npoints)
-                    est$uppar_baseline=rep(quantiles[2],npoints)
-                }
-                
-                #differential of population smooth
-                h=est$X[2]-est$X[1]
-                X_diff=est$X[2:(npoints-1)]
-                par_diff=(est$par[1:(npoints-2)]-est$par[3:npoints])/(2*h)
-                est_diff=est[2:(npoints-1),]
-                est_diff$par=par_diff
-                est_diff$X=X_diff
-                pdiff=ggplot()+geom_line(data=est_diff,aes(X,par),col="black")+xlab(xlabel[[var]])+ylab(paste("derivative of",par))
-                
-                
-                #if we are given posterior draws of the parameters, we can plot the CIs
-                if (!(is.null(all_coeff_fe_post)) & !(is.null(all_coeff_re_post))) {
-                    
-                    #confidence intervals for the population smooth
-                    coeff_re_post=all_coeff_re_post[,index]
-                    coeff_fe_post=all_coeff_fe_post
-                    
-                    n = nrow(X_fe)/n_par
-                    
-                    #Get corresponding SDE parameters
-                    post_par <- array(sapply(1:npost, function(i) {
-                        self$par(t = "all", 
-                                X_fe = X_fe, X_re = X_re, 
-                                coeff_fe =coeff_fe_post[i,],
-                                coeff_re = coeff_re_post[i,],
-                                resp = TRUE)  
-                    }), dim = c(n, n_par, npost))
-                    
-                    dimnames(post_par)[[2]] <- names(self$invlink())
-                    
-                    alpha <- (1 - level)/2
-                    sde_CI <- apply(post_par, c(1, 2), quantile, probs = c(alpha, 1 - alpha))
-                    
-                    sde_CI <- aperm(sde_CI, c(3, 1, 2))
-                    dimnames(sde_CI)[[2]] <- c("low", "upp")
-                    
-                    # Add quantiles of the posterior samples to the df
-                    est$lowpar=sde_CI[par, "low",]
-                    est$uppar=sde_CI[par, "upp",]
-                    
-                }
-                
-                
-                #only parameter estimates
-                if (is.null(baseline) & (is.null(all_coeff_fe_post)) & (is.null(all_coeff_re_post))) {
-                    
-                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)
-                }
-                
-                #parameter estimates and baseline
-                if (!(is.null(baseline)) & (is.null(all_coeff_fe_post)) & (is.null(all_coeff_re_post))) {
-                    
-                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)+
-                        geom_line(aes(X,par_baseline),linetype="dashed",col="black")+
-                        geom_ribbon(aes(x=X,ymin=lowpar_baseline,ymax=uppar_baseline),fill="grey",alpha=0.4)
-                }
-                
-                #parameter estimates and CIs
-                if (is.null(baseline) & !(is.null(all_coeff_fe_post)) & !(is.null(all_coeff_re_post))) {
-                    
-                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)+
-                        geom_ribbon(aes(x=X,ymin=lowpar,ymax=uppar),fill="red",alpha=0.2)
-                    
-                }
-                
-                #parameter estimates, baseline and CIs
-                else {
-                    
-                    p=ggplot(data=est)+geom_line(aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)+
-                        geom_line(aes(X,par_baseline),linetype="dashed",col="black")+
-                        geom_ribbon(aes(x=X,ymin=lowpar_baseline,ymax=uppar_baseline),fill="grey",alpha=0.4)+
-                        geom_ribbon(aes(x=X,ymin=lowpar,ymax=uppar),fill="red",alpha=0.2)
-                }
-                
-                #save plots
-                if (save) {
-                    
-                    if (!(dir.exists(model_name))) {
-                        dir.create(model_name)
-                    }
-                    ggsave(paste(paste("fe",model_name,par,var,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
-                    ggsave(paste(paste("diff_fe",model_name,par,var,sep="_"),".png",sep=""),plot=pdiff,width=10,height=5,path=model_name)
-                }
-                
-                res[[paste("plot",par,var,sep="_")]]=p
-                res[[paste("data",par,var,sep="_")]]=est
-                
-            }
-            return (res)
-        },
-        
-        #' @description plot mixed effects of a parameter when there are two orthogonal covariates
-        #' @param baseline baseline sde model
-        #' @param model_name string to put in the filename for the save
-        #' @param par parameter name
-        #' @param nopints
-        #' @param xmin
-        #' @param xmax
-        #' @param link
-        #' @param xlabel
-        #' @param npost
-        #' @param level
-        #' @param save
-        #' @return ggplot object
-        #' 
-        plot_me_par_2D_ortho=function(baseline=NULL,model_name,par,npoints=200,xmin=NULL,xmax=NULL,
-                                      link=list(),xlabel=list(),npost=1000,level=0.95,save=TRUE) {
-            
-            
-            #get data
-            data=self$data()
-            
-            
-            #get the formula for the parameter of interest
-            formulas=self$formulas()
-            form=formulas[[par]]
-            n_par=length(names(formulas))
-            
-            ##get all covariables in the model
-            all_vars=unique(unlist(lapply(formulas,get_variables)))
-            
-            #fixed effects covariates/variables in the formula for the parameter of interest
-            vars=get_variables(form) 
-            vars=vars[vars!="ID"]
-            
-            #IDs
-            IDs=unique(data$ID)
-            n_id=length(IDs)
-            
-            
-            #initialize dataframe with covariates values 
-            new_data<- data.frame(matrix(0, nrow = npoints*n_id, ncol = length(all_vars)))
-            
-            # Assign column names to the data frame
-            colnames(new_data) <- all_vars
-            
-            #loop over the covariates
-            for (i in 1:2) {
-                
-                #name of the covariate
-                var=vars[i]
-                
-                #Asssign meaningful values to the covariate i that appear in the formula 
+                #Assign values to the covariate that appear in the formula 
                 #for the parameter of interest
                 cov_values=seq(from=xmin[[var]],to=xmax[[var]],length.out=npoints)
-                cov_values=cov_values[rep(seq_len(npoints),n_id)]
+                cov_values=cov_values[rep(seq_len(npoints),n_levels)]
                 new_data[,var]=cov_values
-                new_data$ID=IDs[rep(seq_len(n_id), each = npoints)] 
-                
+                new_data[[factor_var]]=levels[rep(seq_len(n_levels), each = npoints)] 
                 
                 sde_par <- self$par(t = "all",new_data=new_data)
-                sde_CI <- self$CI_pointwise(t = "all",new_data=new_data,n_post=npost,level=level)
-                
                 
                 # Data frame for point estimates
                 sde_par_df <- data.frame(ID=new_data$ID,Cov=new_data[,var],par_estimates = sde_par[, par])
                 
-                
-                # Data frame for CIs
-                sde_ci_df <- data.frame(ID=new_data$ID,Cov=new_data[,var],
-                                        lowpar = sde_CI[par, "low",],
-                                        uppar= sde_CI[par, "upp",])
-                
-                
+                #Compute quantity on the x-axis
                 sde_par_df$X=link[[var]](new_data[,var])
-                sde_ci_df$X=link[[var]](new_data[,var])
                 
                 #labels for the plot
-                labels=paste("A",1:n_id,sep="")
+                labels=paste("A",1:n_levels,sep="")
                 
                 p=ggplot()+geom_line(aes(X, par_estimates,col=ID),data=sde_par_df) +
-                    geom_ribbon(data=sde_ci_df,aes(x=X,ymin=lowpar,ymax=uppar,fill=ID),alpha=0.2)+
-                    scale_color_discrete(name="ID",labels=labels)+
-                    scale_fill_discrete(name="ID",labels=labels)+
-                    xlab(xlabel[[var]])+ylab(par)
+                    scale_color_discrete(name=factor_var,labels=labels)+xlab(xlabel)+ylab(par)
                 
+                if (show_CI!="none") {
+                    CI_fn <- ifelse(show_CI == "pointwise", 
+                                    yes = self$CI_pointwise, 
+                                    no = self$CI_simultaneous)
+                    sde_CI <- CI_fn(t = "all",new_data=new_data)
+                
+                    # Data frame for CIs
+                    sde_ci_df <- data.frame(ID=new_data$ID,Cov=new_data[,var],
+                                        lowpar = sde_CI[par, "low",],
+                                        uppar= sde_CI[par, "upp",])
+            
+                    sde_ci_df$X=link[[var]](new_data[,var])
+                    
+                    p=p+ geom_ribbon(data=sde_ci_df,aes(x=X,ymin=lowpar,ymax=uppar,fill=ID),alpha=0.1)+
+                        scale_fill_discrete(name=factor_var,labels=labels)
+                }
+               
                 
                 if (!(is.null(baseline))) {
                     baseline_par=baseline$par(t = "all",new_data=new_data)
                     baseline_CI=baseline$CI_pointwise(t="all",new_data=new_data)
-                    baseline_par_df=data.frame(ID=new_data$ID,Cov=new_data[,var],par_baseline = baseline_par[, par])
+                    baseline_par_df=data.frame(factor=new_data[[factor_var]],Cov=new_data[,var],par_baseline = baseline_par[, par])
                     baseline_par_df$X=link[[var]](new_data[,var])
-                    p=p+geom_line(aes(X, par_baseline,col=ID),data=baseline_par_df,linetype="dashed")
+                    p=p+geom_line(aes(X, par_baseline,col=factor),data=baseline_par_df,linetype="dashed")
                 }
+            
                 
                 if (save) {
                     
                     if (!(dir.exists(model_name))) {
                         dir.create(model_name)
                     }
-                    
                     ggsave(paste(paste("me",model_name,par,var,sep="_"),".png"),plot=p,width=10,height=5,path=model_name)
                 }
-                
+            res[[paste("fe",par,var,sep="_")]]=p
             }
+        return (res)
         },
         
+        #' @description 3D plot of a parameter when there are two non orthogonal covariates and at most one random effect
+        #' @param baseline is a baseline model without fixed effects to be compared to (default is NULL). 
+        #' @param par  name of the parameter we want to plot
+        #' @param model_name string to put in the name of the saved plots
+        #' @param link  function that links the covariate and the quantity appearing in the x axis of the plots
+        #' @param xmin min values of the covariates to plot the parameters.
+        #' @param xmax max values of the covariates to plot the parameters.
+        #' @param xlabel the label of the x-axis in the plots
+        #' @param npoints number of points where the smooth population function is plotted
+        #' @param show_CI string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment.
+        #' If it is not "none", then 2D plots with confidence intervals of each covariate while the other is fixed at the quantiles
+        #' values are created.
+        #' @param save boolean
+        #' @return ggplot object
         
-        #' @description 3D plot of a parameter when there are two non orthogonal covariates
-        #' 
-        #'
-        #'
-        #'    
-        #'   @return ggplotly object
-        
-        plot_fe_par_3D=function(baseline=NULL,model_name,par,npoints=50,xmin=list(),xmax=list(),link=list(),
-                                xlabel=list(),all_coeff_re_post,all_coeff_fe_post,level=0.95,save=TRUE) {
+        plot_fe_par_3D=function(baseline=NULL,model_name,par,npoints=50,xmin,xmax,link,
+                                xlabel,show_CI="none",probs=c(0.05,0.25,0.5,0.75,0.95),true_smooth=NULL,save=FALSE) {
+            
             
             data=self$data()
             
@@ -2682,16 +2482,18 @@ SDE <- R6Class(
             #get index of the parameter of interest in the vector of all parameters
             j=which(names(formulas)==par)[[1]]
             
-            #list of strings for each term in the formula for the parameter of interest
-            terms=colnames(attr(terms(form),which="factors")) 
+            #get fixed effect covariates for the parameter of interest
+            vars=get_variables(form)
+            fe_vars=vars[sapply(vars, function(col) !is.factor(data[[col]]))]
             
-            #fixed effects covariates/variables in the formula for the parameter of interest
-            vars=get_variables(form) 
-            vars=vars[vars!="ID"]
-            
+            if (length(fe_vars)!=2) {
+                stop("There should be exactly two fixed effect covariates for the 3D plot. Please consider using another plotting method.")
+            }
             #name of the two covariates
-            var1=vars[1]
-            var2=vars[2]
+            var1=fe_vars[1]
+            var2=fe_vars[2]
+            
+            factor_var=all_vars[sapply(all_vars, function(col) is.factor(data[[col]]))]
             
             #initialize data frame with covariate values 
             new_data<- data.frame(matrix(0, nrow = npoints*npoints, ncol = length(all_vars)))
@@ -2699,17 +2501,16 @@ SDE <- R6Class(
             # Assign column names to the data frame
             colnames(new_data) <- all_vars
             
-            
             #define the grid of covariates
-            cov_values1=seq(from=xmin[[var1]],to=xmax[[var1]],length.out=npoints)
-            cov_values2=seq(from=xmin[[var2]],to=xmax[[var2]],length.out=npoints)
+            cov_values=data.frame(seq(from=xmin[[var1]],to=xmax[[var1]],length.out=npoints),seq(from=xmin[[var2]],to=xmax[[var2]],length.out=npoints))
+            colnames(cov_values)=c(var1,var2)
+            grid<- expand.grid(cov_values)
+            new_data[,fe_vars]=grid
             
-            grid<- expand.grid(cov_values1,cov_values2)
-            new_data[,vars]=grid
-            
-            #put any admissible value in the column ID
-            new_data$ID=rep(data$ID[1],length(grid[,1]))
-            
+            if (length(factor_var)>=1) {
+                #put any admissible value for the factor variable(s)
+                new_data[,factor_var]=data[1,factor_var]
+            }
             
             #get model matrices 
             mats=self$make_mat(new_data=new_data)
@@ -2720,21 +2521,15 @@ SDE <- R6Class(
             fe_names=self$terms()$names_re_all
             index=grep("ID", fe_names, invert = TRUE) #index of names that do not contain "ID"
             
-            #keep coeffs and columns matching those names in the random effects
-            X_re=X_re[,index]
+            #coefficients
             coeff_fe=self$coeff_fe()
-            coeff_re=self$coeff_re()[index,]
+            coeff_re=self$coeff_re()
             
-            #linear predictor
-            lp=X_fe%*%coeff_fe+X_re%*%coeff_re
-            lp=matrix(lp,ncol=n_par)
-            
-            #parameters on response scale
-            par_mat <- matrix(sapply(1:ncol(lp), function(i) {self$invlink()[[i]](lp[,i])}), ncol = ncol(lp))
-            colnames(par_mat) <- names(self$invlink())
-            
-            #dataframe for fixed effects estimations
+            #parameter estimates
+            par_mat=self$par(new_data=new_data,X_fe=X_fe,X_re=X_re,coeff_fe=coeff_fe,coeff_re=coeff_re,re_index=index)
             est=as.data.frame(par_mat[,par])
+            
+            #complete dataframe for fixed effects estimations
             est$var1=new_data[,var1]
             est$var2=new_data[,var2]
             est$X1=link[[var1]](new_data[,var1])
@@ -2748,32 +2543,29 @@ SDE <- R6Class(
                 layout(title=paste(par,"estimations"),scene=list(xaxis = list(title = xlabel[[var1]],showgrid = F),
                                                                  yaxis = list(title = xlabel[[var2]],showgrid = F),zaxis = list(title = par))) 
             
-            #if we are given posterior draws of the parameters, we can plot the CIs
-            if (!(is.null(all_coeff_fe_post)) & !(is.null(all_coeff_re_post))) {
+            if (save) {
                 
-                #confidence intervals for the population smooth
-                coeff_re_post=all_coeff_re_post[,index]
-                coeff_fe_post=all_coeff_fe_post
+                if (!(dir.exists(model_name))) {
+                    dir.create(model_name)
+                }
+                # Save the plot as an HTML file
+                file_path <- file.path(model_name, paste("fe", model_name, par, var1, var2, ".html", sep = "_"))
+                saveWidget(p, file =file_path)
+            }
+            
+            res=list()
+            res[[paste("fe",par,var1,var2,sep="_")]]=p
+            
+            if (show_CI!="none") {
+                CI_fn <- ifelse(show_CI == "pointwise", 
+                                yes = self$CI_pointwise, 
+                                no = self$CI_simultaneous)
                 
-                n = nrow(X_fe)/n_par
-                npost=length(all_coeff_fe_post[,1])
+                sde_CI <- CI_fn(t = "all",new_data=new_data,X_re=X_re,X_fe=X_fe,re_index=index)
                 
-                #Get corresponding SDE parameters
-                post_par <- array(sapply(1:npost, function(i) {
-                    self$par(t = "all", 
-                            X_fe = X_fe, X_re = X_re, 
-                            coeff_fe =coeff_fe_post[i,],
-                            coeff_re = coeff_re_post[i,],
-                            resp = TRUE)  
-                }), dim = c(n, n_par, npost))
-                
-                dimnames(post_par)[[2]] <- names(self$invlink())
-                
-                alpha <- (1 - level)/2
-                sde_CI <- apply(post_par, c(1, 2), quantile, probs = c(alpha, 1 - alpha))
-                
-                sde_CI <- aperm(sde_CI, c(3, 1, 2))
-                dimnames(sde_CI)[[2]] <- c("low", "upp")
+                # Add 95% quantiles of posterior draws to the dataframe
+                est$lowpar <- sde_CI[par, "low",]
+                est$uppar<-sde_CI[par, "upp",]
                 
                 # Data frame for CIs
                 sde_ci_df <- data.frame(var1=new_data[,var1],var2=new_data[,var2],
@@ -2783,60 +2575,98 @@ SDE <- R6Class(
                 sde_ci_df$X1=link[[var1]](new_data[,var1])
                 sde_ci_df$X2=link[[var2]](new_data[,var2])
                 
-                # Create the initial 3D scatter plot
+                quantiles=data.frame(quantile(data[,var1],probs=probs),quantile(data[,var2],probs=probs))
+                colnames(quantiles)=c(var1,var2)
                 
-                df1=sde_ci_df[,c("X1","X2","lowpar")]
-                colnames(df1)=c("x","y","z")
-                df2=sde_ci_df[,c("X1","X2","uppar")]
-                colnames(df2)=c("x","y","z")
-                
-                df_volume=rbind(df1,df2)
-                
-                p <- plot_ly()
-                p <- p %>%
-                    add_trace(data = df_volume, type = "volume", x = ~x, y = ~y, z = ~z,value=~2,
-                              opacity = 0.5, showscale=FALSE,showlegend=FALSE)
-                
-                p<- p %>% add_trace(data=est,type = "mesh3d",
-                                    x = ~X1,y = ~X2,z=~par,intensity=~par,
-                                    colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))
+                for (i in 1:2) {
                     
-                
-                
-                # Layout adjustments for the 3D scene
-                p %>%layout(title=paste(par,"estimations"),scene=list(xaxis = list(title = xlabel[[var1]],showgrid = F),       
-                                                                      yaxis = list(title = xlabel[[var2]],showgrid = F),zaxis = list(title = par)))     
-            }
-            
-            if (save) {
-                
-                if (!(dir.exists(model_name))) {
-                    dir.create(model_name)
+                    var=colnames(quantiles)[i]
+                    fixed_var=colnames(quantiles)[-i]
+                    
+                    for (j in 1:length(probs)) {
+                        
+                        
+                        #initialize data frame with covariate values 
+                        predict<- data.frame(matrix(0, nrow = npoints, ncol = length(all_vars)))
+                        
+                        # Assign column names to the data frame
+                        colnames(new_data) <- all_vars
+                        
+                        #grid values for the covariates we need to plot
+                        predict[[var]]=cov_values[[var]]
+                        
+                        if (length(factor_var)==1) {
+                            #put any admissible value for the factor variable(s)
+                            predict[,factor_var]=data[1,factor_var]
+                        }
+                        
+                        #repeat quantile value for the fixed covariate
+                        predict[[fixed_var]]=rep(quantiles[j,fixed_var],npoints)
+                        
+                        #get SDE parameter values and CI
+                        sde_par <- self$par(t = "all",new_data=predict)
+                        sde_CI <- CI_fn(t = "all",new_data=predict)
+                        
+                        
+                        # Data frame for point estimates
+                        sde_par_df <- data.frame(var=predict[[var]],par_estimates = sde_par[, par])
+                        
+                        # Data frame for CIs
+                        sde_ci_df<- data.frame(var=predict[[var]],
+                                               lowpar = sde_CI[par, "low",],
+                                               uppar = sde_CI[par, "upp",])
+                        
+                        #add link variables
+                        sde_par_df$X=link[[var]](predict[,var])
+                        sde_ci_df$X=link[[var]](predict[,var])
+                        
+                        plot_par=ggplot() +geom_line(aes(X, par_estimates),data=sde_par_df) + 
+                            geom_ribbon(data=sde_ci_df,aes(x=X,ymin=lowpar,ymax=uppar),alpha=0.2)+xlab(xlabel[[var]])+
+                            ylab(par)+ggtitle(paste(xlabel[[fixed_var]],"=",round(link[[fixed_var]](quantiles[j,fixed_var]),2),sep=" "))
+                        
+                        if (!(is.null(true_smooth))) {
+                            
+                            cov_data=data.frame(cov_values[[var]],rep(quantiles[j,fixed_var],npoints))
+                            colnames(cov_data)=c(var,fixed_var)
+                            
+                            true_par_df=data.frame(cov_values[[var]],true_par=true_smooth(cov_data))
+                            
+                            true_par_df$X=link[[var]](cov_values[[var]])
+                            
+                            plot_par=plot_par+geom_line(data=true_par_df,aes(X,true_par),col="red")
+                        }
+                        
+                        
+                        res[[paste("fe",par,var,paste("q",j,sep=""),fixed_var,sep="_")]]=plot_par
+                        
+                        if (save) {
+                            
+                            if (!(dir.exists(model_name))) {
+                                dir.create(model_name)
+                            }
+                            
+                            ggsave(paste(paste("fe",model_name,par,var,paste("q",i,sep=""),fixed_var,sep="_"),".png"),plot=plot_par,width=10,height=5,path=model_name)
+                        }
+                    }
                 }
-                
-                # Save the plot as an HTML file
-                file_path <- file.path(model_name, paste("fe", model_name, par, var1, var2, ".html", sep = "_"))
-                saveWidget(p, file =file_path)
             }
-            
-            res=list()
-            res[[paste("data",par,var1,var2,sep="_")]]=est
-            res[[paste("plot",par,var1,var2,sep="_")]]=p
+        
             return (res)
         },
         
         
         #' @description get all the plots of the estimates of the parameters according to the model formulas
         #' for each parameter :
-        #' - if there are no fixed effects (only random effect), we only plot the value of the parameter for each ID
-        #'  with its confidence interval
+        #' - if there are no fixed effects (only random effect), we create violin plots for the parameter estimates
         #'  - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects on two different plots
         #'  - If there are two covariates, two cases are possible :
         #'       . either the covariates are orthogonal, in which case we plot the fixed effects and 
         #'         the mixed effects for each covariate while forcing the other to 0
-        #'       . or they are not orthogonal, in which case we plot the fixed effects in 3D
-        #' other cases are not handled yet.
-        #' Extraction of the covariate names from the formula may not work for some specific formulas (ex: te(theta,ExpShore,k=c(7,5),bs="cs"))
+        #'       . or they are not orthogonal, in which case we plot the fixed effects in 3D, and
+        #'         we plot each covariate while setting the values of the others to the observed quantiles.
+        #' In any other case, we plot each covariate while setting the values of the others to the observed quantiles.
+        #' Extraction of the covariate names from the formulas is based on regular expressions and may not work for some specific cases. If it happens,
+        #' using function plot_par instead is recommended.
         
         
         #' @param baseline baseline sde model to be compared to (default is NULL). 
@@ -2850,11 +2680,13 @@ SDE <- R6Class(
         #' If NULL, then we take the max of the observed values for each covariate.
         #' @param xlabel list of labels for the x-axis for each covariate.
         #' @param npoints number of points where the fixed effects are plotted
+        #' @param show_CI string to indicate the type of CI. "none", "simultaneous" or "pointwise"
         #' 
         #' @return NULL plots are saved in a folder "model name" in the working directory
         
         
-        get_all_plots = function(baseline=NULL,model_name,link=list(),xmin=list(),xmax=list(),xlabel=list(),npost=1000,level=0.95,show_CI=FALSE) {
+        get_all_plots = function(baseline=NULL,model_name,link=list(),xmin=list(),xmax=list(),
+                                 xlabel=list(),show_CI="none",true_smooths=NULL,save=FALSE) {
             
             
             #get data
@@ -2863,18 +2695,6 @@ SDE <- R6Class(
             # get formulas and parameters
             formulas=self$formulas()
             pars=names(formulas)
-            
-            #draw coeff from posterior distribution once and for all 
-            # to get confidence intervals later
-            if (show_CI) {
-                postcoeff=self$post_coeff(npost)
-                all_coeff_re_post=postcoeff$coeff_re
-                all_coeff_fe_post=postcoeff$coeff_fe
-            }
-            else {
-                all_coeff_re_post=NULL
-                all_coeff_fe_post=NULL
-            }
 
             #get all covariates in the model
             all_vars=unique(unlist(lapply(formulas,get_variables)))
@@ -2906,7 +2726,7 @@ SDE <- R6Class(
                 }
             }
             
-            #initialize an empty list to store the result
+            #initialize an empty list to store the ggplot objects
             res=list()
             
             #loop over the formulas of each parameter 
@@ -2918,48 +2738,65 @@ SDE <- R6Class(
                 #name of parameter j
                 par=pars[j] 
                 
-                #fixed effects covariates/variables in the formula
-                vars=get_variables(form) 
-                vars=vars[vars!="ID"]
+                #fixed effects covariates/variables in the parameter formula
+                vars=get_variables(form)
+                fe_vars=vars[sapply(vars, function(col) !is.factor(data[[col]]))]
                 
-                #number of covariates
-                ncovs=length(vars) 
+                if (length(fe_vars)>2) {
+                    stop("The function only handles plots up to two fixed effect covariates. Please consider using another plotting method.")
+                }
+                
+                #random effect factor covariate
+                factor_var=vars[sapply(vars, function(col) is.factor(data[[col]]))]
+                
+                if (length(factor_var)>1) {
+                    stop("There are multiple factor covariates. This function only handles one single random effect covariate. Please consider
+                         using other plotting methods.")
+                }
+                
+                #number of fixed effect covariates
+                ncovs=length(fe_vars) 
                 
                 #if there is no fixed effect
                 if (ncovs==0) {
-                    res=c(res,self$plot_re_par(par=par,model_name=model_name,npost=npost,level=level,save=TRUE))
+                    res=c(res,self$plot_violin_par(par=par,model_name=model_name,save=save))
                 }
                 
                 #if there are fixed effects
                 else {
                     
-                    #if there is only one fixed effect covariable
+                    #if there is only one fixed effect covariate
                     if (ncovs==1){
                         
-                        #add result to the list
-                        res=c(res,self$plot_fe_par_2D(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
-                                       all_coeff_re_post,all_coeff_fe_post,level,save=TRUE))
-                        self$plot_me_par_2D(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,npost,level,save=TRUE)
+                        #add result to the list  
+                        res=c(res,
+                              self$plot_fe_par_2D(baseline=baseline,model_name=model_name,par=par,xmin=xmin,xmax=xmax,
+                                                  link=link,xlabel=xlabel,show_CI=show_CI,true_smooth=true_smooths[[par]],save=save),
+                              self$plot_me_par_2D(baseline=baseline,model_name=model_name,par=par,
+                                                  xmin=xmin,xmax=xmax,link=link,xlabel=xlabel,show_CI=show_CI,save=save))
+                        
                     }
                     
                     # if there are two fixed effects covariables
                     else if (ncovs==2){
                         
-                        #if the covariates are orthogonal
-                        if (are_orthogonals(data,vars[1],vars[2])) {
-                            #add result to the list
-                            res=c(res,self$plot_fe_par_2D_ortho(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
-                                                 all_coeff_re_post,all_coeff_fe_post,level,save=TRUE))
+                        #if the covariates are orthogonal, plot in 2D
+                        if (are_orthogonals(data,fe_vars[1],fe_vars[2])) {
                             
-                            self$plot_me_par_2D_ortho(baseline,model_name,par,npoints=200,xmin,xmax,link,xlabel,
-                                                 npost,level)
+                            #add result to the list
+                            res=c(res,self$plot_fe_par_2D(baseline,model_name,par,xmin,xmax,link,xlabel,
+                                                 show_CI,true_smooth=true_smooths[[par]],save),
+                                  self$plot_me_par_2D(baseline,model_name,par,xmin,xmax,link,xlabel,
+                                                            show_CI,save))
                         }
                         
                         #else, plot in 3D
                         else {
                             #add result to the list
-                            res=c(res,self$plot_fe_par_3D(baseline,model_name,par,npoints=200,xmin=xmin,xmax=xmax,link=link,
-                                           xlabel=xlabel,all_coeff_re_post,all_coeff_fe_post,level=0.95,save=TRUE))
+                            res=c(res,self$plot_fe_par_3D(baseline=baseline,model_name=model_name,par=par,
+                                                          npoints=50,xmin=xmin,xmax=xmax,link=link,xlabel=xlabel,
+                                                          show_CI=show_CI,probs=c(0.05,0.25,0.5,0.75,0.95),
+                                                          true_smooth=true_smooths[[par]],save=save))
                         }
                     }
                 }
@@ -3024,33 +2861,9 @@ SDE <- R6Class(
                                      "* nu = sqrt(pi/beta)*sigma/2"),
                     "ESEAL_SSM" = paste0("    dL(t) = mu dt + sigma dW(t)\n", 
                                          "    Z(i) ~ N(a1 + a2 L(i)/R(i), tau^2/h(i))"),
-                    "RACVM1"=paste0("     dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau) dW1(t)\n ",
+                    "RACVM"=paste0("     dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau) dW1(t)\n ",
                                     "     dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau)  dW2(t)\n",
-                                  "     dX(t)=V(t) dt \n", "     tau=1/beta \n","     nu=sqrt(pi*beta)/sigma/2"),
-                    "RACVM2"=paste0("    dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ sigma dW1(t)\n ",
-                                    "dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ sigma dW2(t)\n",
-                                    "    dX(t)=V(t) dt \n", "tau=1/beta "),
-                    "RACVM3"=paste0("    dV1(t) = -(1/tau) (V1(t) - mu1) dt + phi/tau*(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau) dW1(t)\n ",
-                                    "dV2(t)=-(1/tau) (V1(t) - mu1) dt - phi/tau*(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau) dW2(t)\n",
-                                    "    dX(t)=V(t) dt \n", "tau=1/beta \n","omega=phi/tau"),
-                    "VM_CRCVM"=paste0("    dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ sigma dW1(t)\n ",
-                                    "    dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ sigma dW2(t)\n",
-                                    "    dX(t)=V(t) dt \n",
-                                      "tau(DistanceShore,phi)=delta0+(taum(DistanceShore)-delta0)/(exp(kappa)-1)*(exp(kappa*cos(c(DistanceShore)*phi))-1) \n",
-                                      "omega(DistanceShore,phi)=-sin(c(DistanceShore)*phi)/tau(DistanceShore,phi) \n",
-                                      "taum(DistanceShore)=tau0+(tau1-tau0)/2*(1-tanh(lambda(DistanceShore-D0)))\n",
-                                      "c(DistanceShore)=(1-tanh(lambda(DistanceShore-D0)))/2"),
-                    "S_CRCVM1"=paste0("    dV(t) = -1/tau(I-Rphi)V(t) dt + sigma dW(t) \n",
-                                    "dX(t)=V(t) dt"),
-                    "I_CRCVM"=paste0("    dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ sigma dW1(t)\n ",
-                                    "    dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ sigma dW2(t)\n",
-                                    "    dX(t)=V(t) dt \n", "tau=tau0, omega=0 if Dshore >D0 \n",
-                                    "tau=delta0+(tau1-delta0)/(exp(kappa)-1)*(exp(kappa*cos(phi))-1) \n",
-                                    "omega=-sin(phi)/tau if DShore<D0 "),
-                    "S_CRCVM2"=paste0("    dV(t) = -1/tau(I-Rphi)V(t) dt + sigma dW(t) \n",
-                                    "    dX(t)=V(t) dt \n",
-                                    "tau=delta0+(tau0-delta0)/2*(1+tanh(lambda(Dshore-D0))) \n",
-                                    "omega=-sin(phi)/tau"))
+                                  "     dX(t)=V(t) dt \n", "     tau=1/beta \n","     nu=sqrt(pi*beta)/sigma/2"))
             
         },
         

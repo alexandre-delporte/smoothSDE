@@ -307,6 +307,37 @@ as_sparse <- function(x) {
 }
 
 
+#' Split string with parenthesis
+#' @param string a string to split based on character sep
+#' @sep separation parameter
+#' 
+#' @return list of string split based on sep, but ignoring sep that are within parenthesis
+
+split_term <- function(string,sep) {
+    parts <- character(0)
+    current_part <- ""
+    parenthesis_count <- 0
+    
+    for (char in unlist(strsplit(string, ""))) {
+        if (char == sep && parenthesis_count == 0) {
+            parts <- c(parts, trimws(current_part))
+            current_part <- ""
+        } else {
+            current_part <- paste(current_part, char, sep = "")
+            if (char == "(") {
+                parenthesis_count <- parenthesis_count + 1
+            } else if (char == ")") {
+                parenthesis_count <- parenthesis_count - 1
+            }
+        }
+    }
+    
+    if (nchar(current_part) > 0) {
+        parts <- c(parts, trimws(current_part))
+    }
+    
+    return(parts)
+}
 
 #' Get covariable names from a formula
 #' @param formula a formula (usually for one parameter of the SDE) 
@@ -323,15 +354,16 @@ get_variables=function(formula) {
   #loop over the formula terms
   for (term in  terms) {
       
-    # Regular expression pattern to match covariate names within parentheses
-    pattern <- "\\((.*?)\\)"
-      
+    # Metacharacters to get only what is after the first parenthesis
+    pattern="\\(.*"
+    
     # Find the substring within parentheses (ex : "(X,k=5,bs='cs')" )
-    match <- regmatches(term, regexpr(pattern, term))
+    match=str_extract(term,pattern)
+    # Remove the parenthesis
+    match=substring(match,2,nchar(match)-1)
       
     if (length(match) > 0) {
-        covariates_string <- gsub("[()]", "", match) #remove parenthesis
-        new_covs <- strsplit(covariates_string, ",\\s*")[[1]]
+        new_covs <- split_term(match,sep=",")
         # Filter out terms containing "="
         new_covs <- new_covs[!grepl("=", new_covs)]
         covariates=c(covariates,new_covs)
