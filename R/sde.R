@@ -5,7 +5,7 @@
 #' 
 #' @importFrom R6 R6Class
 #' @importFrom mgcv gam rmvn
-#' @importFrom stringr
+#' @importFrom stringr str_extract
 #' @importFrom ggplot2 ggplot aes theme_light geom_line theme scale_colour_manual
 #' facet_wrap label_bquote xlab ylab ggtitle element_blank element_text geom_point
 #' geom_ribbon scale_size_manual geom_histogram geom_vline
