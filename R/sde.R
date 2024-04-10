@@ -2645,7 +2645,7 @@ SDE <- R6Class(
                                 dir.create(model_name)
                             }
                             
-                            ggsave(paste(paste("fe",model_name,par,var,paste("q",i,sep=""),fixed_var,sep="_"),".png"),plot=plot_par,width=10,height=5,path=model_name)
+                        ggsave(paste(paste("fe",model_name,par,var,paste("q",j,sep=""),fixed_var,sep="_"),".png"),plot=plot_par,width=10,height=5,path=model_name)
                         }
                     }
                 }
