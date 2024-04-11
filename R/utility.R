@@ -10,6 +10,7 @@
 #' @return Block diagonal matrix
 #' 
 #' @importFrom Matrix bdiag
+#' @importFrom stringr str_extract
 bdiag_check <- function(...) {
     # Only use first argument (matrix or list of matrices)
     args <- list(...)[[1]]
@@ -381,6 +382,7 @@ get_variables=function(formula) {
 #' @param v matrice of bivariate vectors with 2 columns
 #' @return vector of signed angles in [-pi,pi] that rotates first vector into second vector
 #' # https://math.stackexchange.com/questions/529555/signed-angle-between-2-vectors
+#' @export
 signed_angle <- function(u, v) {
   # u, v: matrices of bivariate vectors with 2 columns
   u <- matrix(u, ncol = 2)
@@ -402,7 +404,7 @@ signed_angle <- function(u, v) {
 #' @param point the location from which wa want to find the nearest point on land
 #' @param land sf object (list of polygons) defining the land
 #' @return matrix with on row and two columns that are the coordinates of the nearest point
-#' 
+#' @export
 nearest_shore_point=function(point,coastline) {
   #find the nearest shorepoints on the coastline
   
