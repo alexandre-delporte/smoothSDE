@@ -849,6 +849,9 @@ SDE <- R6Class(
         #' to find names of model terms. This uses fairly naive substring 
         #' matching, and may not work if one covariate's name is a 
         #' substring of another one.
+        #' @re_index index of terms we want to keep in the random effects matrix and coeffs
+        #' May creat conflicts with param "term" if it is not null.
+        #' @ignore_re whether or not to ignore the random effects in the linear predictor
         #' 
         #' @return Matrix of linear predictor 
         #' (X_fe %*% coeff_fe + X_re %*% coeff_re) 
@@ -889,17 +892,18 @@ SDE <- R6Class(
                 coeff_re <- coeff_re_term
             }
             
-            #if index is null, keep all columns
-            if (is.null(re_index)){
-                re_index=1:ncol(X_re)
+            #if index is not null, take a subset of teh random effects
+            if (!is.null(re_index)){
+                X_re=X_re[,re_index]
+                coeff_re=coeff_re[re_index]
             }
-            #set all random effect coefficients to 0
+            #if ignore-re, set all random effect coefficients to 0
             if (ignore_re) {
                 coeff_re=rep(0,length(coeff_re))
             }
             
             # Get linear predictor and format into matrix
-            lp <- X_fe %*% coeff_fe + X_re[,re_index] %*% coeff_re[re_index]
+            lp <- X_fe %*% coeff_fe + X_re %*% coeff_re
             lp_mat <- matrix(lp, ncol = length(self$formulas()))
             colnames(lp_mat) <- names(self$formulas())
             
@@ -936,7 +940,7 @@ SDE <- R6Class(
         #' to find names of model terms. This uses fairly naive substring 
         #' matching, and may not work if one covariate's name is a 
         #' substring of another one.
-        #' @re_cols_index index of terms we want to keep in the random effects matrix and coeffs
+        #' @re_index index of terms we want to keep in the random effects matrix and coeffs
         #' May creat conflicts with param "term" if it is not null.
         #' @return Matrix with one row for each time point in t, and one
         #' column for each SDE parameter
@@ -959,7 +963,7 @@ SDE <- R6Class(
                                             X_fe = X_fe, X_re = X_re,
                                             coeff_fe = coeff_fe, 
                                             coeff_re = coeff_re, 
-                                            term = term,ignore_re=ignore_re)
+                                            term = term,ignore_re=ignore_re,re_index=re_index)
             
             # Apply inverse link to get parameters on response scale
             if(resp) {
