@@ -26,60 +26,68 @@ distribution.
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{
-\item \href{#method-new}{\code{SDE$new()}}
-\item \href{#method-formulas}{\code{SDE$formulas()}}
-\item \href{#method-data}{\code{SDE$data()}}
-\item \href{#method-type}{\code{SDE$type()}}
-\item \href{#method-response}{\code{SDE$response()}}
-\item \href{#method-fixpar}{\code{SDE$fixpar()}}
-\item \href{#method-mats}{\code{SDE$mats()}}
-\item \href{#method-other_data}{\code{SDE$other_data()}}
-\item \href{#method-link}{\code{SDE$link()}}
-\item \href{#method-invlink}{\code{SDE$invlink()}}
-\item \href{#method-coeff_fe}{\code{SDE$coeff_fe()}}
-\item \href{#method-coeff_re}{\code{SDE$coeff_re()}}
-\item \href{#method-lambda}{\code{SDE$lambda()}}
-\item \href{#method-sdev}{\code{SDE$sdev()}}
-\item \href{#method-rho}{\code{SDE$rho()}}
-\item \href{#method-terms}{\code{SDE$terms()}}
-\item \href{#method-out}{\code{SDE$out()}}
-\item \href{#method-tmb_obj}{\code{SDE$tmb_obj()}}
-\item \href{#method-tmb_obj_joint}{\code{SDE$tmb_obj_joint()}}
-\item \href{#method-tmb_rep}{\code{SDE$tmb_rep()}}
-\item \href{#method-obs}{\code{SDE$obs()}}
-\item \href{#method-eqn}{\code{SDE$eqn()}}
-\item \href{#method-X_re_decay}{\code{SDE$X_re_decay()}}
-\item \href{#method-update_coeff_fe}{\code{SDE$update_coeff_fe()}}
-\item \href{#method-update_coeff_re}{\code{SDE$update_coeff_re()}}
-\item \href{#method-update_lambda}{\code{SDE$update_lambda()}}
-\item \href{#method-update_rho}{\code{SDE$update_rho()}}
-\item \href{#method-make_mat}{\code{SDE$make_mat()}}
-\item \href{#method-make_mat_grid}{\code{SDE$make_mat_grid()}}
-\item \href{#method-setup}{\code{SDE$setup()}}
-\item \href{#method-fit}{\code{SDE$fit()}}
-\item \href{#method-linear_predictor}{\code{SDE$linear_predictor()}}
-\item \href{#method-par}{\code{SDE$par()}}
-\item \href{#method-post_coeff}{\code{SDE$post_coeff()}}
-\item \href{#method-post_par}{\code{SDE$post_par()}}
-\item \href{#method-CI_pointwise}{\code{SDE$CI_pointwise()}}
-\item \href{#method-CI_simultaneous}{\code{SDE$CI_simultaneous()}}
-\item \href{#method-residuals}{\code{SDE$residuals()}}
-\item \href{#method-check_post}{\code{SDE$check_post()}}
-\item \href{#method-AIC_conditional}{\code{SDE$AIC_conditional()}}
-\item \href{#method-AIC_marginal}{\code{SDE$AIC_marginal()}}
-\item \href{#method-edf_conditional}{\code{SDE$edf_conditional()}}
-\item \href{#method-simulate}{\code{SDE$simulate()}}
-\item \href{#method-plot_par}{\code{SDE$plot_par()}}
-\item \href{#method-ind_fixcoeff}{\code{SDE$ind_fixcoeff()}}
-\item \href{#method-message}{\code{SDE$message()}}
-\item \href{#method-print_par}{\code{SDE$print_par()}}
-\item \href{#method-print}{\code{SDE$print()}}
-\item \href{#method-clone}{\code{SDE$clone()}}
+\item \href{#method-SDE-new}{\code{SDE$new()}}
+\item \href{#method-SDE-formulas}{\code{SDE$formulas()}}
+\item \href{#method-SDE-data}{\code{SDE$data()}}
+\item \href{#method-SDE-type}{\code{SDE$type()}}
+\item \href{#method-SDE-response}{\code{SDE$response()}}
+\item \href{#method-SDE-fixpar}{\code{SDE$fixpar()}}
+\item \href{#method-SDE-map}{\code{SDE$map()}}
+\item \href{#method-SDE-mats}{\code{SDE$mats()}}
+\item \href{#method-SDE-other_data}{\code{SDE$other_data()}}
+\item \href{#method-SDE-link}{\code{SDE$link()}}
+\item \href{#method-SDE-invlink}{\code{SDE$invlink()}}
+\item \href{#method-SDE-coeff_fe}{\code{SDE$coeff_fe()}}
+\item \href{#method-SDE-coeff_re}{\code{SDE$coeff_re()}}
+\item \href{#method-SDE-lambda}{\code{SDE$lambda()}}
+\item \href{#method-SDE-sdev}{\code{SDE$sdev()}}
+\item \href{#method-SDE-rho}{\code{SDE$rho()}}
+\item \href{#method-SDE-terms}{\code{SDE$terms()}}
+\item \href{#method-SDE-out}{\code{SDE$out()}}
+\item \href{#method-SDE-tmb_obj}{\code{SDE$tmb_obj()}}
+\item \href{#method-SDE-tmb_obj_joint}{\code{SDE$tmb_obj_joint()}}
+\item \href{#method-SDE-tmb_rep}{\code{SDE$tmb_rep()}}
+\item \href{#method-SDE-obs}{\code{SDE$obs()}}
+\item \href{#method-SDE-X_re_decay}{\code{SDE$X_re_decay()}}
+\item \href{#method-SDE-update_coeff_fe}{\code{SDE$update_coeff_fe()}}
+\item \href{#method-SDE-update_coeff_re}{\code{SDE$update_coeff_re()}}
+\item \href{#method-SDE-update_lambda}{\code{SDE$update_lambda()}}
+\item \href{#method-SDE-update_rho}{\code{SDE$update_rho()}}
+\item \href{#method-SDE-make_mat}{\code{SDE$make_mat()}}
+\item \href{#method-SDE-make_mat_grid}{\code{SDE$make_mat_grid()}}
+\item \href{#method-SDE-setup}{\code{SDE$setup()}}
+\item \href{#method-SDE-fit}{\code{SDE$fit()}}
+\item \href{#method-SDE-linear_predictor}{\code{SDE$linear_predictor()}}
+\item \href{#method-SDE-par}{\code{SDE$par()}}
+\item \href{#method-SDE-post_coeff}{\code{SDE$post_coeff()}}
+\item \href{#method-SDE-post_par}{\code{SDE$post_par()}}
+\item \href{#method-SDE-CI_pointwise}{\code{SDE$CI_pointwise()}}
+\item \href{#method-SDE-CI_simultaneous}{\code{SDE$CI_simultaneous()}}
+\item \href{#method-SDE-residuals}{\code{SDE$residuals()}}
+\item \href{#method-SDE-check_post}{\code{SDE$check_post()}}
+\item \href{#method-SDE-AIC_conditional}{\code{SDE$AIC_conditional()}}
+\item \href{#method-SDE-AIC_marginal}{\code{SDE$AIC_marginal()}}
+\item \href{#method-SDE-edf_conditional}{\code{SDE$edf_conditional()}}
+\item \href{#method-SDE-simulate}{\code{SDE$simulate()}}
+\item \href{#method-SDE-plot_par}{\code{SDE$plot_par()}}
+\item \href{#method-SDE-plot_violin_coeff}{\code{SDE$plot_violin_coeff()}}
+\item \href{#method-SDE-plot_violin_par}{\code{SDE$plot_violin_par()}}
+\item \href{#method-SDE-plot_fe_par_2D}{\code{SDE$plot_fe_par_2D()}}
+\item \href{#method-SDE-plot_me_par_2D}{\code{SDE$plot_me_par_2D()}}
+\item \href{#method-SDE-plot_fe_par_3D}{\code{SDE$plot_fe_par_3D()}}
+\item \href{#method-SDE-get_all_plots}{\code{SDE$get_all_plots()}}
+\item \href{#method-SDE-ind_fixcoeff}{\code{SDE$ind_fixcoeff()}}
+\item \href{#method-SDE-eqn}{\code{SDE$eqn()}}
+\item \href{#method-SDE-message}{\code{SDE$message()}}
+\item \href{#method-SDE-print_par}{\code{SDE$print_par()}}
+\item \href{#method-SDE-print}{\code{SDE$print()}}
+\item \href{#method-SDE-stationary}{\code{SDE$stationary()}}
+\item \href{#method-SDE-clone}{\code{SDE$clone()}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-new"></a>}}
-\if{latex}{\out{\hypertarget{method-new}{}}}
+\if{html}{\out{<a id="method-SDE-new"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-new}{}}}
 \subsection{Method \code{new()}}{
 Create a SDE object
 \subsection{Usage}{
@@ -90,7 +98,8 @@ Create a SDE object
   response,
   par0 = NULL,
   fixpar = NULL,
-  other_data = NULL
+  other_data = NULL,
+  map = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -108,7 +117,8 @@ time, and ID}
 Uhlenbeck process), "CTCRW" (continuous-time correlated random walk, a.k.a.
 integrated Ornstein-Uhlenbeck process), "CIR" (Cox-Ingersoll-Ross process),
 "BM_SSM" (BM with measurement error), "OU_SSM" (OU with measurement error),
-"BM_t" (BM with Student's t-distributed increments)}
+"BM_t" (BM with Student's t-distributed increments) and "RACVM" (Rotational correlated
+velocity model with drift).}
 
 \item{\code{response}}{Name of response variable, correspond to a column name in
 \code{data}. Can be a vector of names if multiple response variables}
@@ -129,8 +139,8 @@ A new SDE object
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-formulas"></a>}}
-\if{latex}{\out{\hypertarget{method-formulas}{}}}
+\if{html}{\out{<a id="method-SDE-formulas"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-formulas}{}}}
 \subsection{Method \code{formulas()}}{
 Formulas of SDE object
 \subsection{Usage}{
@@ -139,8 +149,8 @@ Formulas of SDE object
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-data"></a>}}
-\if{latex}{\out{\hypertarget{method-data}{}}}
+\if{html}{\out{<a id="method-SDE-data"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-data}{}}}
 \subsection{Method \code{data()}}{
 Data of SDE object
 \subsection{Usage}{
@@ -149,8 +159,8 @@ Data of SDE object
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-type"></a>}}
-\if{latex}{\out{\hypertarget{method-type}{}}}
+\if{html}{\out{<a id="method-SDE-type"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-type}{}}}
 \subsection{Method \code{type()}}{
 Type of SDE object
 \subsection{Usage}{
@@ -159,8 +169,8 @@ Type of SDE object
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-response"></a>}}
-\if{latex}{\out{\hypertarget{method-response}{}}}
+\if{html}{\out{<a id="method-SDE-response"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-response}{}}}
 \subsection{Method \code{response()}}{
 Name(s) of response variable(s)
 \subsection{Usage}{
@@ -169,8 +179,8 @@ Name(s) of response variable(s)
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-fixpar"></a>}}
-\if{latex}{\out{\hypertarget{method-fixpar}{}}}
+\if{html}{\out{<a id="method-SDE-fixpar"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-fixpar}{}}}
 \subsection{Method \code{fixpar()}}{
 Name(s) of fixed parameter(s)
 \subsection{Usage}{
@@ -179,8 +189,18 @@ Name(s) of fixed parameter(s)
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-mats"></a>}}
-\if{latex}{\out{\hypertarget{method-mats}{}}}
+\if{html}{\out{<a id="method-SDE-map"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-map}{}}}
+\subsection{Method \code{map()}}{
+Map for fixed coefficient(s)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$map()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-mats"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-mats}{}}}
 \subsection{Method \code{mats()}}{
 List of model matrices (X_fe, X_re, and S)
 \subsection{Usage}{
@@ -189,8 +209,8 @@ List of model matrices (X_fe, X_re, and S)
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-other_data"></a>}}
-\if{latex}{\out{\hypertarget{method-other_data}{}}}
+\if{html}{\out{<a id="method-SDE-other_data"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-other_data}{}}}
 \subsection{Method \code{other_data()}}{
 Named list of additional data objects
 \subsection{Usage}{
@@ -199,8 +219,8 @@ Named list of additional data objects
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-link"></a>}}
-\if{latex}{\out{\hypertarget{method-link}{}}}
+\if{html}{\out{<a id="method-SDE-link"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-link}{}}}
 \subsection{Method \code{link()}}{
 Link functions
 \subsection{Usage}{
@@ -209,8 +229,8 @@ Link functions
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-invlink"></a>}}
-\if{latex}{\out{\hypertarget{method-invlink}{}}}
+\if{html}{\out{<a id="method-SDE-invlink"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-invlink}{}}}
 \subsection{Method \code{invlink()}}{
 Inverse link functions
 \subsection{Usage}{
@@ -219,8 +239,8 @@ Inverse link functions
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-coeff_fe"></a>}}
-\if{latex}{\out{\hypertarget{method-coeff_fe}{}}}
+\if{html}{\out{<a id="method-SDE-coeff_fe"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-coeff_fe}{}}}
 \subsection{Method \code{coeff_fe()}}{
 Fixed effect parameters
 \subsection{Usage}{
@@ -229,8 +249,8 @@ Fixed effect parameters
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-coeff_re"></a>}}
-\if{latex}{\out{\hypertarget{method-coeff_re}{}}}
+\if{html}{\out{<a id="method-SDE-coeff_re"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-coeff_re}{}}}
 \subsection{Method \code{coeff_re()}}{
 Random effect parameters
 \subsection{Usage}{
@@ -239,8 +259,8 @@ Random effect parameters
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-lambda"></a>}}
-\if{latex}{\out{\hypertarget{method-lambda}{}}}
+\if{html}{\out{<a id="method-SDE-lambda"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-lambda}{}}}
 \subsection{Method \code{lambda()}}{
 Smoothness parameters
 \subsection{Usage}{
@@ -249,8 +269,8 @@ Smoothness parameters
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-sdev"></a>}}
-\if{latex}{\out{\hypertarget{method-sdev}{}}}
+\if{html}{\out{<a id="method-SDE-sdev"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-sdev}{}}}
 \subsection{Method \code{sdev()}}{
 Standard deviations of smooth terms
 
@@ -264,8 +284,8 @@ standard deviations of independent normal random effects.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-rho"></a>}}
-\if{latex}{\out{\hypertarget{method-rho}{}}}
+\if{html}{\out{<a id="method-SDE-rho"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-rho}{}}}
 \subsection{Method \code{rho()}}{
 Decay parameter
 \subsection{Usage}{
@@ -274,8 +294,8 @@ Decay parameter
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-terms"></a>}}
-\if{latex}{\out{\hypertarget{method-terms}{}}}
+\if{html}{\out{<a id="method-SDE-terms"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-terms}{}}}
 \subsection{Method \code{terms()}}{
 Terms of model formulas
 \subsection{Usage}{
@@ -284,8 +304,8 @@ Terms of model formulas
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-out"></a>}}
-\if{latex}{\out{\hypertarget{method-out}{}}}
+\if{html}{\out{<a id="method-SDE-out"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-out}{}}}
 \subsection{Method \code{out()}}{
 Output of optimiser after model fitting
 \subsection{Usage}{
@@ -294,8 +314,8 @@ Output of optimiser after model fitting
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-tmb_obj"></a>}}
-\if{latex}{\out{\hypertarget{method-tmb_obj}{}}}
+\if{html}{\out{<a id="method-SDE-tmb_obj"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-tmb_obj}{}}}
 \subsection{Method \code{tmb_obj()}}{
 Model object created by TMB. This is the output of 
 the TMB function \code{MakeADFun}, and it is a list including elements
@@ -310,8 +330,8 @@ the TMB function \code{MakeADFun}, and it is a list including elements
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-tmb_obj_joint"></a>}}
-\if{latex}{\out{\hypertarget{method-tmb_obj_joint}{}}}
+\if{html}{\out{<a id="method-SDE-tmb_obj_joint"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-tmb_obj_joint}{}}}
 \subsection{Method \code{tmb_obj_joint()}}{
 Model object created by TMB for the joint likelihood of
 the fixed and random effects. This is the output of the TMB function 
@@ -327,8 +347,8 @@ the fixed and random effects. This is the output of the TMB function
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-tmb_rep"></a>}}
-\if{latex}{\out{\hypertarget{method-tmb_rep}{}}}
+\if{html}{\out{<a id="method-SDE-tmb_rep"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-tmb_rep}{}}}
 \subsection{Method \code{tmb_rep()}}{
 Output of the TMB function \code{sdreport}, which includes 
 estimates and standard errors for all model parameters.
@@ -338,8 +358,8 @@ estimates and standard errors for all model parameters.
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-obs"></a>}}
-\if{latex}{\out{\hypertarget{method-obs}{}}}
+\if{html}{\out{<a id="method-SDE-obs"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-obs}{}}}
 \subsection{Method \code{obs()}}{
 Data frame of observations (subset response
 variables out of full data frame)
@@ -349,18 +369,8 @@ variables out of full data frame)
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-eqn"></a>}}
-\if{latex}{\out{\hypertarget{method-eqn}{}}}
-\subsection{Method \code{eqn()}}{
-Print equation for this model
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$eqn()}\if{html}{\out{</div>}}
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-X_re_decay"></a>}}
-\if{latex}{\out{\hypertarget{method-X_re_decay}{}}}
+\if{html}{\out{<a id="method-SDE-X_re_decay"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-X_re_decay}{}}}
 \subsection{Method \code{X_re_decay()}}{
 Get design matrix for random effects in decay model
 
@@ -377,8 +387,8 @@ Design matrix
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-update_coeff_fe"></a>}}
-\if{latex}{\out{\hypertarget{method-update_coeff_fe}{}}}
+\if{html}{\out{<a id="method-SDE-update_coeff_fe"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-update_coeff_fe}{}}}
 \subsection{Method \code{update_coeff_fe()}}{
 Update fixed effect coefficients
 \subsection{Usage}{
@@ -394,8 +404,8 @@ Update fixed effect coefficients
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-update_coeff_re"></a>}}
-\if{latex}{\out{\hypertarget{method-update_coeff_re}{}}}
+\if{html}{\out{<a id="method-SDE-update_coeff_re"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-update_coeff_re}{}}}
 \subsection{Method \code{update_coeff_re()}}{
 Update random effect coefficients
 \subsection{Usage}{
@@ -411,8 +421,8 @@ Update random effect coefficients
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-update_lambda"></a>}}
-\if{latex}{\out{\hypertarget{method-update_lambda}{}}}
+\if{html}{\out{<a id="method-SDE-update_lambda"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-update_lambda}{}}}
 \subsection{Method \code{update_lambda()}}{
 Update smoothness parameters
 \subsection{Usage}{
@@ -428,8 +438,8 @@ Update smoothness parameters
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-update_rho"></a>}}
-\if{latex}{\out{\hypertarget{method-update_rho}{}}}
+\if{html}{\out{<a id="method-SDE-update_rho"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-update_rho}{}}}
 \subsection{Method \code{update_rho()}}{
 Update decay parameter
 \subsection{Usage}{
@@ -445,8 +455,8 @@ Update decay parameter
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-make_mat"></a>}}
-\if{latex}{\out{\hypertarget{method-make_mat}{}}}
+\if{html}{\out{<a id="method-SDE-make_mat"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-make_mat}{}}}
 \subsection{Method \code{make_mat()}}{
 Create model matrices
 \subsection{Usage}{
@@ -468,14 +478,15 @@ A list of
   \item X_re Design matrix for random effects
   \item S Smoothness matrix
   \item ncol_fe Number of columns for X_fe for each parameter
-  \item ncol_re Number of columns of X_re and S for each random effect
+  \item start_ncol_re Indexes for start of columns of X_re and S matching each random effect
+  \item end_ncol_re Indexes for end of columns of X_re and S matching each random effect
 }
 Design matrices for grid of covariates
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-make_mat_grid"></a>}}
-\if{latex}{\out{\hypertarget{method-make_mat_grid}{}}}
+\if{html}{\out{<a id="method-SDE-make_mat_grid"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-make_mat_grid}{}}}
 \subsection{Method \code{make_mat_grid()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$make_mat_grid(var, covs = NULL)}\if{html}{\out{</div>}}
@@ -499,12 +510,12 @@ plus a data frame of covariates values.
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-setup"></a>}}
-\if{latex}{\out{\hypertarget{method-setup}{}}}
+\if{html}{\out{<a id="method-SDE-setup"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-setup}{}}}
 \subsection{Method \code{setup()}}{
 TMB setup
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$setup(silent = TRUE, map = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$setup(silent = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -518,8 +529,8 @@ TMB setup
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-fit"></a>}}
-\if{latex}{\out{\hypertarget{method-fit}{}}}
+\if{html}{\out{<a id="method-SDE-fit"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-fit}{}}}
 \subsection{Method \code{fit()}}{
 Model fitting
 
@@ -530,7 +541,7 @@ the random effects out of the likelihood.
 After the model has been fitted, the output of \code{optim} can be
 accessed using the method \code{res}.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$fit(silent = TRUE, map = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$fit(silent = TRUE, method = "BFGS")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -538,14 +549,14 @@ accessed using the method \code{res}.
 \describe{
 \item{\code{silent}}{Logical. If TRUE, all tracing outputs are hidden (default).}
 
-\item{\code{map}}{List passed to MakeADFun to fix parameters. See TMB documentation.}
+\item{\code{method}}{String. Method used for optimization using optim R function}
 }
 \if{html}{\out{</div>}}
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-linear_predictor"></a>}}
-\if{latex}{\out{\hypertarget{method-linear_predictor}{}}}
+\if{html}{\out{<a id="method-SDE-linear_predictor"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-linear_predictor}{}}}
 \subsection{Method \code{linear_predictor()}}{
 Get linear predictor for SDE parameters
 \subsection{Usage}{
@@ -556,7 +567,9 @@ Get linear predictor for SDE parameters
   X_re = NULL,
   coeff_fe = NULL,
   coeff_re = NULL,
-  term = NULL
+  term = NULL,
+  re_index = NULL,
+  ignore_re = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -597,8 +610,8 @@ with one row for each time step and one column for each SDE parameter
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-par"></a>}}
-\if{latex}{\out{\hypertarget{method-par}{}}}
+\if{html}{\out{<a id="method-SDE-par"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-par}{}}}
 \subsection{Method \code{par()}}{
 Get SDE parameters
 \subsection{Usage}{
@@ -610,7 +623,9 @@ Get SDE parameters
   coeff_fe = NULL,
   coeff_re = NULL,
   resp = TRUE,
-  term = NULL
+  term = NULL,
+  re_index = NULL,
+  ignore_re = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -636,7 +651,7 @@ by \code{make_mat}. By default, uses design matrix from data.}
 
 \item{\code{resp}}{Logical (default: TRUE). Should the output be on 
 the response scale? If FALSE, the output is on the linear 
-predictor scale.}
+predictor scale}
 
 \item{\code{term}}{Name of model term as character string, e.g., "time", 
 or "s(time)". Use \code{$coeff_fe()} and \code{$coeff_re()} methods
@@ -652,8 +667,8 @@ column for each SDE parameter
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-post_coeff"></a>}}
-\if{latex}{\out{\hypertarget{method-post_coeff}{}}}
+\if{html}{\out{<a id="method-SDE-post_coeff"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-post_coeff}{}}}
 \subsection{Method \code{post_coeff()}}{
 Posterior draws (coefficients)
 \subsection{Usage}{
@@ -673,13 +688,21 @@ posterior draw
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-post_par"></a>}}
-\if{latex}{\out{\hypertarget{method-post_par}{}}}
+\if{html}{\out{<a id="method-SDE-post_par"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-post_par}{}}}
 \subsection{Method \code{post_par()}}{
 Posterior draws of SDE parameters (for uncertainty 
 quantification)
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$post_par(X_fe, X_re, n_post = 100, resp = TRUE, term = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$post_par(
+  X_fe,
+  X_re,
+  n_post = 1000,
+  resp = TRUE,
+  term = NULL,
+  re_index = NULL,
+  ignore_re = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -709,8 +732,8 @@ each SDE parameter, and one layer for each posterior draw
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CI_pointwise"></a>}}
-\if{latex}{\out{\hypertarget{method-CI_pointwise}{}}}
+\if{html}{\out{<a id="method-SDE-CI_pointwise"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-CI_pointwise}{}}}
 \subsection{Method \code{CI_pointwise()}}{
 Pointwise confidence intervals for SDE parameters
 \subsection{Usage}{
@@ -722,7 +745,9 @@ Pointwise confidence intervals for SDE parameters
   level = 0.95,
   n_post = 1000,
   resp = TRUE,
-  term = NULL
+  term = NULL,
+  re_index = NULL,
+  ignore_re = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -779,8 +804,8 @@ List with elements:
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-CI_simultaneous"></a>}}
-\if{latex}{\out{\hypertarget{method-CI_simultaneous}{}}}
+\if{html}{\out{<a id="method-SDE-CI_simultaneous"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-CI_simultaneous}{}}}
 \subsection{Method \code{CI_simultaneous()}}{
 Simultaneous confidence intervals for SDE parameters
 \subsection{Usage}{
@@ -792,7 +817,8 @@ Simultaneous confidence intervals for SDE parameters
   level = 0.95,
   n_post = 1000,
   resp = TRUE,
-  term = NULL
+  term = NULL,
+  re_index = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -844,8 +870,8 @@ List with elements:
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-residuals"></a>}}
-\if{latex}{\out{\hypertarget{method-residuals}{}}}
+\if{html}{\out{<a id="method-SDE-residuals"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-residuals}{}}}
 \subsection{Method \code{residuals()}}{
 Model residuals
 \subsection{Usage}{
@@ -854,25 +880,38 @@ Model residuals
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-check_post"></a>}}
-\if{latex}{\out{\hypertarget{method-check_post}{}}}
+\if{html}{\out{<a id="method-SDE-check_post"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-check_post}{}}}
 \subsection{Method \code{check_post()}}{
 Posterior predictive checks
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$check_post(check_fn, n_sims = 100, silent = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$check_post(
+  check_fn,
+  model_name = "",
+  n_sims = 100,
+  silent = FALSE,
+  save = TRUE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{check_fn}}{Goodness-of-fit function which accepts "data" as input
-and returns a statistic or a vector of statistics, to be compared
+and returns a dataframe of statistics for each individual
+(one row per statistic and one column per ID) ,to be compared
 between observed data and simulations.}
+
+\item{\code{model_name}}{string for the name of the sde model to be checked. 
+Used when save=TRUE. Need to exist a folder with name model_name in the working
+directory}
 
 \item{\code{n_sims}}{Number of simulations to perform}
 
 \item{\code{silent}}{Logical. If FALSE, simulation progress is shown. 
 (Default: FALSE)}
+
+\item{\code{save}}{whether or not to save the plots in folder model_name}
 }
 \if{html}{\out{</div>}}
 }
@@ -884,10 +923,6 @@ List with elements:
   \item{stats}{Matrix of values of goodness-of-fit statistics for the
   simulated data sets (one row for each statistic, and one column for each
   simulation)}
-  \item{plot}{ggplot object showing, for each statistic returned by 
-  check_fn, a histogram of simulated values and a vertical line for the
-  observed value. An observed value in the tails of the simulated
-  distribution suggests lack of fit.}
 }
 Conditional Akaike Information Criterion
 
@@ -900,8 +935,8 @@ in non-parametric terms implied by smoothing)
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-AIC_conditional"></a>}}
-\if{latex}{\out{\hypertarget{method-AIC_conditional}{}}}
+\if{html}{\out{<a id="method-SDE-AIC_conditional"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-AIC_conditional}{}}}
 \subsection{Method \code{AIC_conditional()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$AIC_conditional()}\if{html}{\out{</div>}}
@@ -920,8 +955,8 @@ the model
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-AIC_marginal"></a>}}
-\if{latex}{\out{\hypertarget{method-AIC_marginal}{}}}
+\if{html}{\out{<a id="method-SDE-AIC_marginal"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-AIC_marginal}{}}}
 \subsection{Method \code{AIC_marginal()}}{
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$AIC_marginal()}\if{html}{\out{</div>}}
@@ -932,8 +967,8 @@ Marginal AIC
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-edf_conditional"></a>}}
-\if{latex}{\out{\hypertarget{method-edf_conditional}{}}}
+\if{html}{\out{<a id="method-SDE-edf_conditional"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-edf_conditional}{}}}
 \subsection{Method \code{edf_conditional()}}{
 Effective degrees of freedom
 \subsection{Usage}{
@@ -947,12 +982,21 @@ terms implied by smoothing)
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-simulate"></a>}}
-\if{latex}{\out{\hypertarget{method-simulate}{}}}
+\if{html}{\out{<a id="method-SDE-simulate"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-simulate}{}}}
 \subsection{Method \code{simulate()}}{
 Simulate from SDE model
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$simulate(data, z0 = 0, posterior = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$simulate(
+  data,
+  z0 = 0,
+  posterior = FALSE,
+  atw = NULL,
+  land = NULL,
+  sd_noise = NULL,
+  omega_times = 1,
+  verbose = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -961,12 +1005,27 @@ Simulate from SDE model
 \item{\code{data}}{Data frame for input data. Should have at least one column 'time' for
 times of observations, and columns for covariates if necessary.}
 
-\item{\code{z0}}{Optional value for first observation of simulated time series.
+\item{\code{z0}}{Optional values for first observations of simulated time series.
+Can be a matrix with n_dim columns and n_id rows or a single value that will be repeated
+for each initial position in each dimension
 Default: 0.}
 
 \item{\code{posterior}}{Logical. If TRUE, the parameters used for the simulation
 are drawn from their posterior distribution using \code{SDE$post_coeff}, 
 therefore accounting for uncertainty.}
+
+\item{\code{atw}}{(along the way) Covariates to recompute along the way using the previous velocity and position.
+This should be a list with names matching some covariates in self$formulas() and with elements that 
+are functions to compute the covariate value from the last position, velocity and nearest point on the boundary (if needed).
+If some covariate is not in the list, values in argument "data" are used.
+If NULL, covariate values in "data" are used.}
+
+\item{\code{land}}{polygon data for defining the land (or any constrained domain)
+WARNING : Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position}
+
+\item{\code{omega_times}}{coefficient to multiply omega in RACVM.Default: 1}
+
+\item{\code{noise}}{standard deviation to add gaussian noise in the observations. Default: NULL (no noise)}
 }
 \if{html}{\out{</div>}}
 }
@@ -975,8 +1034,8 @@ Input data frame with extra column for simulated time series
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-plot_par"></a>}}
-\if{latex}{\out{\hypertarget{method-plot_par}{}}}
+\if{html}{\out{<a id="method-SDE-plot_par"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-plot_par}{}}}
 \subsection{Method \code{plot_par()}}{
 Plot observation parameters
 \subsection{Usage}{
@@ -1030,8 +1089,288 @@ A ggplot object
 }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ind_fixcoeff"></a>}}
-\if{latex}{\out{\hypertarget{method-ind_fixcoeff}{}}}
+\if{html}{\out{<a id="method-SDE-plot_violin_coeff"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-plot_violin_coeff}{}}}
+\subsection{Method \code{plot_violin_coeff()}}{
+when there are no fixed effect and a single or no random effect,
+create violin plot for the posterior of the paremeter "par".
+Works only for formula of the form "par=~s(ID,bs="re")" or "par=~1"
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_violin_coeff(
+  model_name,
+  substring = NULL,
+  true_coeff = NULL,
+  save = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{model_name}}{name of the SDE model, used as the directory name where the plots should be saved}
+
+\item{\code{substring}}{substring contained in the coeff names that we want to plot. If it is some parameter name, 
+then only the coeff involved in this parameter are plotted. If NULL, all coeffs are plotted.}
+
+\item{\code{true_coeff}}{dataframe with two columns "value" for the true value of the coeff and "name" for the name of the coeff.}
+
+\item{\code{save}}{boolean to save the plots or not}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+ggplot object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-plot_violin_par"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-plot_violin_par}{}}}
+\subsection{Method \code{plot_violin_par()}}{
+when there are no fixed effect and a single or no random effect,
+create violin plot for the posterior of the paremeter "par".
+Works only for formula of the form "par=~s(ID,bs="re")" or "par=~1"
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_violin_par(model_name, par, save = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{model_name}}{name of the SDE model, used as the directory name where the plots should be saved}
+
+\item{\code{par}}{string matching with one parameter name in the sde}
+
+\item{\code{save}}{boolean to save the plots or not}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+ggplot object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-plot_fe_par_2D"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-plot_fe_par_2D}{}}}
+\subsection{Method \code{plot_fe_par_2D()}}{
+plot the fixed effect for a parameter that depends only on one fixed effect covariate,
+or on two orthogonal covariates in a sde model. 
+The function might be extended to multiple orthogonal covariates.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_fe_par_2D(
+  baseline = NULL,
+  model_name,
+  par,
+  npoints = 200,
+  xmin,
+  xmax,
+  link,
+  xlabel,
+  show_CI = "none",
+  true_smooth = NULL,
+  save = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{baseline}}{a fitted baseline sde model without fixed effect. If not NULL, the baseline values with CI
+appear on the plots}
+
+\item{\code{model_name}}{name of the SDE model, used as the directory name where the plots should be saved}
+
+\item{\code{par}}{the name of the parameter we want to plot}
+
+\item{\code{npoints}}{number of points for the plot}
+
+\item{\code{xmin}}{minimum value of the covariate to plot}
+
+\item{\code{xmax}}{maximum value of the covariate to plot}
+
+\item{\code{link}}{function to link the covariate to the quantity we want to have on the x-axis in the plots}
+
+\item{\code{xlabel}}{label for the quantity in the xaxis for the plot}
+
+\item{\code{show_CI}}{string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment}
+
+\item{\code{true_smooth}}{function that takes a dataframe of covariate values and return a dataframe of true values of the parameter}
+
+\item{\code{save}}{boolean to save or not to save the plots}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+ggplot object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-plot_me_par_2D"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-plot_me_par_2D}{}}}
+\subsection{Method \code{plot_me_par_2D()}}{
+function to plot the estimates for each individual (taking into account one single random effect) 
+for a parameter that depends only on one fixed effect covariate, or on two orthogonal covariates
+ in a sde model. The function might be extended to multiple orthogonal covariates.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_me_par_2D(
+  baseline = NULL,
+  model_name,
+  par,
+  npoints = 200,
+  xmin,
+  xmax,
+  link,
+  xlabel,
+  show_CI,
+  save = TRUE
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{baseline}}{is a baseline model without fixed effects to be compared to (default is NULL).}
+
+\item{\code{model_name}}{string to put in the name of the saved plots}
+
+\item{\code{par}}{name of the parameter we want to plot}
+
+\item{\code{npoints}}{number of points where the smooth population function is plotted}
+
+\item{\code{xmin}}{min values of the covariates to plot the parameters. If NULL, then we take the min
+of the observed values of each covariate}
+
+\item{\code{xmax}}{max values of the covariates to plot the parameters. If NULL, then we take the max
+of the observed values of each covariate}
+
+\item{\code{link}}{function that links the covariate and the quantity appearing in the x axis of the plots}
+
+\item{\code{xlabel}}{the label of the x-axis in the plots}
+
+\item{\code{show_CI}}{string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment}
+
+\item{\code{save}}{boolean}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+ggplot object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-plot_fe_par_3D"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-plot_fe_par_3D}{}}}
+\subsection{Method \code{plot_fe_par_3D()}}{
+3D plot of a parameter when there are two non orthogonal covariates and at most one random effect
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_fe_par_3D(
+  baseline = NULL,
+  model_name,
+  par,
+  npoints = 50,
+  xmin,
+  xmax,
+  link,
+  xlabel,
+  show_CI = "none",
+  probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
+  true_smooth = NULL,
+  save = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{baseline}}{is a baseline model without fixed effects to be compared to (default is NULL).}
+
+\item{\code{model_name}}{string to put in the name of the saved plots}
+
+\item{\code{par}}{name of the parameter we want to plot}
+
+\item{\code{npoints}}{number of points where the smooth population function is plotted}
+
+\item{\code{xmin}}{min values of the covariates to plot the parameters.}
+
+\item{\code{xmax}}{max values of the covariates to plot the parameters.}
+
+\item{\code{link}}{function that links the covariate and the quantity appearing in the x axis of the plots}
+
+\item{\code{xlabel}}{the label of the x-axis in the plots}
+
+\item{\code{show_CI}}{string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment.
+If it is not "none", then 2D plots with confidence intervals of each covariate while the other is fixed at the quantiles
+values are created.}
+
+\item{\code{save}}{boolean}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+ggplot object
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-get_all_plots"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-get_all_plots}{}}}
+\subsection{Method \code{get_all_plots()}}{
+get all the plots of the estimates of the parameters according to the model formulas
+for each parameter :
+- if there are no fixed effects (only random effect), we create violin plots for the parameter estimates
+ - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects on two different plots
+ - If there are two covariates, two cases are possible :
+      . either the covariates are orthogonal, in which case we plot the fixed effects and 
+        the mixed effects for each covariate while forcing the other to 0
+      . or they are not orthogonal, in which case we plot the fixed effects in 3D, and
+        we plot each covariate while setting the values of the others to the observed quantiles.
+In any other case, we plot each covariate while setting the values of the others to the observed quantiles.
+Extraction of the covariate names from the formulas is based on regular expressions and may not work for some specific cases. If it happens,
+using function plot_par instead is recommended.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$get_all_plots(
+  baseline = NULL,
+  model_name,
+  link = list(),
+  xmin = list(),
+  xmax = list(),
+  xlabel = list(),
+  show_CI = "none",
+  true_smooths = NULL,
+  save = FALSE
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{baseline}}{baseline sde model to be compared to (default is NULL). 
+It Should be given as an entry if we want to plot baseline parameters on the smooth functions graph}
+
+\item{\code{model_name}}{string name for the sde model, to be chosen by the used. Used for the filenames to save the plots}
+
+\item{\code{link}}{list of functions that links the fixed effect covariates and the quantity appearing in the x axis of the plots.        #' 
+The names of the list is a subset of the names of all the covariates appearing in the formulas.}
+
+\item{\code{xmin}}{list of min values for each fixed effects covariate in the model to plot the parameters.
+If NULL, then we take the min of the observed values for each covariate.}
+
+\item{\code{xmax}}{list of max values for each fixed effects covariate in the model to plot the parameters.
+If NULL, then we take the max of the observed values for each covariate.}
+
+\item{\code{xlabel}}{list of labels for the x-axis for each covariate.}
+
+\item{\code{show_CI}}{string to indicate the type of CI. "none", "simultaneous" or "pointwise"}
+
+\item{\code{npoints}}{number of points where the fixed effects are plotted}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+NULL plots are saved in a folder "model name" in the working directory
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-ind_fixcoeff"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-ind_fixcoeff}{}}}
 \subsection{Method \code{ind_fixcoeff()}}{
 Indices of fixed coefficients in coeff_fe
 \subsection{Usage}{
@@ -1040,8 +1379,18 @@ Indices of fixed coefficients in coeff_fe
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-message"></a>}}
-\if{latex}{\out{\hypertarget{method-message}{}}}
+\if{html}{\out{<a id="method-SDE-eqn"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-eqn}{}}}
+\subsection{Method \code{eqn()}}{
+Print equation for this model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$eqn()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-message"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-message}{}}}
 \subsection{Method \code{message()}}{
 Print SDE and parameter formulas
 \subsection{Usage}{
@@ -1050,8 +1399,8 @@ Print SDE and parameter formulas
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print_par"></a>}}
-\if{latex}{\out{\hypertarget{method-print_par}{}}}
+\if{html}{\out{<a id="method-SDE-print_par"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-print_par}{}}}
 \subsection{Method \code{print_par()}}{
 Print parameter values for t = 1
 \subsection{Usage}{
@@ -1060,8 +1409,8 @@ Print parameter values for t = 1
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-print"></a>}}
-\if{latex}{\out{\hypertarget{method-print}{}}}
+\if{html}{\out{<a id="method-SDE-print"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-print}{}}}
 \subsection{Method \code{print()}}{
 Print SDE object
 \subsection{Usage}{
@@ -1070,8 +1419,18 @@ Print SDE object
 
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-clone"></a>}}
-\if{latex}{\out{\hypertarget{method-clone}{}}}
+\if{html}{\out{<a id="method-SDE-stationary"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-stationary}{}}}
+\subsection{Method \code{stationary()}}{
+Print stationary distribution
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$stationary()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-clone}{}}}
 \subsection{Method \code{clone()}}{
 The objects of this class are cloneable with this method.
 \subsection{Usage}{
