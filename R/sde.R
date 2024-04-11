@@ -2147,7 +2147,7 @@ SDE <- R6Class(
                 p=ggplot(post_par_df,aes(x=factor,y=par,fill=factor))+geom_violin()+
                 stat_summary(fun=median, geom="point", size=2, color="black")+
                 scale_fill_discrete(labels = labels)+scale_x_discrete(labels = labels)+
-                xlab(factor_var)+ylab(par)
+                xlab(factor_var)+ylab(par)+labs(fill = factor_var)
             }
             
             if (save) {
