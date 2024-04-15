@@ -131,6 +131,10 @@ zero on the link scale.}
 
 \item{\code{other_data}}{Named list of data objects to pass to likelihood, only
 required for special models}
+
+\item{\code{map}}{list with element names that are a subset "coeff_re","coeff_fe","log_lambda",
+used to fix specific coefficients in the model
+(see TMB documentation https://search.r-project.org/CRAN/refmans/TMB/html/MakeADFun.html for more details)}
 }
 \if{html}{\out{</div>}}
 }
@@ -600,6 +604,11 @@ or "s(time)". Use \code{$coeff_fe()} and \code{$coeff_re()} methods
 to find names of model terms. This uses fairly naive substring 
 matching, and may not work if one covariate's name is a 
 substring of another one.}
+
+\item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
+May creat conflicts with param "term" if it is not null.}
+
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
 }
 \if{html}{\out{</div>}}
 }
@@ -658,6 +667,11 @@ or "s(time)". Use \code{$coeff_fe()} and \code{$coeff_re()} methods
 to find names of model terms. This uses fairly naive substring 
 matching, and may not work if one covariate's name is a 
 substring of another one.}
+
+\item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
+May create conflicts with param "term" if it is not null.}
+
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
 }
 \if{html}{\out{</div>}}
 }
@@ -723,6 +737,11 @@ or "s(time)". Use \code{$coeff_fe()} and \code{$coeff_re()} methods
 to find names of model terms. This uses fairly naive substring 
 matching, and may not work if one covariate's name is a 
 substring of another one.}
+
+\item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
+May create conflicts with param "term" if it is not null.}
+
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
 }
 \if{html}{\out{</div>}}
 }
@@ -782,7 +801,12 @@ predictor scale.}
 or "s(time)". Use \code{$coeff_fe()} and \code{$coeff_re()} methods
 to find names of model terms. This uses fairly naive substring 
 matching, and may not work if one covariate's name is a 
-substring of another one.
+substring of another one.}
+
+\item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
+May creat conflicts with param "term" if it is not null.}
+
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
 
 This method generates pointwise confidence intervals 
 by simulation. That is, it generates \code{n_post} posterior samples 
@@ -818,7 +842,8 @@ Simultaneous confidence intervals for SDE parameters
   n_post = 1000,
   resp = TRUE,
   term = NULL,
-  re_index = NULL
+  re_index = NULL,
+  ignore_re = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -853,8 +878,12 @@ predictor scale.}
 or "s(time)". Use \code{$coeff_fe()} and \code{$coeff_re()} methods
 to find names of model terms. This uses fairly naive substring 
 matching, and may not work if one covariate's name is a 
-substring of another one.
+substring of another one.}
 
+\item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
+May creat conflicts with param "term" if it is not null.}
+
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
 This method closely follows the approach suggested by Gavin Simpson at
 fromthebottomoftheheap.net/2016/12/15/simultaneous-interval-revisited/,
 itself based on Section 6.5 of Ruppert et al. (2003).}
@@ -887,7 +916,7 @@ Posterior predictive checks
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$check_post(
   check_fn,
-  model_name = "",
+  model_name = NULL,
   n_sims = 100,
   silent = FALSE,
   save = TRUE
@@ -1023,9 +1052,11 @@ If NULL, covariate values in "data" are used.}
 \item{\code{land}}{polygon data for defining the land (or any constrained domain)
 WARNING : Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position}
 
+\item{\code{sd_noise}}{standard deviation to add gaussian noise in the observations. Default: NULL (no noise)}
+
 \item{\code{omega_times}}{coefficient to multiply omega in RACVM.Default: 1}
 
-\item{\code{noise}}{standard deviation to add gaussian noise in the observations. Default: NULL (no noise)}
+\item{\code{verbose}}{If TRUE, verbose mode}
 }
 \if{html}{\out{</div>}}
 }
@@ -1301,6 +1332,11 @@ ggplot object
 If it is not "none", then 2D plots with confidence intervals of each covariate while the other is fixed at the quantiles
 values are created.}
 
+\item{\code{probs}}{quantile probabilities for the plots where one of the covariate is fixed}
+
+\item{\code{true_smooth}}{Default : NULL, otherwise a function that gives the true value of the parameter "par" depending
+on the relevant covariates}
+
 \item{\code{save}}{boolean}
 }
 \if{html}{\out{</div>}}
@@ -1358,14 +1394,18 @@ If NULL, then we take the max of the observed values for each covariate.}
 
 \item{\code{xlabel}}{list of labels for the x-axis for each covariate.}
 
-\item{\code{show_CI}}{string to indicate the type of CI. "none", "simultaneous" or "pointwise"}
+\item{\code{show_CI}}{string to indicate the type of CI. "none", "simultaneous" or "pointwise". 
+Simultaneous CI do not work for the moment.}
 
-\item{\code{npoints}}{number of points where the fixed effects are plotted}
+\item{\code{true_smooths}}{Default : NULL, otherwise a list of functions for each smooth parameter,
+that give the true value of the parameters depending on the relevant covariates}
+
+\item{\code{save}}{boolean}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-NULL plots are saved in a folder "model name" in the working directory
+list of ggplot objects
 }
 }
 \if{html}{\out{<hr>}}

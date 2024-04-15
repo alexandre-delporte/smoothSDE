@@ -310,7 +310,7 @@ as_sparse <- function(x) {
 
 #' Split string with parenthesis
 #' @param string a string to split based on character sep
-#' @sep separation parameter
+#' @param sep separation parameter
 #' 
 #' @return list of string split based on sep, but ignoring sep that are within parenthesis
 
@@ -376,12 +376,13 @@ get_variables=function(formula) {
 
 
 
-#' @description Compute signed angle in [-pi,pi] that rotates first vector into second vector
+#' Compute signed angle in [-pi,pi] that rotates first vector into second vector
 #' 
 #' @param u matrice of bivariate vectors with 2 columns
 #' @param v matrice of bivariate vectors with 2 columns
 #' @return vector of signed angles in [-pi,pi] that rotates first vector into second vector
 #' # https://math.stackexchange.com/questions/529555/signed-angle-between-2-vectors
+#' 
 #' @export
 signed_angle <- function(u, v) {
   # u, v: matrices of bivariate vectors with 2 columns
@@ -399,11 +400,12 @@ signed_angle <- function(u, v) {
 
 
 
-#' @description Compute nearest point on the land (shoreline) 
+#' Compute nearest point on the land (shoreline) 
 #' 
 #' @param point the location from which wa want to find the nearest point on land
-#' @param land sf object (list of polygons) defining the land
+#' @param coastline sf object (list of polygons) defining the land
 #' @return matrix with on row and two columns that are the coordinates of the nearest point
+#' 
 #' @export
 nearest_shore_point=function(point,coastline) {
   #find the nearest shorepoints on the coastline
@@ -435,7 +437,7 @@ nearest_shore_point=function(point,coastline) {
   return (as.matrix(nearest_point))
 }
 
-#' @description check if two columns of a dataframe are orthogonal
+#' Check if two columns of a dataframe are orthogonal
 #' @param data dataframe
 #' @param C1 column name
 #' @param C2 column name
