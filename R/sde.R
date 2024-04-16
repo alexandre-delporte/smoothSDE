@@ -2081,7 +2081,7 @@ SDE <- R6Class(
                 if (!(dir.exists(model_name))) {
                     dir.create(model_name)
                 }
-                ggsave(paste(paste("violin_coeff_re",substring,model_name,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
+                ggsave(paste(paste("violin_coeff_re",substring,model_name,sep="_"),".png",sep=""),plot=p,path=model_name)
             }
             return (p)
         },
