@@ -85,6 +85,8 @@ SDE <- R6Class(
                                                 tau = log, nu = log)),
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
                             "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                                                tau = log, nu = log,omega=identity)),
+                            "RACVMtest" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log,omega=identity)))
             
             # Inverse link functions for SDE parameters
@@ -104,7 +106,9 @@ SDE <- R6Class(
                                                    tau = exp, nu = exp)),
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
                                "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                   tau = exp, nu = exp,omega=identity)))
+                                                   tau = exp, nu = exp,omega=identity)),
+                               "RACVMtest" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                                                   tau = log, nu = log,omega=identity)))
             
             private$link_ <- link
             private$invlink_ <- invlink
@@ -674,7 +678,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type()=="RACVM") {
+            } else if(self$type() %in% c("RACVM","RACVMtest")) {
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
@@ -864,7 +868,8 @@ SDE <- R6Class(
         linear_predictor = function(new_data = NULL, t = "all",
                                     X_fe = NULL, X_re = NULL,
                                     coeff_fe = NULL, coeff_re = NULL,
-                                    term = NULL,re_index=NULL,ignore_re=FALSE) {
+                                    term = NULL,re_index=NULL,ignore_re=FALSE,
+                                    ignore_fe=FALSE) {
             # Get design matrices (X_fe/X_re) if not provided
             if(is.null(X_fe) | is.null(X_re)) {
                 mats <- self$make_mat(new_data = new_data)
@@ -897,15 +902,20 @@ SDE <- R6Class(
                 coeff_re <- coeff_re_term
             }
             
-            #if index is not null, take a subset of teh random effects
+            #if index is not null, take a subset of the random effects
             if (!is.null(re_index)){
                 X_re=X_re[,re_index]
                 coeff_re=coeff_re[re_index]
             }
-            #if ignore-re, set all random effect coefficients to 0
+            #if ignore_re, set all random effect coefficients to 0
             if (ignore_re) {
                 coeff_re=rep(0,length(coeff_re))
             }
+            #if ignore_fe, set all fixed effect coefficients to 0
+            if (ignore_fe) {
+                coeff_fe=rep(0,length(coeff_fe))
+            }
+            
             
             # Get linear predictor and format into matrix
             lp <- X_fe %*% coeff_fe + X_re %*% coeff_re
@@ -953,7 +963,8 @@ SDE <- R6Class(
         par = function(t = NULL, new_data = NULL, 
                        X_fe = NULL, X_re = NULL,
                        coeff_fe = NULL, coeff_re = NULL, 
-                       resp = TRUE, term = NULL,re_index=NULL,ignore_re=FALSE) {
+                       resp = TRUE, term = NULL,re_index=NULL,
+                       ignore_re=FALSE,ignore_fe=FALSE) {
             # Default t = 1, unless new data are provided (then t = all)
             if(is.null(t)) {
                 if(!is.null(new_data) | !is.null(X_fe) | !is.null(X_re)) {
@@ -969,7 +980,8 @@ SDE <- R6Class(
                                             X_fe = X_fe, X_re = X_re,
                                             coeff_fe = coeff_fe, 
                                             coeff_re = coeff_re, 
-                                            term = term,ignore_re=ignore_re,re_index=re_index)
+                                            term = term,re_index=re_index,
+                                            ignore_re=ignore_re,ignore_fe=ignore_fe)
             
             # Apply inverse link to get parameters on response scale
             if(resp) {
@@ -1110,7 +1122,8 @@ SDE <- R6Class(
         #' 
         #' @return Array with one row for each time step, one column for
         #' each SDE parameter, and one layer for each posterior draw
-        post_par = function(X_fe, X_re, n_post = 1000, resp = TRUE, term = NULL,re_index=NULL,ignore_re=FALSE) {
+        post_par = function(X_fe, X_re, n_post = 1000, resp = TRUE, term = NULL,
+                            re_index=NULL,ignore_re=FALSE,ignore_fe=FALSE) {
             # Number of SDE parameters
             n_par <- length(self$formulas())
             # Number of time steps
@@ -1131,7 +1144,8 @@ SDE <- R6Class(
                          coeff_fe = post_coeff$coeff_fe[i,], 
                          coeff_re = post_coeff$coeff_re[i,],
                          resp = resp, 
-                         term = term,re_index=re_index,ignore_re=ignore_re)  
+                         term = term,re_index=re_index,
+                         ignore_re=ignore_re,ignore_fe=ignore_fe)  
             }), dim = c(n, n_par, n_post))
             dimnames(par_array)[[2]] <- names(self$invlink())
             
@@ -1180,10 +1194,9 @@ SDE <- R6Class(
         #'   \item{\code{low}}{Matrix of lower bounds of confidence intervals.}
         #'   \item{\code{upp}}{Matrix of upper bounds of confidence intervals.}
         #' }
-        CI_pointwise = function(t = NULL, new_data = NULL, 
-                                X_fe = NULL, X_re = NULL, 
-                                level = 0.95, n_post = 1e3, 
-                                resp = TRUE, term = NULL,re_index=NULL,ignore_re=FALSE) {
+        CI_pointwise = function(t = NULL, new_data = NULL, X_fe = NULL, X_re = NULL, 
+                                level = 0.95, n_post = 1e3,resp = TRUE, term = NULL,
+                                re_index=NULL,ignore_re=FALSE,ignore_fe=FALSE) {
             # Default t = 1, unless new data are provided (then t = all)
             if(is.null(t)) {
                 if(!is.null(new_data) | !is.null(X_fe) | !is.null(X_re)) {
@@ -1212,7 +1225,8 @@ SDE <- R6Class(
             # Posterior samples of SDE parameters
             post_par <- self$post_par(X_fe = X_fe, X_re = X_re, 
                                       n_post = n_post, resp = resp,
-                                      term = term,re_index=re_index,ignore_re=ignore_re)
+                                      term = term,re_index=re_index,
+                                      ignore_re=ignore_re,ignore_fe=ignore_fe)
             
             # Get confidence intervals as quantiles of posterior samples
             alpha <- (1 - level)/2
@@ -1262,10 +1276,9 @@ SDE <- R6Class(
         #'   \item{\code{low}}{Matrix of lower bounds of confidence intervals.}
         #'   \item{\code{upp}}{Matrix of upper bounds of confidence intervals.}
         #' }
-        CI_simultaneous = function(t = NULL, new_data = NULL, 
-                                   X_fe = NULL, X_re = NULL, 
-                                   level = 0.95, n_post = 1000, 
-                                   resp = TRUE, term = NULL,re_index=NULL,ignore_re=FALSE) {
+        CI_simultaneous = function(t = NULL, new_data = NULL,X_fe = NULL, X_re = NULL, 
+                                   level = 0.95, n_post = 1000, resp = TRUE, term = NULL,
+                                   re_index=NULL,ignore_re=FALSE,ignore_fe=FALSE) {
             # Default t = 1, unless new data are provided (then t = all)
             if(is.null(t)) {
                 if(!is.null(new_data) | !is.null(X_fe) | !is.null(X_re)) {
@@ -1299,11 +1312,13 @@ SDE <- R6Class(
             # Get SE of parameters on linear predictor scale
             
             par_linpred <- self$par(t = "all", X_fe = X_fe, X_re = X_re, 
-                                    resp = FALSE, term = term,re_index=re_index)
+                                    resp = FALSE, term = term,re_index=re_index,
+                                    ignore_re=ignore_re,ignore_fe=ignore_fe)
             
             CIpw_linpred <- self$CI_pointwise(X_fe = X_fe, X_re = X_re, 
                                               level = level, n_post = n_post, 
-                                              resp = FALSE, term = term,re_index=re_index)
+                                              resp = FALSE, term = term,re_index=re_index,
+                                              ignore_re=ignore_re,ignore_fe=ignore_fe)
             se_linpred <- (par_linpred - t(CIpw_linpred[,"low",]))/qnorm((1 + level)/2)
             se_linpred_vec <- as.vector(se_linpred)
             
@@ -2196,7 +2211,7 @@ SDE <- R6Class(
         #' @return ggplot object
         
         plot_fe_par_2D=function(baseline=NULL,model_name,par,npoints=200,xmin,xmax,
-                                link,xlabel,show_CI="none",true_smooth=NULL,save=FALSE) {
+                                link,xlabel,show_CI="none",ignore_intercept=FALSE,true_smooth=NULL,save=FALSE) {
             
             #get data
             data=self$data()
@@ -2256,14 +2271,16 @@ SDE <- R6Class(
             
                 #extract index of names for fixed effect smooths
                 fe_names=self$terms()$names_re_all
-                index=grep("ID", fe_names, invert = TRUE) #index of names that do not contain "ID"
+                index=grep(factor_var, fe_names, invert = TRUE) #index of names that do not contain factor_var
             
                 #coefficients
                 coeff_fe=self$coeff_fe()
                 coeff_re=self$coeff_re()
+                
             
                 #parameter estimates
-                par_mat=self$par(new_data=new_data,X_fe=X_fe,X_re=X_re,coeff_fe=coeff_fe,coeff_re=coeff_re,re_index=index)
+                par_mat=self$par(new_data=new_data,X_fe=X_fe,X_re=X_re,coeff_fe=coeff_fe,
+                                 coeff_re=coeff_re,re_index=index,ignore_fe=ignore_intercept)
                 est=as.data.frame(par_mat[,par])
                 est$cov=new_data[,var]
                 est$X=link[[var]](new_data[,var])
@@ -2296,7 +2313,7 @@ SDE <- R6Class(
                                 yes = self$CI_pointwise, 
                                 no = self$CI_simultaneous)
                 
-                    sde_CI <- CI_fn(t = "all",new_data=new_data,X_re=X_re,X_fe=X_fe,re_index=index)
+                    sde_CI <- CI_fn(t = "all",new_data=new_data,X_re=X_re,X_fe=X_fe,re_index=index,ignore_fe=ignore_intercept)
                 
                     # Add 95% quantiles of posterior draws to the dataframe
                     est$lowpar <- sde_CI[par, "low",]
@@ -2330,7 +2347,6 @@ SDE <- R6Class(
         
         
         
-        
         #' @description function to plot the estimates for each individual (taking into account one single random effect) 
         #' for a parameter that depends only on one fixed effect covariate, or on two orthogonal covariates
         #'  in a sde model. The function might be extended to multiple orthogonal covariates.
@@ -2349,7 +2365,8 @@ SDE <- R6Class(
         #' @param save boolean
         #' @return ggplot object
         
-        plot_me_par_2D=function(baseline=NULL,model_name,par,npoints=200,xmin,xmax,link,xlabel,show_CI,save=TRUE) {
+        plot_me_par_2D=function(baseline=NULL,model_name,par,npoints=200,xmin,xmax,link,xlabel,
+                                ignore_intercept=FALSE,show_CI,save=TRUE) {
             
             #get data
             data=self$data()
@@ -2414,7 +2431,7 @@ SDE <- R6Class(
                 new_data[,var]=cov_values
                 new_data[[factor_var]]=levels[rep(seq_len(n_levels), each = npoints)] 
                 
-                sde_par <- self$par(t = "all",new_data=new_data)
+                sde_par <- self$par(t = "all",new_data=new_data,ignore_fe=ignore_intercept)
                 
                 # Data frame for point estimates
                 sde_par_df <- data.frame(ID=new_data$ID,Cov=new_data[,var],par_estimates = sde_par[, par])
@@ -2432,7 +2449,7 @@ SDE <- R6Class(
                     CI_fn <- ifelse(show_CI == "pointwise", 
                                     yes = self$CI_pointwise, 
                                     no = self$CI_simultaneous)
-                    sde_CI <- CI_fn(t = "all",new_data=new_data)
+                    sde_CI <- CI_fn(t = "all",new_data=new_data,ignore_fe=ignore_intercept)
                 
                     # Data frame for CIs
                     sde_ci_df <- data.frame(ID=new_data$ID,Cov=new_data[,var],
@@ -2487,7 +2504,8 @@ SDE <- R6Class(
         #' @return ggplot object
         
         plot_fe_par_3D=function(baseline=NULL,model_name,par,npoints=50,xmin,xmax,link,
-                                xlabel,show_CI="none",probs=c(0.05,0.25,0.5,0.75,0.95),true_smooth=NULL,save=FALSE) {
+                                xlabel,show_CI="none",probs=c(0.05,0.25,0.5,0.75,0.95),
+                                true_smooth=NULL,save=FALSE) {
             
             
             data=self$data()
@@ -2714,7 +2732,7 @@ SDE <- R6Class(
         
         
         get_all_plots = function(baseline=NULL,model_name,link=list(),xmin=list(),xmax=list(),
-                                 xlabel=list(),show_CI="none",true_smooths=NULL,save=FALSE) {
+                                 xlabel=list(),show_CI="none",ignore_intercept=FALSE,true_smooths=NULL,save=FALSE) {
             
             
             #get data
@@ -2802,15 +2820,19 @@ SDE <- R6Class(
                             #add plots to the list  
                             res=c(res,
                                   self$plot_fe_par_2D(baseline=baseline,model_name=model_name,par=par,xmin=xmin,xmax=xmax,
-                                                      link=link,xlabel=xlabel,show_CI=show_CI,true_smooth=true_smooths[[par]],save=save))
+                                                      link=link,xlabel=xlabel,show_CI=show_CI,
+                                                      ignore_intercept=ignore_intercept,
+                                                      true_smooth=true_smooths[[par]],save=save))
                         } else {
                         
                             #add plots to the list  
                             res=c(res,
                               self$plot_fe_par_2D(baseline=baseline,model_name=model_name,par=par,xmin=xmin,xmax=xmax,
-                                                  link=link,xlabel=xlabel,show_CI=show_CI,true_smooth=true_smooths[[par]],save=save),
+                                                  link=link,xlabel=xlabel,show_CI=show_CI,ignore_intercept=ignore_intercept,
+                                                  true_smooth=true_smooths[[par]],save=save),
                               self$plot_me_par_2D(baseline=baseline,model_name=model_name,par=par,
-                                                  xmin=xmin,xmax=xmax,link=link,xlabel=xlabel,show_CI=show_CI,save=save))
+                                                  xmin=xmin,xmax=xmax,link=link,xlabel=xlabel,ignore_intercept=ignore_intercept,
+                                                  show_CI=show_CI,save=save))
                         }
                     }
                     
@@ -2824,13 +2846,15 @@ SDE <- R6Class(
                             if (length(factor_var)==0) {
                                 #add plots to the list
                                 res=c(res,self$plot_fe_par_2D(baseline,model_name,par,xmin,xmax,link,xlabel,
-                                                              show_CI,true_smooth=true_smooths[[par]],save))}
+                                                              show_CI,ignore_intercept=ignore_intercept,
+                                                              true_smooth=true_smooths[[par]],save))}
                             else {
                                 #add plots to the list
                                 res=c(res,self$plot_fe_par_2D(baseline,model_name,par,xmin,xmax,link,xlabel,
-                                                              show_CI,true_smooth=true_smooths[[par]],save),
+                                                              show_CI,ignore_intercept=ignore_intercept,
+                                                              true_smooth=true_smooths[[par]],save),
                                       self$plot_me_par_2D(baseline,model_name,par,xmin,xmax,link,xlabel,
-                                                          show_CI,save))
+                                                          show_CI,ignore_intercept=ignore_intercept,save))
                             }
                            
                         }
