@@ -1,5 +1,5 @@
-#ifndef _RACVM_
-#define _RACVM_
+#ifndef _RACVM1_
+#define _RACVM1_
 
 #undef TMB_OBJECTIVE_PTR
 #define TMB_OBJECTIVE_PTR obj
@@ -14,7 +14,7 @@ using namespace Eigen;
 //' @param sigma_obs SD of measurement error
 //' @param n_dim Number of dimensions
 template<class Type>
-matrix<Type> makeH_racvm_test(Type sigma_obs) {
+matrix<Type> makeH_racvm1(Type sigma_obs) {
     matrix<Type> H(2, 2);
     H.setZero();
     for(int i = 0; i < 2; i ++) {
@@ -29,7 +29,7 @@ matrix<Type> makeH_racvm_test(Type sigma_obs) {
 //' @param omega Parameter omega of RCVM
 //' @param dt Length of time interval
 template<class Type>
-matrix<Type> makeT_racvm_test(Type beta, Type omega, Type delta) {
+matrix<Type> makeT_racvm1(Type beta, Type omega, Type delta) {
 
     matrix<Type> T(4, 4);
     T.setZero();
@@ -86,7 +86,7 @@ matrix<Type> makeT_racvm_test(Type beta, Type omega, Type delta) {
 //' @param omega Parameter omega od RCVM
 //' @param delta Length of time interval
 template<class Type>
-matrix<Type> makeQ_racvm_test(Type beta, Type sigma,Type omega, Type delta) {
+matrix<Type> makeQ_racvm1(Type beta, Type sigma,Type omega, Type delta) {
 
     //initialize matrix with zeros
     matrix<Type> Q(4, 4);
@@ -137,7 +137,7 @@ matrix<Type> makeQ_racvm_test(Type beta, Type sigma,Type omega, Type delta) {
 //' @param beta Parameter beta of OU velocity process
 //' @param dt Length of time interval
 template<class Type>
-matrix<Type> makeB_racvm_test(Type beta,Type omega, Type delta) {
+matrix<Type> makeB_racvm1(Type beta,Type omega, Type delta) {
     matrix<Type> B(4,2);
     B.setZero();
 
@@ -185,7 +185,7 @@ matrix<Type> makeB_racvm_test(Type beta,Type omega, Type delta) {
 //' habitat selection. PhD thesis, University of Sheffield.
 //' (etheses.whiterose.ac.uk/23688/1/TheoMichelot_PhD_thesis_April2019.pdf)
 template <class Type>
-Type nllk_racvm_test(objective_function<Type>* obj) {
+Type nllk_racvm1(objective_function<Type>* obj) {
     //======//
     // DATA //
     //======//
@@ -246,7 +246,7 @@ Type nllk_racvm_test(objective_function<Type>* obj) {
     Z.setZero();
     Z(0,0)=1;
     Z(1,1)=1;
-    matrix<Type> H = makeH_racvm(sigma_obs);
+    matrix<Type> H = makeH_racvm1(sigma_obs);
     matrix<Type> T(4, 4);
     matrix<Type> Q(4, 4);
     matrix<Type> F(2, 2);
@@ -291,9 +291,9 @@ Type nllk_racvm_test(objective_function<Type>* obj) {
             Type beta_value = (beta(i)+beta(i+1))/2;
             Type sigma_value = (sigma(i)+sigma(i+1))/2;
             Type omega_value=(omega(i)+omega(i+1))/2;
-            matrix<Type> T = makeT_racvm(beta_value,omega_value,dtimes(i));
-            matrix<Type> Q = makeQ_racvm(beta_value, sigma_value, omega_value, dtimes(i));
-            matrix<Type> B = makeB_racvm(beta_value,omega_value,dtimes(i));
+            matrix<Type> T = makeT_racvm1(beta_value,omega_value,dtimes(i));
+            matrix<Type> Q = makeQ_racvm1(beta_value, sigma_value, omega_value, dtimes(i));
+            matrix<Type> B = makeB_racvm1(beta_value,omega_value,dtimes(i));
 
             // Mean velocity component of state update
             vector<Type> mu_i = mu.row(i).transpose();

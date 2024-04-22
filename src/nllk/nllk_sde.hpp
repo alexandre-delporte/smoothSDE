@@ -24,8 +24,7 @@ Type nllk_sde(objective_function<Type>* obj) {
     DATA_SPARSE_MATRIX(X_fe); // Design matrix for fixed effects
     DATA_SPARSE_MATRIX(X_re); // Design matrix for random effects
     DATA_SPARSE_MATRIX(S); // Penalty matrix
-    DATA_IVECTOR(start_ncol_re); // Number of columns of S and X_re for each random effect
-    DATA_IVECTOR(end_ncol_re);
+    DATA_IMATRIX(ncol_re);
     DATA_INTEGER(include_penalty); // If this is 0, don't include penalty
     DATA_VECTOR(other_data); // Optional extra data needed to evaluate the likelihood
     DATA_VECTOR(t_decay);
@@ -94,15 +93,15 @@ Type nllk_sde(objective_function<Type>* obj) {
         int S_start = 0;
         
         // Loop over smooths
-        for(int i = 0; i < start_ncol_re.size(); i++) {
+        for(int i = 0; i < ncol_re.cols(); i++) {
             // Size of penalty matrix for this smooth
-            int Sn = end_ncol_re(i) - start_ncol_re(i) + 1;
+            int Sn = ncol_re(1,i) - ncol_re(0,i) + 1;
             
             // Penalty matrix for this smooth
             Eigen::SparseMatrix<Type> this_S = S.block(S_start, S_start, Sn, Sn);
             
             // Coefficients for this smooth
-            vector<Type> this_coeff_re = coeff_re.segment(start_ncol_re(i) - 1, Sn);
+            vector<Type> this_coeff_re = coeff_re.segment(ncol_re(0,i) - 1, Sn);
             
             // Add penalty
             nllk = nllk -
