@@ -1886,7 +1886,7 @@ SDE <- R6Class(
                         
                         # Loop over time steps
                         sub_obs <- rep(z0[id,d], sub_n)
-                        for(i in 2:n) {
+                        for(i in 2:sub_n) {
                             c <- 2 * beta[i-1] / 
                                 ((1 - exp(-beta[i-1] * dtimes[i-1])) * sigma[i-1]^2)
                             df <- 4 * beta[i-1] * mu[i-1] / sigma[i-1]^2
