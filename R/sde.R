@@ -2189,7 +2189,9 @@ SDE <- R6Class(
                 }
                 ggsave(paste(paste("violin",model_name,par,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
             }
-            return (p)
+            res=list()
+            res[[paste("violin",par,sep="_")]]=p
+            return (res)
         },
         
         
