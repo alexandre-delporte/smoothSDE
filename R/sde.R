@@ -8,8 +8,10 @@
 #' @importFrom ggplot2 ggplot aes theme_light geom_line theme scale_colour_manual
 #' facet_wrap label_bquote xlab ylab ggtitle element_blank element_text geom_point
 #' geom_ribbon scale_size_manual geom_histogram geom_vline
+#' @importFrom plotly plot_ly layout
+#' @importFrom htmlwidgets saveWidget
 #' @importFrom TMB MakeADFun sdreport
-#' @import Hmisc
+#' @importFrom Hmisc mean_sdl
 #' 
 #' 
 #' @useDynLib smoothSDE, .registration = TRUE
@@ -2572,18 +2574,21 @@ SDE <- R6Class(
             
             #parameter estimates
             par_mat=self$par(new_data=new_data,X_fe=X_fe,X_re=X_re,coeff_fe=coeff_fe,coeff_re=coeff_re,re_index=index)
-            est=matrix(par_mat[,par],npoints,npoints)
             
-            #complete dataframe for fixed effects estimations
-            X1=link[[var1]](cov_values[[var1]])
-            X2=link[[var2]](cov_values[[var2]])
+            #matrix of values for surface plot
+            z=matrix(par_mat[,par],npoints,npoints)
+            
+            #values of the x and y axis
+            Y=link[[var1]](cov_values[[var1]])
+            X=link[[var2]](cov_values[[var2]])
             
             
             p <- plot_ly(type = "surface",
-                         contours = list(z = list(show = TRUE, start = min(est), end = max(est), size = (max(est)-min(est))/10,color="black")),
-                         x = ~X2,y = ~X1,z=~est,colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))%>%
-                layout(title=paste(par,"estimations"),scene=list(xaxis = list(title = xlabel[[var2]],showgrid = T),
-                                                                 yaxis = list(title = xlabel[[var1]],showgrid = T),zaxis = list(title = par))) 
+                         contours = list(z = list(show = TRUE, start = min(z), end = max(z), size = (max(z)-min(z))/10,color="black")),
+                         x = ~X,y = ~Y,z=~z,colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))%>% colorbar(title = "") %>%
+                layout(title=paste(par,"estimations"),
+                       scene=list(xaxis = list(title = xlabel[[var2]],showgrid = T), yaxis = list(title = xlabel[[var1]],showgrid = T),zaxis = list(title = par)))
+            
             
             if (save) {
                 
@@ -2598,10 +2603,11 @@ SDE <- R6Class(
             res=list()
             res[[paste("fe",par,var1,var2,sep="_")]]=p
             
-                
+            #quantile of observed covariate values
             quantiles=data.frame(quantile(data[,var1],probs=probs),quantile(data[,var2],probs=probs))
             colnames(quantiles)=c(var1,var2)
-                
+            
+          
             for (i in 1:2) {
                     
                 var=colnames(quantiles)[i]
@@ -2645,10 +2651,7 @@ SDE <- R6Class(
                         
                         sde_CI <- CI_fn(t = "all",new_data=new_data,X_re=X_re,X_fe=X_fe,re_index=index)
                         
-                        # Add 95% quantiles of posterior draws to the dataframe
-                        est$lowpar <- sde_CI[par, "low",]
-                        est$uppar<-sde_CI[par, "upp",]
-                        
+                       
                         # Data frame for CIs
                         sde_ci_df <- data.frame(var1=new_data[,var1],var2=new_data[,var2],
                                                 lowpar = sde_CI[par, "low",],
@@ -2690,7 +2693,7 @@ SDE <- R6Class(
                             dir.create(model_name)
                         }
                             
-                        ggsave(paste(paste("fe",model_name,par,var,paste("q",j,sep=""),fixed_var,sep="_"),".png"),
+                        ggsave(paste(paste("fe",model_name,par,var,paste("q",probs[j],sep=""),fixed_var,sep="_"),".png"),
                                plot=plot_par,width=10,height=5,path=model_name)
                         }
                     }
