@@ -8,7 +8,7 @@
 #' @importFrom ggplot2 ggplot aes theme_light geom_line theme scale_colour_manual
 #' facet_wrap label_bquote xlab ylab ggtitle element_blank element_text geom_point
 #' geom_ribbon scale_size_manual geom_histogram geom_vline
-#' @importFrom plotly plot_ly layout
+#' @importFrom plotly plot_ly layout colorbar
 #' @importFrom htmlwidgets saveWidget
 #' @importFrom TMB MakeADFun sdreport
 #' @importFrom Hmisc smean.sdl
