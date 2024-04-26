@@ -46,7 +46,6 @@ SDE <- R6Class(
         #' @param map list with element names that are a subset "coeff_re","coeff_fe","log_lambda",
         #' used to fix specific coefficients in the model
         #' (see TMB documentation https://search.r-project.org/CRAN/refmans/TMB/html/MakeADFun.html for more details)
-        #' 
         #' @return A new SDE object
         initialize = function(formulas = NULL, data, type, response, par0 = NULL, 
                               fixpar = NULL, other_data = NULL,map = NULL) {
@@ -797,7 +796,9 @@ SDE <- R6Class(
         #' 
         #' @param silent Logical. If TRUE, all tracing outputs are hidden (default).
         #' @param method String. Method used for optimization using optim R function
-        fit = function(silent = TRUE,method="BFGS") {
+        #' @param lower Numeric vector. Used to define bounds on parameters in optimization with optim R function
+        #' @param upper NUmeric vector. Used to define bounds on parameters in optimization with optim R function
+        fit = function(silent = TRUE,method="BFGS",lower=-Inf,upper=Inf) {
             # Print model formulation
             self$message()
             
@@ -810,7 +811,8 @@ SDE <- R6Class(
                 # Fit model
                 private$out_ <- optim(par = private$tmb_obj_$par,
                                       fn = private$tmb_obj_$fn, 
-                                      gr = private$tmb_obj_$gr,control=list(trace=1),method=method)
+                                      gr = private$tmb_obj_$gr,control=list(trace=1),
+                                      method=method,lower=lower,upper=upper)
                 # private$out_ <- do.call(optim, private$tmb_obj_)
             })
             private$out_$systime <- sys_time
@@ -2568,21 +2570,18 @@ SDE <- R6Class(
             
             #parameter estimates
             par_mat=self$par(new_data=new_data,X_fe=X_fe,X_re=X_re,coeff_fe=coeff_fe,coeff_re=coeff_re,re_index=index)
-            est=as.data.frame(par_mat[,par])
+            est=matrix(par_mat[,par],npoints,npoints)
             
             #complete dataframe for fixed effects estimations
-            est$var1=new_data[,var1]
-            est$var2=new_data[,var2]
-            est$X1=link[[var1]](new_data[,var1])
-            est$X2=link[[var2]](new_data[,var2])
-            colnames(est)=c("par",var1,var2,"X1","X2")
+            X1=link[[var1]](cov_values[[var1]])
+            X2=link[[var2]](cov_values[[var2]])
             
             
-            p <- plot_ly(est,type = "mesh3d",
-                         x = ~X1,y = ~X2,z=~par,intensity=~par,
-                         colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))%>%
-                layout(title=paste(par,"estimations"),scene=list(xaxis = list(title = xlabel[[var1]],showgrid = F),
-                                                                 yaxis = list(title = xlabel[[var2]],showgrid = F),zaxis = list(title = par))) 
+            p <- plot_ly(type = "surface",
+                         contours = list(z = list(show = TRUE, start = min(est), end = max(est), size = (max(est)-min(est))/10,color="black")),
+                         x = ~X2,y = ~X1,z=~est,colors=colorRamp(c("blue", "lightblue", "chartreuse3", "yellow", "red")))%>%
+                layout(title=paste(par,"estimations"),scene=list(xaxis = list(title = xlabel[[var2]],showgrid = T),
+                                                                 yaxis = list(title = xlabel[[var1]],showgrid = T),zaxis = list(title = par))) 
             
             if (save) {
                 
@@ -2700,32 +2699,32 @@ SDE <- R6Class(
         
         #' @description get all the plots of the estimates of the parameters according to the model formulas
         #' for each parameter :
-        #' - if there are no fixed effects (only random effect), we create violin plots for the parameter estimates
-        #'  - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects on two different plots
-        #'  - If there are two covariates, two cases are possible :
-        #'       . either the covariates are orthogonal, in which case we plot the fixed effects and 
-        #'         the mixed effects for each covariate while forcing the other to 0
+        #' - if there are no fixed effects, we create violin plots for the parameter estimates
+        #'  - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects (if there is one random effect) on two different plots
+        #'  - If there are two fixed effects, two cases are possible :
+        #'       . either the covariates are orthogonal, in which case we plot the fixed effects (and 
+        #'         the mixed effects if there is one random effect) for each covariate while forcing the other to 0
         #'       . or they are not orthogonal, in which case we plot the fixed effects in 3D, and
         #'         we plot each covariate while setting the values of the others to the observed quantiles.
-        #' In any other case, we plot each covariate while setting the values of the others to the observed quantiles.
+        #' In any other case, we plot each covariate while setting the values of the others to the observed quantiles (NOT DONE YET)
         #' Extraction of the covariate names from the formulas is based on regular expressions and may not work for some specific cases. If it happens,
         #' using function plot_par instead is recommended.
         
         
         #' @param baseline baseline sde model to be compared to (default is NULL). 
-        #' It Should be given as an entry if we want to plot baseline parameters on the smooth functions graph
-        #' @param model_name string name for the sde model, to be chosen by the used. Used for the filenames to save the plots
-        #' @param link list of functions that links the fixed effect covariates and the quantity appearing in the x axis of the plots.        #' 
+        #' It Should be given as an entry if we want to plot baseline intercepts on the smooth functions graph
+        #' @param model_name string name for the sde model, to be chosen by the user. Used for the filenames to save the plots
+        #' @param link list of functions that links the fixed effect covariates and the quantity appearing in the axis of the plots.        #' 
         #' The names of the list is a subset of the names of all the covariates appearing in the formulas.
         #' @param xmin list of min values for each fixed effects covariate in the model to plot the parameters.
         #' If NULL, then we take the min of the observed values for each covariate.
         #' @param xmax list of max values for each fixed effects covariate in the model to plot the parameters.
         #' If NULL, then we take the max of the observed values for each covariate.
-        #' @param xlabel list of labels for the x-axis for each covariate.
+        #' @param xlabel list of labels for the axis of the plot for each covariate.
         #' @param show_CI string to indicate the type of CI. "none", "simultaneous" or "pointwise". 
         #' Simultaneous CI do not work for the moment.
         #' @param true_smooths Default : NULL, otherwise a list of functions for each smooth parameter,
-        #' that give the true value of the parameters depending on the relevant covariates
+        #' that takes in entry a dataframe of covariates and give the true value of the parameters depending on the relevant covariates
         #' @param save boolean
         #' 
         #' @return list of ggplot objects 
