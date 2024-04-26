@@ -11,7 +11,7 @@
 #' @importFrom plotly plot_ly layout
 #' @importFrom htmlwidgets saveWidget
 #' @importFrom TMB MakeADFun sdreport
-#' @importFrom Hmisc mean_sdl
+#' @importFrom Hmisc smean.sdl
 #' 
 #' 
 #' @useDynLib smoothSDE, .registration = TRUE
@@ -865,7 +865,7 @@ SDE <- R6Class(
         #' @param re_index index of terms we want to keep in the random effects matrix and coeffs
         #' May creat conflicts with param "term" if it is not null.
         #' @param ignore_re whether or not to ignore the random effects in the linear predictor
-        #' 
+        #' @param ignore_fe whether or not to ignore the fixed effects (intercepts)
         #' @return Matrix of linear predictor 
         #' (X_fe %*% coeff_fe + X_re %*% coeff_re) 
         #' with one row for each time step and one column for each SDE parameter
@@ -962,6 +962,7 @@ SDE <- R6Class(
         #' @param re_index index of terms we want to keep in the random effects matrix and coeffs
         #' May create conflicts with param "term" if it is not null.
         #' @param ignore_re whether or not to ignore the random effects in the linear predictor
+        #' @param ignore_fe whether or not to ignore the fixed effects (intercepts)
         #' @return Matrix with one row for each time point in t, and one
         #' column for each SDE parameter
         par = function(t = NULL, new_data = NULL, 
@@ -1123,6 +1124,7 @@ SDE <- R6Class(
         #' @param re_index index of terms we want to keep in the random effects matrix and coeffs
         #' May create conflicts with param "term" if it is not null.
         #' @param ignore_re whether or not to ignore the random effects in the linear predictor
+        #' @param ignore_fe whether or not to ignore the fixed effects (intercepts)
         #' 
         #' @return Array with one row for each time step, one column for
         #' each SDE parameter, and one layer for each posterior draw
@@ -1183,6 +1185,7 @@ SDE <- R6Class(
         #' @param re_index index of terms we want to keep in the random effects matrix and coeffs
         #' May creat conflicts with param "term" if it is not null.
         #' @param ignore_re whether or not to ignore the random effects in the linear predictor
+        #' @param ignore_fe whether or not to ignore the fixed effects (intercepts)
         #' 
         #' This method generates pointwise confidence intervals 
         #' by simulation. That is, it generates \code{n_post} posterior samples 
@@ -1271,6 +1274,9 @@ SDE <- R6Class(
         #' @param re_index index of terms we want to keep in the random effects matrix and coeffs
         #' May creat conflicts with param "term" if it is not null.
         #' @param ignore_re whether or not to ignore the random effects in the linear predictor
+        #' @param ignore_fe whether or not to ignore the fixed effects (intercepts)
+        #' 
+        #' 
         #' This method closely follows the approach suggested by Gavin Simpson at
         #' fromthebottomoftheheap.net/2016/12/15/simultaneous-interval-revisited/,
         #' itself based on Section 6.5 of Ruppert et al. (2003).
@@ -2214,6 +2220,7 @@ SDE <- R6Class(
         #' @param show_CI string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment
         #' @param true_smooth function that takes a dataframe of covariate values and return a dataframe of true values of the parameter
         #' @param save boolean to save or not to save the plots
+        #' @param ignore_intercept whether or not to ignore the fixed effects (intercepts)
         #' @return ggplot object
         
         plot_fe_par_2D=function(baseline=NULL,model_name,par,npoints=200,xmin,xmax,
@@ -2367,6 +2374,7 @@ SDE <- R6Class(
         #' of the observed values of each covariate
         #' @param link  function that links the covariate and the quantity appearing in the x axis of the plots
         #' @param xlabel the label of the x-axis in the plots
+        #' @param ignore_intercept whether or not to ignore the fixed effects (intercepts)
         #' @param show_CI string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment
         #' @param save boolean
         #' @return ggplot object
@@ -2728,6 +2736,7 @@ SDE <- R6Class(
         #' @param xlabel list of labels for the axis of the plot for each covariate.
         #' @param show_CI string to indicate the type of CI. "none", "simultaneous" or "pointwise". 
         #' Simultaneous CI do not work for the moment.
+        #' @param ignore_intercept whether or not to ignore the fixed effects (intercepts)
         #' @param true_smooths Default : NULL, otherwise a list of functions for each smooth parameter,
         #' that takes in entry a dataframe of covariates and give the true value of the parameters depending on the relevant covariates
         #' @param save boolean
