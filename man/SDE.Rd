@@ -545,7 +545,7 @@ the random effects out of the likelihood.
 After the model has been fitted, the output of \code{optim} can be
 accessed using the method \code{res}.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$fit(silent = TRUE, method = "BFGS")}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$fit(silent = TRUE, method = "BFGS", lower = -Inf, upper = Inf)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -554,6 +554,10 @@ accessed using the method \code{res}.
 \item{\code{silent}}{Logical. If TRUE, all tracing outputs are hidden (default).}
 
 \item{\code{method}}{String. Method used for optimization using optim R function}
+
+\item{\code{lower}}{Numeric vector. Used to define bounds on parameters in optimization with optim R function}
+
+\item{\code{upper}}{NUmeric vector. Used to define bounds on parameters in optimization with optim R function}
 }
 \if{html}{\out{</div>}}
 }
@@ -573,7 +577,8 @@ Get linear predictor for SDE parameters
   coeff_re = NULL,
   term = NULL,
   re_index = NULL,
-  ignore_re = FALSE
+  ignore_re = FALSE,
+  ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -609,6 +614,8 @@ substring of another one.}
 May creat conflicts with param "term" if it is not null.}
 
 \item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+
+\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)}
 }
 \if{html}{\out{</div>}}
 }
@@ -634,7 +641,8 @@ Get SDE parameters
   resp = TRUE,
   term = NULL,
   re_index = NULL,
-  ignore_re = FALSE
+  ignore_re = FALSE,
+  ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -672,6 +680,8 @@ substring of another one.}
 May create conflicts with param "term" if it is not null.}
 
 \item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+
+\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)}
 }
 \if{html}{\out{</div>}}
 }
@@ -715,7 +725,8 @@ quantification)
   resp = TRUE,
   term = NULL,
   re_index = NULL,
-  ignore_re = FALSE
+  ignore_re = FALSE,
+  ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -742,6 +753,8 @@ substring of another one.}
 May create conflicts with param "term" if it is not null.}
 
 \item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+
+\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)}
 }
 \if{html}{\out{</div>}}
 }
@@ -766,7 +779,8 @@ Pointwise confidence intervals for SDE parameters
   resp = TRUE,
   term = NULL,
   re_index = NULL,
-  ignore_re = FALSE
+  ignore_re = FALSE,
+  ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -806,7 +820,9 @@ substring of another one.}
 \item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
 May creat conflicts with param "term" if it is not null.}
 
-\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+
+\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)
 
 This method generates pointwise confidence intervals 
 by simulation. That is, it generates \code{n_post} posterior samples 
@@ -843,7 +859,8 @@ Simultaneous confidence intervals for SDE parameters
   resp = TRUE,
   term = NULL,
   re_index = NULL,
-  ignore_re = FALSE
+  ignore_re = FALSE,
+  ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
 }
 
@@ -883,7 +900,11 @@ substring of another one.}
 \item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
 May creat conflicts with param "term" if it is not null.}
 
-\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+
+\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)
+
+
 This method closely follows the approach suggested by Gavin Simpson at
 fromthebottomoftheheap.net/2016/12/15/simultaneous-interval-revisited/,
 itself based on Section 6.5 of Ruppert et al. (2003).}
@@ -1197,6 +1218,7 @@ The function might be extended to multiple orthogonal covariates.
   link,
   xlabel,
   show_CI = "none",
+  ignore_intercept = FALSE,
   true_smooth = NULL,
   save = FALSE
 )}\if{html}{\out{</div>}}
@@ -1223,6 +1245,8 @@ appear on the plots}
 \item{\code{xlabel}}{label for the quantity in the xaxis for the plot}
 
 \item{\code{show_CI}}{string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment}
+
+\item{\code{ignore_intercept}}{whether or not to ignore the fixed effects (intercepts)}
 
 \item{\code{true_smooth}}{function that takes a dataframe of covariate values and return a dataframe of true values of the parameter}
 
@@ -1251,6 +1275,7 @@ for a parameter that depends only on one fixed effect covariate, or on two ortho
   xmax,
   link,
   xlabel,
+  ignore_intercept = FALSE,
   show_CI,
   save = TRUE
 )}\if{html}{\out{</div>}}
@@ -1276,6 +1301,8 @@ of the observed values of each covariate}
 \item{\code{link}}{function that links the covariate and the quantity appearing in the x axis of the plots}
 
 \item{\code{xlabel}}{the label of the x-axis in the plots}
+
+\item{\code{ignore_intercept}}{whether or not to ignore the fixed effects (intercepts)}
 
 \item{\code{show_CI}}{string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment}
 
@@ -1351,14 +1378,14 @@ ggplot object
 \subsection{Method \code{get_all_plots()}}{
 get all the plots of the estimates of the parameters according to the model formulas
 for each parameter :
-- if there are no fixed effects (only random effect), we create violin plots for the parameter estimates
- - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects on two different plots
- - If there are two covariates, two cases are possible :
-      . either the covariates are orthogonal, in which case we plot the fixed effects and 
-        the mixed effects for each covariate while forcing the other to 0
+- if there are no fixed effects, we create violin plots for the parameter estimates
+ - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects (if there is one random effect) on two different plots
+ - If there are two fixed effects, two cases are possible :
+      . either the covariates are orthogonal, in which case we plot the fixed effects (and 
+        the mixed effects if there is one random effect) for each covariate while forcing the other to 0
       . or they are not orthogonal, in which case we plot the fixed effects in 3D, and
         we plot each covariate while setting the values of the others to the observed quantiles.
-In any other case, we plot each covariate while setting the values of the others to the observed quantiles.
+In any other case, we plot each covariate while setting the values of the others to the observed quantiles (NOT DONE YET)
 Extraction of the covariate names from the formulas is based on regular expressions and may not work for some specific cases. If it happens,
 using function plot_par instead is recommended.
 \subsection{Usage}{
@@ -1370,6 +1397,7 @@ using function plot_par instead is recommended.
   xmax = list(),
   xlabel = list(),
   show_CI = "none",
+  ignore_intercept = FALSE,
   true_smooths = NULL,
   save = FALSE
 )}\if{html}{\out{</div>}}
@@ -1379,11 +1407,11 @@ using function plot_par instead is recommended.
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{baseline}}{baseline sde model to be compared to (default is NULL). 
-It Should be given as an entry if we want to plot baseline parameters on the smooth functions graph}
+It Should be given as an entry if we want to plot baseline intercepts on the smooth functions graph}
 
-\item{\code{model_name}}{string name for the sde model, to be chosen by the used. Used for the filenames to save the plots}
+\item{\code{model_name}}{string name for the sde model, to be chosen by the user. Used for the filenames to save the plots}
 
-\item{\code{link}}{list of functions that links the fixed effect covariates and the quantity appearing in the x axis of the plots.        #' 
+\item{\code{link}}{list of functions that links the fixed effect covariates and the quantity appearing in the axis of the plots.        #' 
 The names of the list is a subset of the names of all the covariates appearing in the formulas.}
 
 \item{\code{xmin}}{list of min values for each fixed effects covariate in the model to plot the parameters.
@@ -1392,13 +1420,15 @@ If NULL, then we take the min of the observed values for each covariate.}
 \item{\code{xmax}}{list of max values for each fixed effects covariate in the model to plot the parameters.
 If NULL, then we take the max of the observed values for each covariate.}
 
-\item{\code{xlabel}}{list of labels for the x-axis for each covariate.}
+\item{\code{xlabel}}{list of labels for the axis of the plot for each covariate.}
 
 \item{\code{show_CI}}{string to indicate the type of CI. "none", "simultaneous" or "pointwise". 
 Simultaneous CI do not work for the moment.}
 
+\item{\code{ignore_intercept}}{whether or not to ignore the fixed effects (intercepts)}
+
 \item{\code{true_smooths}}{Default : NULL, otherwise a list of functions for each smooth parameter,
-that give the true value of the parameters depending on the relevant covariates}
+that takes in entry a dataframe of covariates and give the true value of the parameters depending on the relevant covariates}
 
 \item{\code{save}}{boolean}
 }
