@@ -48,9 +48,12 @@ SDE <- R6Class(
         #' @param map list with element names that are a subset "coeff_re","coeff_fe","log_lambda",
         #' used to fix specific coefficients in the model
         #' (see TMB documentation https://search.r-project.org/CRAN/refmans/TMB/html/MakeADFun.html for more details)
+        #' @param knots knots for smooth parameters expressed as splines : a list with one for each parameter, which is itself a list with one 
+        #' element for each covariate containing the position of the knots. The numbers of knotsshould be consistent with the splines
+        #'  degree of freedom
         #' @return A new SDE object
         initialize = function(formulas = NULL, data, type, response, par0 = NULL, 
-                              fixpar = NULL, other_data = NULL,map = NULL) {
+                              fixpar = NULL, other_data = NULL,map = NULL,knots=NULL) {
             private$type_ <- type
             private$response_ <- response
             private$fixpar_ <- fixpar
@@ -150,7 +153,7 @@ SDE <- R6Class(
             private$data_ <- data
             
             # Save terms of model formulas and model matrices
-            mats <- self$make_mat()
+            mats <- self$make_mat(knots=knots)
             ncol_fe <- mats$ncol_fe
             ncol_re <- mats$ncol_re
             private$terms_ <- list(ncol_fe = ncol_fe,
@@ -417,7 +420,7 @@ SDE <- R6Class(
         #'   \item start_ncol_re Indexes for start of columns of X_re and S matching each random effect
         #'   \item end_ncol_re Indexes for end of columns of X_re and S matching each random effect
         #' }
-        make_mat = function(new_data = NULL) {
+        make_mat = function(new_data = NULL,knots=NULL) {
             # Initialise lists of matrices
             X_list_fe <- list() #list of fixed effect design matrices
             X_list_re <- list() #list of random effect design matrices
@@ -440,14 +443,14 @@ SDE <- R6Class(
                 if(is.null(new_data)) {
                     gam_setup <- gam(formula = update(form, dummy ~ .), 
                                      data = cbind(dummy = 1, self$data()), 
-                                     fit = FALSE)
+                                     fit = FALSE,knots=knots[[par_name]])
                     Xmat <- gam_setup$X
                     # Extract column names for design matrices
                     term_names <- gam_setup$term.names
                 } else {
                     # Get design matrix for new data set
                     gam_setup <- gam(formula = update(form, dummy ~ .), 
-                                     data = cbind(dummy = 1, self$data()))
+                                     data = cbind(dummy = 1, self$data()),knots=knots)
                     Xmat <- predict(gam_setup, newdata = new_data, type = "lpmatrix")
                     # Extract column names for design matrices
                     term_names <- names(gam_setup$coefficients)
