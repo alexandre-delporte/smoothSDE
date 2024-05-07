@@ -2287,7 +2287,12 @@ SDE <- R6Class(
             
                 #extract index of names for fixed effect smooths
                 fe_names=self$terms()$names_re_all
-                index=grep(factor_var, fe_names, invert = TRUE) #index of names that do not contain factor_var
+                if (length(factor_var)>0) {
+                    index=grep(factor_var, fe_names, invert = TRUE) #index of names that do not contain factor_var
+                }
+                else {
+                    index=NULL
+                }
             
                 #coefficients
                 coeff_fe=self$coeff_fe()
@@ -2577,7 +2582,12 @@ SDE <- R6Class(
             
             #extract index of names for fixed effect coeff
             fe_names=self$terms()$names_re_all
-            index=grep("ID", fe_names, invert = TRUE) #index of names that do not contain "ID"
+            if (length(factor_var>0)) {
+                index=grep(factor_var, fe_names, invert = TRUE) #index of names that do not contain the factor var
+            }
+            else {
+                index=NULL
+            }
             
             #coefficients
             coeff_fe=self$coeff_fe()
