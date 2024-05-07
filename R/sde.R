@@ -2957,7 +2957,7 @@ SDE <- R6Class(
                     "ESEAL_SSM" = paste0("    dL(t) = mu dt + sigma dW(t)\n", 
                                          "    Z(i) ~ N(a1 + a2 L(i)/R(i), tau^2/h(i))"),
                     "RACVM"=paste0("     dV1(t) = -(1/tau) (V1(t) - mu1) dt + omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau) dW1(t)\n ",
-                                    "     dV2(t)=-(1/tau) (V1(t) - mu1) dt - omega(V2(t)-mu2)dt+ (2*nu)/sqrt(pi*tau)  dW2(t)\n",
+                                    "     dV2(t)=-(1/tau) (V2(t) - mu1) dt - omega(V1(t)-mu2)dt+ (2*nu)/sqrt(pi*tau)  dW2(t)\n",
                                   "     dX(t)=V(t) dt \n", "     tau=1/beta \n","     nu=sqrt(pi*beta)/sigma/2"))
             
         },
