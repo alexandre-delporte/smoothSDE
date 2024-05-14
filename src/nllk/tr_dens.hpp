@@ -51,6 +51,7 @@ Type tr_dens(vector<Type> Z1, vector<Type> Z0, Type dtimes, vector<Type> par,
                     (1 - exp(-2 * dtimes / exp(par(n_dim)))));
                 res = res + dnorm(Z1(i), mean, sd, true);
             } else if(type == "CIR") {
+                
                 // Cox-Ingersoll-Ross model:
                 // dZ_t = beta(t) (mu(t) - Z_t) dt + sigma(t) sqrt(Z_t) dW_t
                 // where par = log(mu_1), ..., log(mu_d), log(beta), log(sigma)

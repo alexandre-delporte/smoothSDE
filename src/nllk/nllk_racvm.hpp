@@ -121,8 +121,8 @@ matrix<Type> makeQ_racvm(Type beta, Type sigma,Type omega, Type delta) {
     Q(0,2) = cov1;
     Q(2,0) = cov1;
     Q(0,3) = cov2;
-    Q(3,0) = cov2;
-    Q(1,2) = cov2;
+    Q(3,0) = -cov2;
+    Q(1,2) = -cov2;
     Q(2,1) = cov2;
     Q(1,3) = cov1;
     Q(3,1) = cov1;
