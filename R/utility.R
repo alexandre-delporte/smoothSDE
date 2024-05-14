@@ -224,7 +224,7 @@ RACVM_cov <- function(beta, sigma,omega,dt) {
   var_zeta=sigma^2/(2*beta)*(1-exp(-2*dt*beta))
   cov1=sigma^2/(2*C)*(1+exp(-2*dt*beta)-2*exp(-dt*beta)*cos(omega*dt))
   cov2=sigma^2/C*(exp(-dt*beta)*sin(omega*dt)-omega/(2*beta)*(1-exp(-2*dt*beta)))
-  Q=matrix(c(var_xi,0,cov1,cov2,0,var_xi,cov2,cov1,cov1,cov2,var_zeta,0,cov2,cov1,0,var_zeta),nrow=4,byrow=TRUE)
+  Q=matrix(c(var_xi,0,cov1,cov2,0,var_xi,-cov2,cov1,cov1,cov2,var_zeta,0,-cov2,cov1,0,var_zeta),nrow=4,byrow=TRUE)
   
   return(Q)   
 }
