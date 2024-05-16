@@ -2307,7 +2307,7 @@ SDE <- R6Class(
                 est$X=link[[var]](new_data[,var])
                 colnames(est)=c("par",var,"X")
             
-                p=ggplot()+geom_line(data=est,aes(X,par),col="red")+xlab(xlabel)+ylab(par)
+                p=ggplot()+geom_line(data=est,aes(X,par),col="red")+xlab(xlabe[[var]])+ylab(par)
             
                 #if there is a baseline, add its values to the df
                 if (!(is.null(baseline))) {
