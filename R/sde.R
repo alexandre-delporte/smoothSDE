@@ -2307,7 +2307,7 @@ SDE <- R6Class(
                 est$X=link[[var]](new_data[,var])
                 colnames(est)=c("par",var,"X")
             
-                p=ggplot()+geom_line(data=est,aes(X,par),col="red")+xlab(xlabe[[var]])+ylab(par)
+                p=ggplot()+geom_line(data=est,aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)
             
                 #if there is a baseline, add its values to the df
                 if (!(is.null(baseline))) {
@@ -2465,7 +2465,7 @@ SDE <- R6Class(
                 labels=paste("A",1:n_levels,sep="")
                 
                 p=ggplot()+geom_line(aes(X, par_estimates,col=ID),data=sde_par_df) +
-                    scale_color_discrete(name=factor_var,labels=labels)+xlab(xlabel)+ylab(par)
+                    scale_color_discrete(name=factor_var,labels=labels)+xlab(xlabel[[var]])+ylab(par)
                 
                 if (show_CI!="none") {
                     CI_fn <- ifelse(show_CI == "pointwise", 
