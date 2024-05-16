@@ -2641,7 +2641,7 @@ SDE <- R6Class(
                     predict<- data.frame(matrix(0, nrow = npoints, ncol = length(all_vars)))
                         
                     # Assign column names to the data frame
-                    colnames(new_data) <- all_vars
+                    colnames(predict) <- all_vars
                         
                     #grid values for the covariates we need to plot
                     predict[[var]]=cov_values[[var]]
