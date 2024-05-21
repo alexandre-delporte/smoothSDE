@@ -1082,26 +1082,29 @@ SDE <- R6Class(
               post_list$coeff_fe <- post_fe
             }
             
-            ind_est_re=1:sum(length(self$coeff_re()))
-            #Deal with fixed coefficients in coeff_re in the map argument
-            if (!(is.null(map)) & "coeff_re" %in% names(map)) {
-              #indices of coefficients that are not fixed in map
-              ind_est_re=which(!is.na(map$coeff_re))
-            }
+            #if there are random effects
+            if (!is.null(rep$par.random)) {
+                ind_est_re=1:sum(length(self$coeff_re()))
+                #Deal with fixed coefficients in coeff_re in the map argument
+                if (!(is.null(map)) & "coeff_re" %in% names(map)) {
+                     #indices of coefficients that are not fixed in map
+                    ind_est_re=which(!is.na(map$coeff_re))
+                }
             
-            # In post_re, set columns for fixed coefficients to fixed value,
-            # and use posterior draws for non-fixed coefficients
-            post_re <- matrix(rep(self$coeff_re(), each = n_post),
+                # In post_re, set columns for fixed coefficients to fixed value,
+                # and use posterior draws for non-fixed coefficients
+                post_re <- matrix(rep(self$coeff_re(), each = n_post),
                               nrow = n_post, ncol = length(self$coeff_re()))
             
-            #if all coefficients are fixed, set all posterior draws to fixed values
-            if (!("coeff_re" %in% names(post_list))) {
-              post_list$coeff_re <- post_re
-            }
-            #else, change only parameters that are estimated
-            else {
-              post_re[,ind_est_re] <- post_list$coeff_re
-              post_list$coeff_re <- post_re
+                #if all coefficients are fixed, set all posterior draws to fixed values
+                if (!("coeff_re" %in% names(post_list))) {
+                 post_list$coeff_re <- post_re
+                }
+                #else, change only parameters that are estimated
+                else {
+                 post_re[,ind_est_re] <- post_list$coeff_re
+                 post_list$coeff_re <- post_re
+                }
             }
             # Set column names
             colnames(post_list$coeff_fe) <- self$terms()$names_fe
