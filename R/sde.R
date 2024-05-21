@@ -824,7 +824,7 @@ SDE <- R6Class(
             # Get estimates and precision matrix for all parameters
             private$tmb_rep_ <- sdreport(private$tmb_obj_, 
                                          getJointPrecision = TRUE, 
-                                         skip.delta.method = FALSE,bias.correct=TRUE)
+                                         skip.delta.method = FALSE)
             
             # Save parameter estimates
             par_list <- as.list(private$tmb_rep_, "Estimate")
