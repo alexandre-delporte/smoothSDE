@@ -588,15 +588,8 @@ SDE <- R6Class(
                 # If there are random effects, 
                 # set initial values for coeff_re and log_lambda
                 random <- c(random, "coeff_re")
-                #initialize to 0
-                coeff_re0=self$coeff_re()
-                #change to specific values according to 
-                #coeff_re0 in other_data if provided
-                if (!is.null(self$other_data()$coeff_re0)) {
-                  coeff_names=rownames(self$other_data()$coeff_re0)
-                  coeff_re0[coeff_names,]=self$other_data()$coeff_re0
-                }
-                tmb_par$coeff_re <- coeff_re0
+                #initialize 
+                tmb_par$coeff_re <- self$coeff_re()
                 tmb_par$log_lambda <- log(self$lambda())
             }
             
@@ -2099,7 +2092,8 @@ SDE <- R6Class(
             #ggplot
             p=ggplot()+geom_violin(data=post_coeff_df,aes(x=factor,y=value,fill=factor))+
                 xlab(" ")+labs(fill = "Estimated coefficients")+
-                theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+                theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+
+                theme_minimal()
             
             if (!(is.null(true_coeff))) {
                 
@@ -2119,7 +2113,7 @@ SDE <- R6Class(
         
         #' @description when there are no fixed effect and a single or no random effect,
         #' create violin plot for the posterior of the paremeter "par".
-        #' Works only for formula of the form "par=~s(ID,bs="re")" or "par=~1"
+        #' Works only for formula of the form "par=~s(.,bs="re")" or "par=~1"
         #' 
         #' @param model_name name of the SDE model, used as the directory name where the plots should be saved
         #' @param par string matching with one parameter name in the sde
@@ -2164,7 +2158,7 @@ SDE <- R6Class(
                 #ggplot
                 p=ggplot(post_par_df,aes(x=factor,y=par,fill=factor))+geom_violin()+
                     stat_summary(fun.data=mean_sdl,geom="pointrange", color="black")+xlab(" ")+ylab(par)+
-                    theme(legend.position = "none")
+                    theme(legend.position = "none")+theme_minimal()
             }
             else {
                 
@@ -2194,7 +2188,7 @@ SDE <- R6Class(
                 p=ggplot(post_par_df,aes(x=factor,y=par,fill=factor))+geom_violin()+
                 stat_summary(fun=median, geom="point", size=2, color="black")+
                 scale_fill_discrete(labels = labels)+scale_x_discrete(labels = labels)+
-                xlab(factor_var)+ylab(par)+labs(fill = factor_var)
+                xlab(factor_var)+ylab(par)+labs(fill = factor_var)+theme_minimal()
             }
             
             if (save) {
@@ -2310,7 +2304,7 @@ SDE <- R6Class(
                 est$X=link[[var]](new_data[,var])
                 colnames(est)=c("par",var,"X")
             
-                p=ggplot()+geom_line(data=est,aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)
+                p=ggplot()+geom_line(data=est,aes(X,par),col="red")+xlab(xlabel[[var]])+ylab(par)+theme_minimal()
             
                 #if there is a baseline, add its values to the df
                 if (!(is.null(baseline))) {
@@ -2468,7 +2462,8 @@ SDE <- R6Class(
                 labels=paste("A",1:n_levels,sep="")
                 
                 p=ggplot()+geom_line(aes(X, par_estimates,col=ID),data=sde_par_df) +
-                    scale_color_discrete(name=factor_var,labels=labels)+xlab(xlabel[[var]])+ylab(par)
+                    scale_color_discrete(name=factor_var,labels=labels)+xlab(xlabel[[var]])+ylab(par)+
+                    theme_minimal()
                 
                 if (show_CI!="none") {
                     CI_fn <- ifelse(show_CI == "pointwise", 
@@ -2502,9 +2497,9 @@ SDE <- R6Class(
                     if (!(dir.exists(model_name))) {
                         dir.create(model_name)
                     }
-                    ggsave(paste(paste("me",model_name,par,var,sep="_"),".png"),plot=p,width=10,height=5,path=model_name)
+                    ggsave(paste(paste("me",model_name,par,var,sep="_"),".png",sep=""),plot=p,width=10,height=5,path=model_name)
                 }
-            res[[paste("fe",par,var,sep="_")]]=p
+            res[[paste("me",par,var,sep="_")]]=p
             }
         return (res)
         },
@@ -2636,6 +2631,7 @@ SDE <- R6Class(
                     
                 var=colnames(quantiles)[i]
                 fixed_var=colnames(quantiles)[-i]
+                
                     
                 for (j in 1:length(probs)) {
                         
@@ -2666,7 +2662,9 @@ SDE <- R6Class(
                     
                     #ggplot
                     plot_par=ggplot() +geom_line(aes(X, par_estimates),data=sde_par_df)+xlab(xlabel[[var]])+
-                        ylab(par)+ggtitle(paste(xlabel[[fixed_var]],"=",round(link[[fixed_var]](quantiles[j,fixed_var]),2),sep=" "))
+                        ylab(par)+ggtitle(paste(xlabel[[fixed_var]],"=",
+                                                round(link[[fixed_var]](quantiles[j,fixed_var]),2),sep=" "))+
+                        theme_minimal()
                     
                     if (show_CI!="none") {
                         CI_fn <- ifelse(show_CI == "pointwise", 

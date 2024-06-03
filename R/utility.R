@@ -360,14 +360,21 @@ get_variables=function(formula) {
     
     # Find the substring within parentheses (ex : "(X,k=5,bs='cs')" )
     match=str_extract(term,pattern)
-    # Remove the parenthesis
-    match=substring(match,2,nchar(match)-1)
+    
+    #if no parentheses, assume it is a linear term
+    if (is.na(match)) {
+        covariates=c(covariates,term)
+    }
+    else {
+        # Remove the parenthesis
+        match=substring(match,2,nchar(match)-1)
       
-    if (length(match) > 0) {
-        new_covs <- split_term(match,sep=",")
-        # Filter out terms containing "="
-        new_covs <- new_covs[!grepl("=", new_covs)]
-        covariates=c(covariates,new_covs)
+        if (length(match) > 0) {
+            new_covs <- split_term(match,sep=",")
+            # Filter out terms containing "="
+            new_covs <- new_covs[!grepl("=", new_covs)]
+            covariates=c(covariates,new_covs)
+        }
     }
   }
 
