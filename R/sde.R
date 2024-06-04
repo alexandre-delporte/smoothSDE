@@ -1024,7 +1024,7 @@ SDE <- R6Class(
             map=self$map()
         
             
-            # Vector of all parameters
+            # Vector of all parameters that are not fixed 
             par_all <- c(rep$par.fixed, rep$par.random)
             
             # Make sure that parameters have the same order in vector of estimates
@@ -1042,30 +1042,24 @@ SDE <- R6Class(
                 post_coeff[, which(names_coeff == name), drop = FALSE])
             names(post_list) <- unique(names_coeff)
             
-            # Add empty vector for coeff_re if no random effects
-            if(!"coeff_re" %in% unique(names_coeff)) {
-                post_list$coeff_re <- matrix(NA, nrow = n_post, ncol = 0)
-            }
+            # In post_fe, set columns for fixed parameters to fixed value,
+            # and use posterior draws for non-fixed parameters
+            post_fe <- matrix(rep(self$coeff_fe(), each = n_post),
+                              nrow = n_post, ncol = sum(self$terms()$ncol_fe))
             
-            # Deal with fixed SDE parameters in argument fixpar
+            # Get indices of fixed fixed effect coefficients in fixpar and map
             ind_estpar <- which(!names(self$formulas()) %in% self$fixpar())
             # Indices of estimated coefficients in coeff_fe
             fe_cols <- rep(1:n_par, self$terms()$ncol_fe)
             ind_est_fe <- which(fe_cols %in% ind_estpar)
             
-            #Deal with fixed intercepts in coeff_fe in the map argument
             if (!(is.null(map)) & "coeff_fe" %in% names(map)) {
               #indices of intercept that are not fixed in map
               ind_est_intercept=which(!is.na(map$coeff_fe))
               ind_est_fe=intersect(ind_est_fe,ind_est_intercept)
             }
             
-            
-            # In post_fe, set columns for fixed parameters to fixed value,
-            # and use posterior draws for non-fixed parameters
-            post_fe <- matrix(rep(self$coeff_fe(), each = n_post),
-                              nrow = n_post, ncol = sum(self$terms()$ncol_fe))
-            #if all intercepts are fixed, set all posterior draws to fixed values
+            #if all fixed effects coeffs are fixed, set all posterior draws to fixed values
             if (!("coeff_fe" %in% names(post_list))) {
               post_list$coeff_fe <- post_fe
             }
@@ -1075,19 +1069,23 @@ SDE <- R6Class(
               post_list$coeff_fe <- post_fe
             }
             
+            # Set column names for fixed effects
+            colnames(post_list$coeff_fe) <- self$terms()$names_fe
+            
             #if there are random effects
-            if (!is.null(rep$par.random)) {
+            if (!is.null(self$coeff_re())) {
+                
+                # In post_re, set columns for fixed coefficients to fixed value,
+                # and use posterior draws for non-fixed coefficients
+                post_re <- matrix(rep(self$coeff_re(), each = n_post),
+                                  nrow = n_post, ncol = length(self$coeff_re()))
+                
                 ind_est_re=1:sum(length(self$coeff_re()))
                 #Deal with fixed coefficients in coeff_re in the map argument
                 if (!(is.null(map)) & "coeff_re" %in% names(map)) {
                      #indices of coefficients that are not fixed in map
                     ind_est_re=which(!is.na(map$coeff_re))
                 }
-            
-                # In post_re, set columns for fixed coefficients to fixed value,
-                # and use posterior draws for non-fixed coefficients
-                post_re <- matrix(rep(self$coeff_re(), each = n_post),
-                              nrow = n_post, ncol = length(self$coeff_re()))
             
                 #if all coefficients are fixed, set all posterior draws to fixed values
                 if (!("coeff_re" %in% names(post_list))) {
@@ -1098,10 +1096,36 @@ SDE <- R6Class(
                  post_re[,ind_est_re] <- post_list$coeff_re
                  post_list$coeff_re <- post_re
                 }
+                
+                # Set column names for fixed effects
+                colnames(post_list$coeff_re) <- self$terms()$names_re_all
+            
+                
             }
-            # Set column names
-            colnames(post_list$coeff_fe) <- self$terms()$names_fe
-            colnames(post_list$coeff_re) <- self$terms()$names_re_all
+            
+            #Deal with smoothing penalties
+            # In post_log_lambda, set columns for fixed coefficients to fixed value,
+            # and use posterior draws for non-fixed coefficients
+            post_log_lambda <- matrix(rep(log(self$lambda()), each = n_post),
+                              nrow = n_post, ncol = length(self$lambda()))
+            
+            ind_est_lambda=1:sum(length(self$lambda()))
+            #Deal with fixed coefficients in coeff_re in the map argument
+            if (!(is.null(map)) & "log_lambda" %in% names(map)) {
+                #indices of coefficients that are not fixed in map
+                ind_est_lambda=which(!is.na(map$log_lambda))
+            }
+            
+            #if all coefficients are fixed, set all posterior draws to fixed values
+            if (!("log_lambda" %in% names(post_list))) {
+                post_list$log_lambda <- post_log_lambda
+            }
+            #else, change only parameters that are estimated
+            else {
+                post_log_lambda[,ind_est_lambda] <- post_list$log_lambda
+                post_list$log_lambda <- post_log_lambda
+            }
+            
             
             return(post_list)
         },
