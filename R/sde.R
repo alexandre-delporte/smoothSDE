@@ -793,6 +793,7 @@ SDE <- R6Class(
         #' accessed using the method \code{res}.
         #' 
         #' @param silent Logical. If TRUE, all tracing outputs are hidden (default).
+        #' @param silent String. Name of the optimizer to be used. Possible choices are "optim" and "nlminb".
         #' @param method String. Method used for optimization using optim R function
         #' @param lower Numeric vector. Used to define bounds on parameters in optimization with optim R function
         #' @param upper NUmeric vector. Used to define bounds on parameters in optimization with optim R function
