@@ -797,7 +797,7 @@ SDE <- R6Class(
         #' @param method String. Method used for optimization using optim R function
         #' @param lower Numeric vector. Used to define bounds on parameters in optimization with optim R function
         #' @param upper NUmeric vector. Used to define bounds on parameters in optimization with optim R function
-        fit = function(silent = TRUE,optimizer="optim",method="BFGS",lower=-Inf,upper=Inf) {
+        fit = function(silent = TRUE,optimizer="optim",method="BFGS",lower=-Inf,upper=Inf,trace=2) {
             # Print model formulation
             self$message()
             
@@ -810,10 +810,10 @@ SDE <- R6Class(
                 # Fit model
                 private$out_ <- ifelse(optimizer=="optim",
                                        yes=optim(par = private$tmb_obj_$par,fn = private$tmb_obj_$fn,
-                                                 gr = private$tmb_obj_$gr,control=list(trace=1),
+                                                 gr = private$tmb_obj_$gr,control=list(trace=trace),
                                        method=method,lower=lower,upper=upper),
                                        no=nlminb(start=private$tmb_obj_$par,objective= private$tmb_obj_$fn,
-                                                 gradient=private$tmb_obj_$gr,control=list(trace=1),
+                                                 gradient=private$tmb_obj_$gr,control=list(trace=trace),
                                                  lower=lower,upper=upper))
                 # private$out_ <- do.call(optim, private$tmb_obj_)
             })
