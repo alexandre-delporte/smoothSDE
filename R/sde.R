@@ -1131,7 +1131,7 @@ SDE <- R6Class(
             }
             
             # Set column names for fixed effects
-            colnames(post_list$log_lambda) <- names(self$lambda())
+            colnames(post_list$log_lambda) <- rownames(self$lambda())
             
             
             
