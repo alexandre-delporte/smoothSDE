@@ -1130,6 +1130,10 @@ SDE <- R6Class(
                 post_list$log_lambda <- post_log_lambda
             }
             
+            # Set column names for fixed effects
+            colnames(post_list$log_lambda) <- names(self$lambda())
+            
+            
             
             return(post_list)
         },
