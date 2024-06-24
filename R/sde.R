@@ -1133,8 +1133,7 @@ SDE <- R6Class(
             # Set column names for fixed effects
             colnames(post_list$log_lambda) <- rownames(self$lambda())
             
-            
-            
+        
             return(post_list)
         },
         
@@ -2647,7 +2646,7 @@ SDE <- R6Class(
                     dir.create(model_name)
                 }
                 # Save the plot as an HTML file
-                file_path <- file.path(model_name, paste("fe", model_name, par, var1, var2, ".html", sep = "_"))
+                file_path <- file.path(model_name, paste(paste("fe", model_name, par, var1, var2, sep = "_"),".html",sep=""))
                 saveWidget(p, file =file_path)
             }
             
@@ -2747,7 +2746,7 @@ SDE <- R6Class(
                             dir.create(model_name)
                         }
                             
-                        ggsave(paste(paste("fe",model_name,par,var,paste("q",probs[j],sep=""),fixed_var,sep="_"),".png"),
+                        ggsave(paste(paste("fe",model_name,par,var,paste("q",probs[j],sep=""),fixed_var,sep="_"),".png",sep=""),
                                plot=plot_par,width=10,height=5,path=model_name)
                         }
                     }

@@ -307,7 +307,7 @@ Type nllk_racvm(objective_function<Type>* obj) {
                 F = Z * Pest * Z.transpose() + H;
                 detF = det(F);
 
-                if(detF <= 0) {
+                if(detF <= 1e-6) {
                     aest = T * aest;
                     Pest = T * Pest * T.transpose() + Q;
                 } else {
