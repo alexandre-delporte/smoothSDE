@@ -9,21 +9,6 @@ using namespace density;
 using namespace Eigen;
 
 
-//' Matrix determinant
-template<class Type>
-Type det(matrix<Type> M) {
-    int n_dim = M.cols();
-    Type det = 0;
-    if(n_dim == 1) {
-        det = M(0, 0);
-    } else if(n_dim == 2) {
-        det = M(0,0) * M(1,1) - M(1,0) * M(0,1);        
-    } else {
-        det = exp(atomic::logdet(M));
-    }
-    return det;
-}
-
 //' Make H matrix for Kalman filter
 //'
 //' @param sigma_obs SD of measurement error
@@ -320,7 +305,7 @@ Type nllk_racvm(objective_function<Type>* obj) {
                 u = obsrow - Z * aest;
                 // Residual covariance
                 F = Z * Pest * Z.transpose() + H;
-                detF = det(F);
+                detF = exp(atomic::logdet(F));;
 
                 if(detF <= 0) {
                     aest = T * aest;
