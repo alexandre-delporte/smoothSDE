@@ -305,7 +305,7 @@ Type nllk_racvm(objective_function<Type>* obj) {
                 u = obsrow - Z * aest;
                 // Residual covariance
                 F = Z * Pest * Z.transpose() + H;
-                detF = exp(atomic::logdet(F));;
+                detF = det(F);
 
                 if(detF <= 0) {
                     aest = T * aest;

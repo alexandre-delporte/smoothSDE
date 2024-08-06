@@ -25,9 +25,6 @@ Type objective_function<Type>::operator() () {
         return nllk_eseal_ssm(this);
     } else if (type=="RACVM") {
         return nllk_racvm(this);
-    } 
-    else if (type=="RACVMtest") {
-        return nllk_racvm1(this);
     }else {
         error ("Unknown SDE type");
     }
