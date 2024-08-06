@@ -2906,91 +2906,94 @@ SDE <- R6Class(
                 #name of parameter j
                 par=pars[j] 
                 
-                #fixed effects covariates/variables in the parameter formula
-                vars=get_variables(form)
-                fe_vars=vars[sapply(vars, function(col) !is.factor(data[[col]]))]
+                if (!(par %in% fixpar)) {
                 
-                if (length(fe_vars)>2) {
-                    stop("The function only handles plots up to two fixed effect covariates.
-                         Please consider using another plot_par instead.")
-                }
-                
-                #random effect factor covariate
-                factor_var=vars[sapply(vars, function(col) is.factor(data[[col]]))]
-                
-                if (length(factor_var)>1) {
-                    stop("There are multiple factor covariates. This function only handles one single random effect covariate. 
-                    Please consider using plot_par instead.")
-                }
-                
-                #number of fixed effect covariates
-                ncovs=length(fe_vars) 
-                
-                #if there is no fixed effect
-                if (ncovs==0) {
-                    l=list()
-                    l[[paste("violin",par,sep="_")]]=self$plot_violin_par(par=par)
-                    res=c(res,l)
-                }
-                
-                #if there are fixed effects
-                else {
+                    #fixed effects covariates/variables in the parameter formula
+                    vars=get_variables(form)
+                    fe_vars=vars[sapply(vars, function(col) !is.factor(data[[col]]))]
                     
-                    #if there is only one fixed effect covariate
-                    if (ncovs==1){
-                        
-                        #no random effects
-                        if (length(factor_var)==0) {
-                            
-                            #add plots to the list  
-                            res=c(res,
-                                  self$plot_fe_par_2D(baseline=baseline,par=par,xmin=xmin,xmax=xmax,
-                                                      link=link,xlabel=xlabel,show_CI=show_CI,
-                                                      ignore_intercept=ignore_intercept,
-                                                      true_smooth=true_smooths[[par]]))
-                        } else {
-                        
-                            #add plots to the list  
-                            res=c(res,
-                              self$plot_fe_par_2D(baseline=baseline,par=par,xmin=xmin,xmax=xmax,
-                                                  link=link,xlabel=xlabel,show_CI=show_CI,ignore_intercept=ignore_intercept,
-                                                  true_smooth=true_smooths[[par]]),
-                              self$plot_me_par_2D(baseline=baseline,par=par,
-                                                  xmin=xmin,xmax=xmax,link=link,xlabel=xlabel,ignore_intercept=ignore_intercept,
-                                                  show_CI=show_CI))
-                        }
+                    if (length(fe_vars)>2) {
+                        stop("The function only handles plots up to two fixed effect covariates.
+                             Please consider using another plot_par instead.")
                     }
                     
-                    # if there are two fixed effects covariables
-                    else if (ncovs==2){
+                    #random effect factor covariate
+                    factor_var=vars[sapply(vars, function(col) is.factor(data[[col]]))]
+                    
+                    if (length(factor_var)>1) {
+                        stop("There are multiple factor covariates. This function only handles one single random effect covariate. 
+                        Please consider using plot_par instead.")
+                    }
+                    
+                    #number of fixed effect covariates
+                    ncovs=length(fe_vars) 
+                    
+                    #if there is no fixed effect
+                    if (ncovs==0) {
+                        l=list()
+                        l[[paste("violin",par,sep="_")]]=self$plot_violin_par(par=par)
+                        res=c(res,l)
+                    }
+                    
+                    #if there are fixed effects
+                    else {
                         
-                        #if the covariates are orthogonal, plot in 2D
-                        if (are_orthogonals(data,fe_vars[1],fe_vars[2])) {
+                        #if there is only one fixed effect covariate
+                        if (ncovs==1){
                             
                             #no random effects
                             if (length(factor_var)==0) {
-                                #add plots to the list
-                                res=c(res,self$plot_fe_par_2D(baseline,par,xmin,xmax,link,xlabel,
-                                                              show_CI,ignore_intercept=ignore_intercept,
-                                                              true_smooth=true_smooths[[par]],save))}
-                            else {
-                                #add plots to the list
-                                res=c(res,self$plot_fe_par_2D(baseline,par,xmin,xmax,link,xlabel,
-                                                              show_CI,ignore_intercept=ignore_intercept,
-                                                              true_smooth=true_smooths[[par]]),
-                                      self$plot_me_par_2D(baseline,par,xmin,xmax,link,xlabel,
-                                                          show_CI,ignore_intercept=ignore_intercept))
+                                
+                                #add plots to the list  
+                                res=c(res,
+                                      self$plot_fe_par_2D(baseline=baseline,par=par,xmin=xmin,xmax=xmax,
+                                                          link=link,xlabel=xlabel,show_CI=show_CI,
+                                                          ignore_intercept=ignore_intercept,
+                                                          true_smooth=true_smooths[[par]]))
+                            } else {
+                            
+                                #add plots to the list  
+                                res=c(res,
+                                  self$plot_fe_par_2D(baseline=baseline,par=par,xmin=xmin,xmax=xmax,
+                                                      link=link,xlabel=xlabel,show_CI=show_CI,ignore_intercept=ignore_intercept,
+                                                      true_smooth=true_smooths[[par]]),
+                                  self$plot_me_par_2D(baseline=baseline,par=par,
+                                                      xmin=xmin,xmax=xmax,link=link,xlabel=xlabel,ignore_intercept=ignore_intercept,
+                                                      show_CI=show_CI))
                             }
-                           
                         }
                         
-                        #else, plot in 3D
-                        else {
-                            #add result to the list
-                            res=c(res,self$plot_fe_par_3D(baseline=baseline,par=par,
-                                                          npoints=50,xmin=xmin,xmax=xmax,link=link,xlabel=xlabel,
-                                                          show_CI=show_CI,probs=c(0.05,0.25,0.5,0.75,0.95),
-                                                          true_smooth=true_smooths[[par]]))
+                        # if there are two fixed effects covariables
+                        else if (ncovs==2){
+                            
+                            #if the covariates are orthogonal, plot in 2D
+                            if (are_orthogonals(data,fe_vars[1],fe_vars[2])) {
+                                
+                                #no random effects
+                                if (length(factor_var)==0) {
+                                    #add plots to the list
+                                    res=c(res,self$plot_fe_par_2D(baseline,par,xmin,xmax,link,xlabel,
+                                                                  show_CI,ignore_intercept=ignore_intercept,
+                                                                  true_smooth=true_smooths[[par]],save))}
+                                else {
+                                    #add plots to the list
+                                    res=c(res,self$plot_fe_par_2D(baseline,par,xmin,xmax,link,xlabel,
+                                                                  show_CI,ignore_intercept=ignore_intercept,
+                                                                  true_smooth=true_smooths[[par]]),
+                                          self$plot_me_par_2D(baseline,par,xmin,xmax,link,xlabel,
+                                                              show_CI,ignore_intercept=ignore_intercept))
+                                }
+                               
+                            }
+                            
+                            #else, plot in 3D
+                            else {
+                                #add result to the list
+                                res=c(res,self$plot_fe_par_3D(baseline=baseline,par=par,
+                                                              npoints=50,xmin=xmin,xmax=xmax,link=link,xlabel=xlabel,
+                                                              show_CI=show_CI,probs=c(0.05,0.25,0.5,0.75,0.95),
+                                                              true_smooth=true_smooths[[par]]))
+                            }
                         }
                     }
                 }
