@@ -2865,7 +2865,7 @@ SDE <- R6Class(
             #get all covariates in the model
             all_vars=unique(unlist(lapply(formulas,get_variables)))
             
-            fe_vars=vars[sapply(all_vars, function(col) !is.factor(data[[col]]))]
+            fe_vars=all_vars[sapply(all_vars, function(col) !is.factor(data[[col]]))]
             
             
             #Set link function to identity if not given
