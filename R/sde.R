@@ -482,6 +482,7 @@ SDE <- R6Class(
                 ncol_fe <- c(ncol_fe, gam_setup$nsdf)
                 
                 #if new data is not null, gam_setup has no attribute S and we don't enter the loop
+                #This chunk of code is copied from hmmtmp package https://github.com/TheoMichelot/hmmTMB
                 if(length(gam_setup$S) > 0) {
                   sub_ncol_re <- matrix(1, nrow = 2, ncol = length(gam_setup$S))
                   colnames(sub_ncol_re) <- 1:ncol(sub_ncol_re)
@@ -2810,6 +2811,7 @@ SDE <- R6Class(
                     res[[paste("fe",par,var,paste("q",j,sep=""),fixed_var,sep="_")]]=plot_par
                         
                 }
+            }
             return (res)
         },
         
