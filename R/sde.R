@@ -1442,7 +1442,7 @@ SDE <- R6Class(
             # Handle fixed effects selection
             if (ignore_fe) {
                 # Ignore fixed effects by setting them to zero
-                diff_fe= matrix(0, nrow = nrow(diff_fe), ncol = ncol(diff_fe)
+                diff_fe= matrix(0, nrow = nrow(diff_fe), ncol = ncol(diff_fe))
             } else if (!is.null(fe_index)) {
                 # Select columns based on fe_index if not ignoring
                 diff_fe <- diff_fe[fe_index,]
