@@ -2906,7 +2906,7 @@ SDE <- R6Class(
                 #name of parameter j
                 par=pars[j] 
                 
-                if (!(par %in% fixpar)) {
+                if (!(par %in% self$fixpar())) {
                 
                     #fixed effects covariates/variables in the parameter formula
                     vars=get_variables(form)
