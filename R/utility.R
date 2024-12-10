@@ -10,7 +10,6 @@
 #' @return Block diagonal matrix
 #' 
 #' @importFrom Matrix bdiag
-#' @importFrom stringr str_extract
 bdiag_check <- function(...) {
     # Only use first argument (matrix or list of matrices)
     args <- list(...)[[1]]
@@ -344,6 +343,7 @@ split_term <- function(string,sep) {
 #' @param formula a formula (usually for one parameter of the SDE) 
 #'
 #'@return Vector of names of the covariables in the formula
+#'@importFrom stringr str_extract
 get_variables=function(formula) {
   
   #list of strings for each term in the formula

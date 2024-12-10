@@ -120,7 +120,7 @@ Uhlenbeck process), "CTCRW" (continuous-time correlated random walk, a.k.a.
 integrated Ornstein-Uhlenbeck process), "CIR" (Cox-Ingersoll-Ross process),
 "BM_SSM" (BM with measurement error), "OU_SSM" (OU with measurement error),
 "BM_t" (BM with Student's t-distributed increments) and "RACVM" (Rotational correlated
-velocity model with drift).}
+velocity model with measurement error).}
 
 \item{\code{response}}{Name of response variable, correspond to a column name in
 \code{data}. Can be a vector of names if multiple response variables}
@@ -1120,6 +1120,7 @@ Simulate from SDE model
   atw = NULL,
   land = NULL,
   sd_noise = NULL,
+  reflect = FALSE,
   omega_times = 1,
   verbose = FALSE
 )}\if{html}{\out{</div>}}
@@ -1140,7 +1141,7 @@ Default: 0.}
 are drawn from their posterior distribution using \code{SDE$post_coeff}, 
 therefore accounting for uncertainty.}
 
-\item{\code{atw}}{(along the way) Covariates to recompute along the way using the previous velocity and position.
+\item{\code{atw}}{(along the way) "Covariates" to recompute along the way using the previous velocity and position.
 This should be a list with names matching some covariates in \code{self$formulas()} and with elements that 
 are functions to compute the new covariate value based the last position, velocity and nearest point on the land (if needed)
 in this order .
@@ -1153,6 +1154,8 @@ reproject the positions on the boundary when land is reached.
 Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position.}
 
 \item{\code{sd_noise}}{standard deviation to add gaussian noise in the observations. Default: NULL (no noise)}
+
+\item{\code{reflect}}{Boolean : whether or not to reflect on the land boundary when land is not NULL}
 
 \item{\code{omega_times}}{coefficient to multiply omega in RACVM.Default: 1}
 
@@ -1177,7 +1180,8 @@ Plot observation parameters
   n_post = 100,
   show_CI = "none",
   resp = TRUE,
-  term = NULL
+  term = NULL,
+  link = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -1212,6 +1216,8 @@ or "s(time)". Use \code{$coeff_fe()} and \code{$coeff_re()} methods
 to find names of model terms. This uses fairly naive substring 
 matching, and may not work if one covariate's name is a 
 substring of another one.}
+
+\item{\code{link}}{link function to get the quantity to plot on the xaxis}
 }
 \if{html}{\out{</div>}}
 }
@@ -1292,7 +1298,7 @@ The function might be extended to more than two orthogonal covariates.
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{baseline}}{a fitted baseline sde model without fixed effect. If not NULL, the baseline values appear on the plots}
+\item{\code{baseline}}{a fitted baseline sde model without fixed effect. If not NULL, the baseline values with CI appear on the plots}
 
 \item{\code{par}}{name of the parameter we want to plot}
 

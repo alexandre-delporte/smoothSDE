@@ -1833,7 +1833,7 @@ SDE <- R6Class(
             }
             
             
-            if (self$type()%in% c("CTCRW","RACVM","CRCVM_cubic") && n_dim==2) {
+            if (self$type() %in% c("CTCRW","RACVM","CRCVM_cubic") && n_dim==2) {
               
               # Initialize vector of simulated observations
               n=length(data$time)
