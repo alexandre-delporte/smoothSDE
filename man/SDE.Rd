@@ -40,6 +40,7 @@ distribution.
 \item \href{#method-SDE-coeff_fe}{\code{SDE$coeff_fe()}}
 \item \href{#method-SDE-coeff_re}{\code{SDE$coeff_re()}}
 \item \href{#method-SDE-lambda}{\code{SDE$lambda()}}
+\item \href{#method-SDE-knots}{\code{SDE$knots()}}
 \item \href{#method-SDE-sdev}{\code{SDE$sdev()}}
 \item \href{#method-SDE-rho}{\code{SDE$rho()}}
 \item \href{#method-SDE-terms}{\code{SDE$terms()}}
@@ -53,6 +54,7 @@ distribution.
 \item \href{#method-SDE-update_coeff_re}{\code{SDE$update_coeff_re()}}
 \item \href{#method-SDE-update_lambda}{\code{SDE$update_lambda()}}
 \item \href{#method-SDE-update_rho}{\code{SDE$update_rho()}}
+\item \href{#method-SDE-update_map}{\code{SDE$update_map()}}
 \item \href{#method-SDE-make_mat}{\code{SDE$make_mat()}}
 \item \href{#method-SDE-make_mat_grid}{\code{SDE$make_mat_grid()}}
 \item \href{#method-SDE-setup}{\code{SDE$setup()}}
@@ -99,7 +101,7 @@ Create a SDE object
   par0 = NULL,
   fixpar = NULL,
   other_data = NULL,
-  map = NULL
+  knots = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -132,9 +134,10 @@ zero on the link scale.}
 \item{\code{other_data}}{Named list of data objects to pass to likelihood, only
 required for special models}
 
-\item{\code{map}}{list with element names that are a subset "coeff_re","coeff_fe","log_lambda",
-used to fix specific coefficients in the model
-(see TMB documentation https://search.r-project.org/CRAN/refmans/TMB/html/MakeADFun.html for more details)}
+\item{\code{knots}}{Knots for smooth parameters expressed as splines. A list with one element for each parameter, 
+which is itself a list with one element for each covariate containing the position of the knots. 
+The numbers of knots should be consistent with the splines
+degree of freedom that is set in \code{formulas}. If not provided, knots are chosen by default when calling the gam function.}
 }
 \if{html}{\out{</div>}}
 }
@@ -196,7 +199,7 @@ Name(s) of fixed parameter(s)
 \if{html}{\out{<a id="method-SDE-map"></a>}}
 \if{latex}{\out{\hypertarget{method-SDE-map}{}}}
 \subsection{Method \code{map()}}{
-Map for fixed coefficient(s)
+Map for fixed coefficient(s) in TMB
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$map()}\if{html}{\out{</div>}}
 }
@@ -269,6 +272,16 @@ Random effect parameters
 Smoothness parameters
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$lambda()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-knots"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-knots}{}}}
+\subsection{Method \code{knots()}}{
+Knots
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$knots()}\if{html}{\out{</div>}}
 }
 
 }
@@ -459,12 +472,31 @@ Update decay parameter
 }
 }
 \if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-update_map"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-update_map}{}}}
+\subsection{Method \code{update_map()}}{
+Update map
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$update_map(new_map)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{new_map}}{List with element names that are a subset "coeff_re","coeff_fe","log_lambda",
+used to fix specific coefficients in the model. If not provided, all parameters will be estimated.
+(see TMB documentation https://search.r-project.org/CRAN/refmans/TMB/html/MakeADFun.html for more details)}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SDE-make_mat"></a>}}
 \if{latex}{\out{\hypertarget{method-SDE-make_mat}{}}}
 \subsection{Method \code{make_mat()}}{
 Create model matrices
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$make_mat(new_data = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$make_mat(new_data = NULL, knots = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -472,6 +504,8 @@ Create model matrices
 \describe{
 \item{\code{new_data}}{Optional new data set, including covariates for which
 the design matrices should be created.}
+
+\item{\code{knots}}{List of knots for each smootth parameters, as defined in initialize}
 }
 \if{html}{\out{</div>}}
 }
@@ -538,14 +572,21 @@ TMB setup
 \subsection{Method \code{fit()}}{
 Model fitting
 
-The negative log-likelihood of the model is minimised using the
-function \code{optim}. TMB uses the Laplace approximation to integrate 
+The negative log-likelihood of the model is minimised using an optimizer in
+R. TMB uses the Laplace approximation to integrate 
 the random effects out of the likelihood.
 
-After the model has been fitted, the output of \code{optim} can be
+After the model has been fitted, the output of the optimizer can be
 accessed using the method \code{res}.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$fit(silent = TRUE, method = "BFGS", lower = -Inf, upper = Inf)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$fit(
+  silent = TRUE,
+  optimizer = "optim",
+  method = "BFGS",
+  lower = -Inf,
+  upper = Inf,
+  trace = 1
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -553,11 +594,16 @@ accessed using the method \code{res}.
 \describe{
 \item{\code{silent}}{Logical. If TRUE, all tracing outputs are hidden (default).}
 
-\item{\code{method}}{String. Method used for optimization using optim R function}
+\item{\code{optimizer}}{String. Name of the optimizer to be used. Default is 'optim".
+Possible alternative is "nlminb".}
 
-\item{\code{lower}}{Numeric vector. Used to define bounds on parameters in optimization with optim R function}
+\item{\code{method}}{String. Method used for optimization when using "optim" optimizer}
 
-\item{\code{upper}}{NUmeric vector. Used to define bounds on parameters in optimization with optim R function}
+\item{\code{lower}}{Numeric vector. Used to define lower bounds on parameters}
+
+\item{\code{upper}}{Numeric vector. Used to define upper bounds on parameters}
+
+\item{\code{trace}}{Non negative integer. Controls how much tracing information is printed during the optimization}
 }
 \if{html}{\out{</div>}}
 }
@@ -577,6 +623,7 @@ Get linear predictor for SDE parameters
   coeff_re = NULL,
   term = NULL,
   re_index = NULL,
+  fe_index = NULL,
   ignore_re = FALSE,
   ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
@@ -611,11 +658,16 @@ matching, and may not work if one covariate's name is a
 substring of another one.}
 
 \item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
-May creat conflicts with param "term" if it is not null.}
+Only considered if \code{term} is NULL.}
 
-\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+\item{\code{fe_index}}{index of terms we want to keep in the random effects matrix and coeffs
+Only considered if \code{term} is NULL.}
 
-\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)}
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
+Only considered if \code{term} is NULL.}
+
+\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)
+Only considered if \code{term} is NULL.}
 }
 \if{html}{\out{</div>}}
 }
@@ -641,6 +693,7 @@ Get SDE parameters
   resp = TRUE,
   term = NULL,
   re_index = NULL,
+  fe_index = NULL,
   ignore_re = FALSE,
   ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
@@ -677,11 +730,16 @@ matching, and may not work if one covariate's name is a
 substring of another one.}
 
 \item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
-May create conflicts with param "term" if it is not null.}
+Only considered if \code{term} is NULL.}
 
-\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+\item{\code{fe_index}}{index of terms we want to keep in the fixed effects matrix and coeffs
+Only considered if \code{term} is NULL.}
 
-\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)}
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
+Only considered if \code{term} is NULL.}
+
+\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)
+Only considered if \code{term} is NULL.}
 }
 \if{html}{\out{</div>}}
 }
@@ -724,6 +782,7 @@ quantification)
   n_post = 1000,
   resp = TRUE,
   term = NULL,
+  fe_index = NULL,
   re_index = NULL,
   ignore_re = FALSE,
   ignore_fe = FALSE
@@ -749,12 +808,17 @@ to find names of model terms. This uses fairly naive substring
 matching, and may not work if one covariate's name is a 
 substring of another one.}
 
+\item{\code{fe_index}}{index of terms we want to keep in the random effects matrix and coeffs
+Only considered if \code{term} is NULL.}
+
 \item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
-May create conflicts with param "term" if it is not null.}
+Only considered if \code{term} is NULL.}
 
-\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
+Only considered if \code{term} is NULL.}
 
-\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)}
+\item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)
+Only considered if \code{term} is NULL.}
 }
 \if{html}{\out{</div>}}
 }
@@ -779,6 +843,7 @@ Pointwise confidence intervals for SDE parameters
   resp = TRUE,
   term = NULL,
   re_index = NULL,
+  fe_index = NULL,
   ignore_re = FALSE,
   ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
@@ -818,11 +883,16 @@ matching, and may not work if one covariate's name is a
 substring of another one.}
 
 \item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
-May creat conflicts with param "term" if it is not null.}
+Only considered if \code{term} is NULL.}
 
-\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+\item{\code{fe_index}}{index of terms we want to keep in the random effects matrix and coeffs
+Only considered if \code{term} is NULL.}
+
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
+Only considered if \code{term} is NULL.}
 
 \item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)
+Only considered if \code{term} is NULL.
 
 This method generates pointwise confidence intervals 
 by simulation. That is, it generates \code{n_post} posterior samples 
@@ -859,6 +929,7 @@ Simultaneous confidence intervals for SDE parameters
   resp = TRUE,
   term = NULL,
   re_index = NULL,
+  fe_index = NULL,
   ignore_re = FALSE,
   ignore_fe = FALSE
 )}\if{html}{\out{</div>}}
@@ -898,11 +969,16 @@ matching, and may not work if one covariate's name is a
 substring of another one.}
 
 \item{\code{re_index}}{index of terms we want to keep in the random effects matrix and coeffs
-May creat conflicts with param "term" if it is not null.}
+Only considered if \code{term} is NULL.}
 
-\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor}
+\item{\code{fe_index}}{index of terms we want to keep in the random effects matrix and coeffs
+Only considered if \code{term} is NULL.}
+
+\item{\code{ignore_re}}{whether or not to ignore the random effects in the linear predictor
+Only considered if \code{term} is NULL.}
 
 \item{\code{ignore_fe}}{whether or not to ignore the fixed effects (intercepts)
+Only considered if \code{term} is NULL.
 
 
 This method closely follows the approach suggested by Gavin Simpson at
@@ -1065,13 +1141,16 @@ are drawn from their posterior distribution using \code{SDE$post_coeff},
 therefore accounting for uncertainty.}
 
 \item{\code{atw}}{(along the way) Covariates to recompute along the way using the previous velocity and position.
-This should be a list with names matching some covariates in self$formulas() and with elements that 
-are functions to compute the covariate value from the last position, velocity and nearest point on the boundary (if needed).
+This should be a list with names matching some covariates in \code{self$formulas()} and with elements that 
+are functions to compute the new covariate value based the last position, velocity and nearest point on the land (if needed)
+in this order .
 If some covariate is not in the list, values in argument "data" are used.
 If NULL, covariate values in "data" are used.}
 
-\item{\code{land}}{polygon data for defining the land (or any constrained domain)
-WARNING : Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position}
+\item{\code{land}}{sf polygon data defining a spatial domain that is needed to compute the covariates along the way. 
+For instance, it could be the shore for marine mammals with covariate distance to shore. If specified, we 
+reproject the positions on the boundary when land is reached.       
+Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position.}
 
 \item{\code{sd_noise}}{standard deviation to add gaussian noise in the observations. Default: NULL (no noise)}
 
@@ -1144,29 +1223,21 @@ A ggplot object
 \if{html}{\out{<a id="method-SDE-plot_violin_coeff"></a>}}
 \if{latex}{\out{\hypertarget{method-SDE-plot_violin_coeff}{}}}
 \subsection{Method \code{plot_violin_coeff()}}{
-when there are no fixed effect and a single or no random effect,
-create violin plot for the posterior of the paremeter "par".
-Works only for formula of the form "par=~s(ID,bs="re")" or "par=~1"
+create violin plot for the posterior of the estimated coefficients
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_violin_coeff(
-  model_name,
-  substring = NULL,
-  true_coeff = NULL,
-  save = FALSE
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_violin_coeff(substring = NULL, true_coeff = NULL, n_post = 100)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{model_name}}{name of the SDE model, used as the directory name where the plots should be saved}
-
 \item{\code{substring}}{substring contained in the coeff names that we want to plot. If it is some parameter name, 
 then only the coeff involved in this parameter are plotted. If NULL, all coeffs are plotted.}
 
-\item{\code{true_coeff}}{dataframe with two columns "value" for the true value of the coeff and "name" for the name of the coeff.}
+\item{\code{true_coeff}}{dataframe with two columns "value" for the true value of the coeff and "name" for the name of the coeff.
+If NULL, no true values are plotted.}
 
-\item{\code{save}}{boolean to save the plots or not}
+\item{\code{n_post}}{number of posterior draws. Default : 100}
 }
 \if{html}{\out{</div>}}
 }
@@ -1179,20 +1250,16 @@ ggplot object
 \if{latex}{\out{\hypertarget{method-SDE-plot_violin_par}{}}}
 \subsection{Method \code{plot_violin_par()}}{
 when there are no fixed effect and a single or no random effect,
-create violin plot for the posterior of the paremeter "par".
-Works only for formula of the form "par=~s(ID,bs="re")" or "par=~1"
+create violin plot for the posterior of the parameter "par".
+Works only for formula of the form "par=~s(.,bs="re")" or "par=~1"
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_violin_par(model_name, par, save = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{SDE$plot_violin_par(par)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{model_name}}{name of the SDE model, used as the directory name where the plots should be saved}
-
 \item{\code{par}}{string matching with one parameter name in the sde}
-
-\item{\code{save}}{boolean to save the plots or not}
 }
 \if{html}{\out{</div>}}
 }
@@ -1205,12 +1272,11 @@ ggplot object
 \if{latex}{\out{\hypertarget{method-SDE-plot_fe_par_2D}{}}}
 \subsection{Method \code{plot_fe_par_2D()}}{
 plot the fixed effect for a parameter that depends only on one fixed effect covariate,
-or on two orthogonal covariates in a sde model. 
-The function might be extended to multiple orthogonal covariates.
+or on two orthogonal covariates in a sde model, and optionally compare it to a baseline with no fixed effect (constant parameters).
+The function might be extended to more than two orthogonal covariates.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$plot_fe_par_2D(
   baseline = NULL,
-  model_name,
   par,
   npoints = 200,
   xmin,
@@ -1219,20 +1285,16 @@ The function might be extended to multiple orthogonal covariates.
   xlabel,
   show_CI = "none",
   ignore_intercept = FALSE,
-  true_smooth = NULL,
-  save = FALSE
+  true_smooth = NULL
 )}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{baseline}}{a fitted baseline sde model without fixed effect. If not NULL, the baseline values with CI
-appear on the plots}
+\item{\code{baseline}}{a fitted baseline sde model without fixed effect. If not NULL, the baseline values appear on the plots}
 
-\item{\code{model_name}}{name of the SDE model, used as the directory name where the plots should be saved}
-
-\item{\code{par}}{the name of the parameter we want to plot}
+\item{\code{par}}{name of the parameter we want to plot}
 
 \item{\code{npoints}}{number of points for the plot}
 
@@ -1244,18 +1306,17 @@ appear on the plots}
 
 \item{\code{xlabel}}{label for the quantity in the xaxis for the plot}
 
-\item{\code{show_CI}}{string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment}
+\item{\code{show_CI}}{string "none", "pointwise" or "simultaneous"}
 
-\item{\code{ignore_intercept}}{whether or not to ignore the fixed effects (intercepts)}
+\item{\code{ignore_intercept}}{whether or not to ignore the fixed effects (intercepts). Used to plot only the deviation from
+the baseline}
 
 \item{\code{true_smooth}}{function that takes a dataframe of covariate values and return a dataframe of true values of the parameter}
-
-\item{\code{save}}{boolean to save or not to save the plots}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-ggplot object
+list of ggplot objects
 }
 }
 \if{html}{\out{<hr>}}
@@ -1264,11 +1325,11 @@ ggplot object
 \subsection{Method \code{plot_me_par_2D()}}{
 function to plot the estimates for each individual (taking into account one single random effect) 
 for a parameter that depends only on one fixed effect covariate, or on two orthogonal covariates
- in a sde model. The function might be extended to multiple orthogonal covariates.
+in a sde model, and optionally compare it to a baseline with no fixed effect.
+The function might be extended to more than two orthogonal covariates.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$plot_me_par_2D(
   baseline = NULL,
-  model_name,
   par,
   npoints = 200,
   xmin,
@@ -1276,8 +1337,7 @@ for a parameter that depends only on one fixed effect covariate, or on two ortho
   link,
   xlabel,
   ignore_intercept = FALSE,
-  show_CI,
-  save = TRUE
+  show_CI
 )}\if{html}{\out{</div>}}
 }
 
@@ -1285,8 +1345,6 @@ for a parameter that depends only on one fixed effect covariate, or on two ortho
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{baseline}}{is a baseline model without fixed effects to be compared to (default is NULL).}
-
-\item{\code{model_name}}{string to put in the name of the saved plots}
 
 \item{\code{par}}{name of the parameter we want to plot}
 
@@ -1305,24 +1363,21 @@ of the observed values of each covariate}
 \item{\code{ignore_intercept}}{whether or not to ignore the fixed effects (intercepts)}
 
 \item{\code{show_CI}}{string "none", "pointwise" or "simultaneous". Simultaneous CI do not work for the moment}
-
-\item{\code{save}}{boolean}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-ggplot object
+list ggplot objects
 }
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-SDE-plot_fe_par_3D"></a>}}
 \if{latex}{\out{\hypertarget{method-SDE-plot_fe_par_3D}{}}}
 \subsection{Method \code{plot_fe_par_3D()}}{
-3D plot of a parameter when there are two non orthogonal covariates and at most one random effect
+3D plot of a parameter when there are two non orthogonal covariates.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$plot_fe_par_3D(
   baseline = NULL,
-  model_name,
   par,
   npoints = 50,
   xmin,
@@ -1331,8 +1386,7 @@ ggplot object
   xlabel,
   show_CI = "none",
   probs = c(0.05, 0.25, 0.5, 0.75, 0.95),
-  true_smooth = NULL,
-  save = FALSE
+  true_smooth = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -1340,8 +1394,6 @@ ggplot object
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{baseline}}{is a baseline model without fixed effects to be compared to (default is NULL).}
-
-\item{\code{model_name}}{string to put in the name of the saved plots}
 
 \item{\code{par}}{name of the parameter we want to plot}
 
@@ -1359,17 +1411,15 @@ ggplot object
 If it is not "none", then 2D plots with confidence intervals of each covariate while the other is fixed at the quantiles
 values are created.}
 
-\item{\code{probs}}{quantile probabilities for the plots where one of the covariate is fixed}
+\item{\code{probs}}{quantile probabilities for the plots where one of the covariate is fixed.}
 
 \item{\code{true_smooth}}{Default : NULL, otherwise a function that gives the true value of the parameter "par" depending
 on the relevant covariates}
-
-\item{\code{save}}{boolean}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-ggplot object
+list of ggplot objects
 }
 }
 \if{html}{\out{<hr>}}
@@ -1379,27 +1429,27 @@ ggplot object
 get all the plots of the estimates of the parameters according to the model formulas
 for each parameter :
 - if there are no fixed effects, we create violin plots for the parameter estimates
- - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects (if there is one random effect) on two different plots
+ - If there is only one fixed effect, we plot the fixed effect estimates and the mixed effects 
+ (if there is one random effect) on two different plots
  - If there are two fixed effects, two cases are possible :
       . either the covariates are orthogonal, in which case we plot the fixed effects (and 
         the mixed effects if there is one random effect) for each covariate while forcing the other to 0
       . or they are not orthogonal, in which case we plot the fixed effects in 3D, and
         we plot each covariate while setting the values of the others to the observed quantiles.
-In any other case, we plot each covariate while setting the values of the others to the observed quantiles (NOT DONE YET)
-Extraction of the covariate names from the formulas is based on regular expressions and may not work for some specific cases. If it happens,
-using function plot_par instead is recommended.
+In any other case, we plot each covariate while setting the values of the others to the observed quantiles using the basic 
+plotting method (NOT DONE YET).
+Extraction of the covariate names from the formulas is based on regular expressions and may not work for some specific cases. 
+If it happens,using function \code{plot_par} instead is recommended.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$get_all_plots(
   baseline = NULL,
-  model_name,
   link = list(),
   xmin = list(),
   xmax = list(),
   xlabel = list(),
   show_CI = "none",
   ignore_intercept = FALSE,
-  true_smooths = NULL,
-  save = FALSE
+  true_smooths = NULL
 )}\if{html}{\out{</div>}}
 }
 
@@ -1408,8 +1458,6 @@ using function plot_par instead is recommended.
 \describe{
 \item{\code{baseline}}{baseline sde model to be compared to (default is NULL). 
 It Should be given as an entry if we want to plot baseline intercepts on the smooth functions graph}
-
-\item{\code{model_name}}{string name for the sde model, to be chosen by the user. Used for the filenames to save the plots}
 
 \item{\code{link}}{list of functions that links the fixed effect covariates and the quantity appearing in the axis of the plots.        #' 
 The names of the list is a subset of the names of all the covariates appearing in the formulas.}
@@ -1429,8 +1477,6 @@ Simultaneous CI do not work for the moment.}
 
 \item{\code{true_smooths}}{Default : NULL, otherwise a list of functions for each smooth parameter,
 that takes in entry a dataframe of covariates and give the true value of the parameters depending on the relevant covariates}
-
-\item{\code{save}}{boolean}
 }
 \if{html}{\out{</div>}}
 }

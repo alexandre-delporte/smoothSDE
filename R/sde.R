@@ -12,7 +12,6 @@
 #' @importFrom htmlwidgets saveWidget
 #' @importFrom TMB MakeADFun sdreport
 #' @importFrom Hmisc smean.sdl
-#' @importFrom dlm dlm dlmFilter dlmSmooth
 
 #' 
 #' 
@@ -38,7 +37,7 @@ SDE <- R6Class(
         #' integrated Ornstein-Uhlenbeck process), "CIR" (Cox-Ingersoll-Ross process),
         #' "BM_SSM" (BM with measurement error), "OU_SSM" (OU with measurement error),
         #' "BM_t" (BM with Student's t-distributed increments) and "RACVM" (Rotational correlated
-        #' velocity model with drift).
+        #' velocity model with measurement error).
         #' @param response Name of response variable, correspond to a column name in
         #' \code{data}. Can be a vector of names if multiple response variables
         #' @param par0 Vector of initial values for SDE parameters, with one value
@@ -89,7 +88,9 @@ SDE <- R6Class(
                                                 tau = log, nu = log)),
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
                             "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                tau = log, nu = log,omega=identity)))
+                                                tau = log, nu = log,omega=identity)),
+                            "CRCVM_cubic" = as.list(c(tau = log, nu = log,a=log,theta0=identity,D0=log)),
+                            "CRCVM_test" = as.list(c(tau = log, nu = log,omega=identity,D0=log)))
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -108,7 +109,9 @@ SDE <- R6Class(
                                                    tau = exp, nu = exp)),
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
                                "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
-                                                   tau = exp, nu = exp,omega=identity)))
+                                                   tau = exp, nu = exp,omega=identity)),
+                               "CRCVM_cubic" = as.list(c(tau = exp, nu = exp,a=exp,theta0=identity,D0=exp)),
+                               "CRCVM_test" = as.list(c(tau = exp, nu = exp,omega=identity,D0=exp)))
             
             private$link_ <- link
             private$invlink_ <- invlink
@@ -413,6 +416,8 @@ SDE <- R6Class(
         #' @param new_data Optional new data set, including covariates for which
         #' the design matrices should be created.
         #' 
+        #' @param knots List of knots for each smootth parameters, as defined in initialize
+        #' 
         #' @return A list of
         #' \itemize{
         #'   \item X_fe Design matrix for fixed effects
@@ -678,7 +683,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type()=="RACVM") {
+            } else if(self$type() %in% c("RACVM","CRCVM_cubic","CRCVM_test")) {
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
@@ -710,6 +715,19 @@ SDE <- R6Class(
                 map <- c(map, list(log_sigma_obs = factor(NA)))
               } else {
                 tmb_dat$H_array <- array(0)
+              }
+              
+              if (self$type() %in% c("CRCVM_cubic","CRCVM_test")) {
+                  
+                  if (is.null(self$data()$theta)) {
+                      stop(paste0("Data must contain a column theta for ",self$type))
+                  }
+                  tmb_dat$theta=self$data()$theta
+                  
+                  if (is.null(self$data()$DistanceShore)) {
+                      stop(paste0("Data must contain a column DistanceShore for ",self$type))
+                  }
+                  tmb_dat$DistanceShore=self$data()$DistanceShore
               }
             } else if(self$type() == "ESEAL_SSM") {
                 # Define initial state and covariance for Kalman filter
@@ -1050,7 +1068,7 @@ SDE <- R6Class(
             
             #map for fixed coefficients in TMB
             map=self$map()
-        
+            
             
             # Vector of all parameters that are not fixed 
             par_all <- c(rep$par.fixed, rep$par.random)
@@ -1082,19 +1100,19 @@ SDE <- R6Class(
             ind_est_fe <- which(fe_cols %in% ind_estpar)
             
             if (!(is.null(map)) & "coeff_fe" %in% names(map)) {
-              #indices of intercept that are not fixed in map
-              ind_est_intercept=which(!is.na(map$coeff_fe))
-              ind_est_fe=intersect(ind_est_fe,ind_est_intercept)
+                #indices of intercept that are not fixed in map
+                ind_est_intercept=which(!is.na(map$coeff_fe))
+                ind_est_fe=intersect(ind_est_fe,ind_est_intercept)
             }
             
             #if all fixed effects coeffs are fixed, set all posterior draws to fixed values
             if (!("coeff_fe" %in% names(post_list))) {
-              post_list$coeff_fe <- post_fe
+                post_list$coeff_fe <- post_fe
             }
             #else, change only parameters that are estimated
             else {
-              post_fe[,ind_est_fe] <- post_list$coeff_fe
-              post_list$coeff_fe <- post_fe
+                post_fe[,ind_est_fe] <- post_list$coeff_fe
+                post_list$coeff_fe <- post_fe
             }
             
             # Set column names for fixed effects
@@ -1111,23 +1129,23 @@ SDE <- R6Class(
                 ind_est_re=1:sum(length(self$coeff_re()))
                 #Deal with fixed coefficients in coeff_re in the map argument
                 if (!(is.null(map)) & "coeff_re" %in% names(map)) {
-                     #indices of coefficients that are not fixed in map
+                    #indices of coefficients that are not fixed in map
                     ind_est_re=which(!is.na(map$coeff_re))
                 }
-            
+                
                 #if all coefficients are fixed, set all posterior draws to fixed values
                 if (!("coeff_re" %in% names(post_list))) {
-                 post_list$coeff_re <- post_re
+                    post_list$coeff_re <- post_re
                 }
                 #else, change only parameters that are estimated
                 else {
-                 post_re[,ind_est_re] <- post_list$coeff_re
-                 post_list$coeff_re <- post_re
+                    post_re[,ind_est_re] <- post_list$coeff_re
+                    post_list$coeff_re <- post_re
                 }
                 
                 # Set column names for fixed effects
                 colnames(post_list$coeff_re) <- self$terms()$names_re_all
-            
+                
                 
             }
             
@@ -1135,7 +1153,7 @@ SDE <- R6Class(
             # In post_log_lambda, set columns for fixed coefficients to fixed value,
             # and use posterior draws for non-fixed coefficients
             post_log_lambda <- matrix(rep(log(self$lambda()), each = n_post),
-                              nrow = n_post, ncol = length(self$lambda()))
+                                      nrow = n_post, ncol = length(self$lambda()))
             
             ind_est_lambda=1:sum(length(self$lambda()))
             #Deal with fixed coefficients in coeff_re in the map argument
@@ -1157,7 +1175,7 @@ SDE <- R6Class(
             # Set column names for fixed effects
             colnames(post_list$log_lambda) <- rownames(self$lambda())
             
-        
+            
             return(post_list)
         },
         
@@ -1194,11 +1212,6 @@ SDE <- R6Class(
             
             # Generate posterior draws of coeff_fe and coeff_re
             post_coeff <- self$post_coeff(n_post = n_post)
-            
-            #If index is null, keep all coefficients
-            if (is.null(re_index)){
-                re_index=1:ncol(X_re)
-            }
             
             # Get corresponding SDE parameters
             par_array <- array(sapply(1:n_post, function(i) {
@@ -1284,10 +1297,6 @@ SDE <- R6Class(
                 mats <- self$make_mat(new_data = new_data)
                 X_fe <- mats$X_fe
                 X_re <- mats$X_re
-            }
-            
-            if (is.null(re_index)){
-                re_index=1:ncol(X_re)
             }
             
             # Posterior samples of SDE parameters
@@ -1762,20 +1771,22 @@ SDE <- R6Class(
         #' are drawn from their posterior distribution using \code{SDE$post_coeff}, 
         #' therefore accounting for uncertainty.
         #' @param land sf polygon data defining a spatial domain that is needed to compute the covariates along the way. 
-        #' For instance, it could be the shore for marine mammals with covariate distance to shore.        
+        #' For instance, it could be the shore for marine mammals with covariate distance to shore. If specified, we 
+        #' reproject the positions on the boundary when land is reached.       
         #' Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position.
-        #' @param atw (along the way) Covariates to recompute along the way using the previous velocity and position.
+        #' @param atw (along the way) "Covariates" to recompute along the way using the previous velocity and position.
         #' This should be a list with names matching some covariates in \code{self$formulas()} and with elements that 
         #' are functions to compute the new covariate value based the last position, velocity and nearest point on the land (if needed)
         #' in this order .
         #' If some covariate is not in the list, values in argument "data" are used.
         #' If NULL, covariate values in "data" are used.
         #' @param sd_noise standard deviation to add gaussian noise in the observations. Default: NULL (no noise)
+        #' @param reflect Boolean : whether or not to reflect on the land boundary when land is not NULL
         #' @param omega_times coefficient to multiply omega in RACVM.Default: 1
         #' @param verbose If TRUE, verbose mode
         #' 
         #' @return Input data frame with extra column for simulated time series
-        simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,omega_times=1,verbose=FALSE) {
+        simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,reflect=FALSE,omega_times=1,verbose=FALSE) {
           
             # Check that data includes times of observations
             if(is.null(data$time)) {
@@ -1805,7 +1816,7 @@ SDE <- R6Class(
             n_id=length(unique(data$ID))
           
             #initial positions
-          
+            z0=as.matrix(z0)
             #if z0 is scalar, replicate in each dimension and for each ID
             if(length(z0) == 1) {
               z0 <- matrix(rep(z0, n_dim*n_id),ncol=n_dim)
@@ -1822,7 +1833,7 @@ SDE <- R6Class(
             }
             
             
-            if (self$type()=="RACVM") {
+            if (self$type()%in% c("CTCRW","RACVM","CRCVM_cubic") && n_dim==2) {
               
               # Initialize vector of simulated observations
               n=length(data$time)
@@ -1848,14 +1859,40 @@ SDE <- R6Class(
                                   dimnames = list(NULL, c("z1","z2", "v1","v2")))
                 
                 # Unpack parameters
-                mu1s <- sub_par[, 1]
-                mu2s <- sub_par[,2]
-                taus <- sub_par[, 3]
-                nus <- sub_par[, 4]
-                betas<- 1/taus
-                sigmas <- 2 * nus / sqrt(taus * pi)
-                omegas<- omega_times*sub_par[, 5]
+                if (self$type =="CTCRW") {
+                    mu1s <- sub_par[, 1]
+                    mu2s <- sub_par[,2]
+                    taus <- sub_par[, 3]
+                    nus <- sub_par[, 4]
+                    betas<- 1/taus
+                    sigmas <- 2 * nus / sqrt(taus * pi)
+                    omegas <- rep(0,sub_n)
+                    }
+    
+                if (self$type =="RACVM") {
+                    mu1s <- sub_par[, 1]
+                    mu2s <- sub_par[,2]
+                    taus <- sub_par[, 3]
+                    nus <- sub_par[, 4]
+                    betas<- 1/taus
+                    sigmas <- 2 * nus / sqrt(taus * pi)
+                    omegas <- omega_times*sub_par[, 5]
+                }
                 
+                else if (self$type=="CRCVM_cubic") {
+                    
+                    taus <- sub_par[, 1]
+                    nus <- sub_par[, 2]
+                    a <- sub_par[,3]
+                    theta0 <- sub_par[,4]
+                    D0 <- sub_par[,5]
+                    omegas <- a*(data$theta-theta0)*(data$theta+theta0)*exp(-data$DistanceShore/D0)
+                    betas<- 1/taus
+                    sigmas <- 2 * nus / sqrt(taus * pi)
+                    mu1s <-rep(0,sub_n)
+                    mu2s <-rep(0,sub_n)
+                    
+                }
         
                 #loop over time steps
                 for(i in 2:sub_n) {
@@ -1882,7 +1919,7 @@ SDE <- R6Class(
                     v=as.numeric(sub_dat[i-1,c("v1","v2")])
                     
                     #compute nearest shore point
-                    p=nearest_shore_point(st_point(z),land)
+                    p=nearest_boundary_point(st_point(z),land)
                     
                     if (verbose) {
                         cat("Distance to shore :",sqrt((p[1]-z[1])^2+(p[2]-z[2])^2),"\n")
@@ -1904,7 +1941,12 @@ SDE <- R6Class(
                     mu=matrix(c(new_par[1,"mu1"],new_par[1,"mu2"]),ncol=1,nrow=2,byrow=TRUE)
                     tau=new_par[1,"tau"]
                     nu=new_par[1,"nu"]
-                    omega=omega_times*new_par[1,"omega"]
+                    if (self$type()=="CTCRW") {
+                        omega=0
+                    }
+                    else {
+                        omega=omega_times*new_par[1,"omega"]
+                    }
                     beta<- 1/tau
                     sigma <- 2 * nu / sqrt(tau * pi)
                     
@@ -1929,7 +1971,23 @@ SDE <- R6Class(
                   #mean of next state vector 
                   mean=Ti%*%alpha+Bi%*%mu
                   
-                  sub_dat[i,] <- rmvn(1, mu =c(mean), V = V)
+                  #next state vectr
+                  new_state <-rmvn(1, mu =c(mean), V = V)
+                  
+                  #ensure next position is not in land if land is provided
+                  if (!(is.null(land)))  {
+                    new_z=as.numeric(new_state[1:2])
+                    
+                    if (reflect && is_in_land(st_point(new_z),land)) {
+                        #get last position 
+                        z=as.numeric(sub_dat[i-1,c("z1","z2")])
+                        #project new position on boundary
+                        new_p=nearest_boundary_point(st_point(new_z),land)
+                        new_state<-c(new_p,(new_p-z)/delta)
+                    }
+                  }
+                  
+                  sub_dat[i,] <- new_state
                 }
                 
                 # Only return location (and not velocity)
@@ -2083,10 +2141,11 @@ SDE <- R6Class(
         #' to find names of model terms. This uses fairly naive substring 
         #' matching, and may not work if one covariate's name is a 
         #' substring of another one.
+        #' @param link link function to get the quantity to plot on the xaxis
         #' 
         #' @return A ggplot object
         plot_par = function(var, par_names = NULL, covs = NULL, n_post = 100,
-                            show_CI = "none", resp = TRUE, term = NULL) {
+                            show_CI = "none", resp = TRUE, term = NULL,link=NULL) {
             if(missing(var)) {
                 var_names <- unique(rapply(self$formulas(), all.vars))
                 error_message <- paste0("'var' should be one of: '", 
@@ -2268,7 +2327,7 @@ SDE <- R6Class(
             }
             
             if (length(vars)>1) {
-                stop("There are multiple randon effects covariates : please consider using another plotting method.")
+                stop("There are multiple random effects covariates : please consider using another plotting method.")
             }
             
             #if no random effect
@@ -2329,11 +2388,11 @@ SDE <- R6Class(
         
         
         #' @description plot the fixed effect for a parameter that depends only on one fixed effect covariate,
-        #' or on two orthogonal covariates in a sde model, and optionally compare it to a baseline with no fixed effect.
+        #' or on two orthogonal covariates in a sde model, and optionally compare it to a baseline with no fixed effect (constant parameters).
         #' The function might be extended to more than two orthogonal covariates.
         #' 
-        #' @param baseline a fitted baseline sde model without fixed effect. If not NULL, the baseline values appear on the plots
-        #' @param par  the name of the parameter we want to plot
+        #' @param baseline a fitted baseline sde model without fixed effect. If not NULL, the baseline values with CI appear on the plots
+        #' @param par  name of the parameter we want to plot
         #' @param npoints number of points for the plot
         #' @param xmin minimum value of the covariate to plot 
         #' @param xmax maximum value of the covariate to plot 
@@ -2393,7 +2452,7 @@ SDE <- R6Class(
                 #covariate to plot on the x-axis
                 var=fe_vars[i]
                 
-                #Asssign meaningful values to the covariate that appear in the formula 
+                #Asssign values to the covariate that appear in the formula 
                 #for the parameter of interest
                 new_data[,var]=seq(from=xmin[[var]],to=xmax[[var]],length.out=npoints)
                 

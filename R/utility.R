@@ -405,43 +405,55 @@ signed_angle <- function(u, v) {
   return(result) 
 } 
 
-
-
-#' Compute nearest point on the land (shoreline) 
+#' Check whether a point is on land or not
 #' 
-#' @param point the location from which wa want to find the nearest point on land
-#' @param coastline sf object (list of polygons) defining the land
-#' @return matrix with on row and two columns that are the coordinates of the nearest point
+#' @param point the location we want to tell if it is on land or not
+#' @param land sf object (list of polygons) defining the land
+#' @return boolean TRUE if it is on land, FALSE otherwise
 #' 
 #' @export
-nearest_shore_point=function(point,coastline) {
-  #find the nearest shorepoints on the coastline
-  
-  # Initialize variables to store the minimum distance and nearest point
-  min_distance <- Inf
-  nearest_point <- NULL
-  
-  
-  # Iterate over each polygon in coastline_utm
-  for (j in 1:length(coastline$geometry)) {
+
+is_in_land=function(point,land) {
+    return (length(st_intersects(point,land$geometry)[[1]])>0)
+}
+
+
+#' Compute nearest point on the shoreline
+#' 
+#' @param point the location from which we want to find the nearest point on land
+#' @param land sf object (list of polygons) defining the land
+#' @return matrix with on row and two columns that are the coordinates of the nearest point in land
+#' 
+#' @export
+
+nearest_boundary_point <- function(point, land) {
+    # Initialize variables to store the minimum distance and nearest boundary point
+    min_distance <- Inf
+    nearest_point <- NULL
     
-    # Get the current polygon
-    polygon <- coastline$geometry[[j]]
-    
-    
-    distance <- st_distance(point, polygon)
-    
-    candidate=st_nearest_points(point,polygon)
-    if (!st_is_empty(candidate)) {
-      coordinates=st_coordinates(candidate)[2,c("X","Y")]
-      
-      if (distance < min_distance) {
-        min_distance=distance
-        nearest_point=coordinates
-      }
+    # Iterate over each polygon in land
+    for (j in 1:length(land$geometry)) {
+        
+        # Get the boundary of the current polygon
+        boundary <- st_boundary(land$geometry[[j]])
+        
+        # Calculate distance and nearest point to the boundary
+        distance <- st_distance(point, boundary)
+        candidate <- st_nearest_points(point, boundary)
+        
+        # Ensure that the candidate is not empty
+        if (!st_is_empty(candidate)) {
+            coordinates <- st_coordinates(candidate)[2, c("X", "Y")]
+            
+            # Update the nearest point if this boundary point is closer
+            if (distance < min_distance) {
+                min_distance <- distance
+                nearest_point <- coordinates
+            }
+        }
     }
-  }
-  return (as.matrix(nearest_point))
+    
+    return(as.matrix(nearest_point))
 }
 
 #' Check if two columns of a dataframe are orthogonal
@@ -450,7 +462,7 @@ nearest_shore_point=function(point,coastline) {
 #' @param C2 column name
 #' 
 #' @return boolean
-#' 
+#' @export
 are_orthogonals=function(data,C1,C2){
     inner_product=data[,C1]*data[,C2]
     return (all(inner_product==0))
