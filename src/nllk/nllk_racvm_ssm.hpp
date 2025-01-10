@@ -1,5 +1,7 @@
-#ifndef _crcvm_test_
-#define _crcvm_test_
+#ifndef _RACVM_SSM_
+#define _RACVM_SSM_
+
+#include "make_RACVM_matrix.hpp"
 
 #undef TMB_OBJECTIVE_PTR
 #define TMB_OBJECTIVE_PTR obj
@@ -9,12 +11,13 @@ using namespace density;
 using namespace Eigen;
 
 
+
 //' Make H matrix for Kalman filter
 //'
 //' @param sigma_obs SD of measurement error
 //' @param n_dim Number of dimensions
 template<class Type>
-matrix<Type> makeH_crcvm_test(Type sigma_obs) {
+matrix<Type> makeH_racvm_ssm(Type sigma_obs) {
     matrix<Type> H(2, 2);
     H.setZero();
     for(int i = 0; i < 2; i ++) {
@@ -22,114 +25,6 @@ matrix<Type> makeH_crcvm_test(Type sigma_obs) {
     }
     return H;
 }
-
-//' Make T matrix for Kalman filter
-//'
-//' @param beta Parameter beta of RCVM
-//' @param omega Parameter omega of RCVM
-//' @param dt Length of time interval
-template<class Type>
-matrix<Type> makeT_crcvm_test(Type beta, Type omega, Type delta) {
-
-    matrix<Type> T(4, 4);
-    T.setZero();
-
-    matrix<Type> A(2,2);
-    A << beta,-omega,omega,beta;
-
-    Type C = beta*beta+omega*omega;
-    matrix<Type> invA(2,2);
-    invA << beta/C,omega/C,-omega/C,beta/C;
-
-    matrix<Type> I(2,2);
-    I << 1,0,0,1;
-
-    matrix<Type> R(2,2);
-    R << cos(omega*delta),sin(omega*delta),-sin(omega*delta),cos(omega*delta);
-    matrix<Type> expAdelta(2,2);
-    expAdelta<<exp(-beta*delta)*R;
-    matrix<Type> IntexpAdelta(2,2);
-    IntexpAdelta << invA*(I-expAdelta);
-
-    // Combine the matrices into T
-    // Top-left block
-    T(0,0) = 1;
-    T(1,1) = 1;
-    T(1,0) = 0;
-    T(0,1) = 0;
-
-    //// Top-right block
-    T(0,2) = IntexpAdelta(0,0);
-    T(0,3) = IntexpAdelta(0,1);
-    T(1,2) = IntexpAdelta(1,0);
-    T(1,3) = IntexpAdelta(1,1);
-
-    // Bottom-left block
-    T(2,0) = 0;
-    T(2,1) = 0;
-    T(3,0) = 0;
-    T(3,1) = 0;
-
-    // Bottom-right block
-    T(2,2) = expAdelta(0,0);
-    T(2,3) = expAdelta(0,1);
-    T(3,2) = expAdelta(1,0);
-    T(3,3) = expAdelta(1,1);
-
-    return T;
-}
-
-//' Make Q matrix for Kalman filter
-//'
-//' @param beta Parameter beta of RCVM
-//' @param sigma Parameter sigma of RCVM
-//' @param omega Parameter omega od RCVM
-//' @param delta Length of time interval
-template<class Type>
-matrix<Type> makeQ_crcvm_test(Type beta, Type sigma,Type omega, Type delta) {
-
-    //initialize matrix with zeros
-    matrix<Type> Q(4, 4);
-    Q.setZero();
-
-    //constants
-    Type tau = 1/beta;
-    Type C = beta*beta+omega*omega;
-
-    // variances and covariances values
-    Type var_xi = sigma*sigma/C*(delta+(omega*omega-3/(tau*tau))/(2/tau*C)-exp(-2*delta/tau)/(2/tau)+
-                        2*exp(-delta/tau)*(1/tau*cos(omega*delta)-omega*sin(omega*delta))/C);
-    Type var_zeta = sigma*sigma*tau/2*(1-exp(-2*delta/tau));
-
-    Type cov1 = sigma*sigma/(2*C)*(1+exp(-2*delta/tau)-2*exp(-delta/tau)*cos(omega*delta));
-
-    Type cov2 = sigma*sigma/C*(exp(-delta/tau)*sin(omega*delta)-omega/(2/tau)*(1-exp(-2*delta/tau)));
-
-    // diagonal elements
-    Q(0,0) = var_xi;
-    Q(1,1) = var_xi;
-    Q(2,2) = var_zeta;
-    Q(3,3) = var_zeta;
-
-    //zero off diagonal elements
-    Q(0,1) = 0;
-    Q(1,0) = 0;
-    Q(2,3) = 0;
-    Q(3,2) = 0;
-
-    //non-zero off diagonal elements
-    Q(0,2) = cov1;
-    Q(2,0) = cov1;
-    Q(0,3) = cov2;
-    Q(3,0) = cov2;
-    Q(1,2) = -cov2;
-    Q(2,1) = -cov2;
-    Q(1,3) = cov1;
-    Q(3,1) = cov1;
-
-    return Q;
-}
-
 
 //' Penalised negative log-likelihood for CTCRW
 //'
@@ -141,14 +36,12 @@ matrix<Type> makeQ_crcvm_test(Type beta, Type sigma,Type omega, Type delta) {
 //' habitat selection. PhD thesis, University of Sheffield.
 //' (etheses.whiterose.ac.uk/23688/1/TheoMichelot_PhD_thesis_April2019.pdf)
 template <class Type>
-Type nllk_crcvm_test(objective_function<Type>* obj) {
+Type nllk_racvm_ssm(objective_function<Type>* obj) {
     //======//
     // DATA //
     //======//
     DATA_VECTOR(ID); // Time series ID
     DATA_VECTOR(times); // Observation times
-    DATA_VECTOR(theta); // Observed angles
-    DATA_VECTOR(DistanceShore); // Observed distances to boundary
     DATA_MATRIX(obs); // Response variables
     DATA_SPARSE_MATRIX(X_fe); // Design matrix for fixed effects
     DATA_SPARSE_MATRIX(X_re); // Design matrix for random effects
@@ -189,15 +82,12 @@ Type nllk_crcvm_test(objective_function<Type>* obj) {
     }
 
     // Parameters of velocity process
-    vector<Type> tau = exp(par_mat.col(0).array());
-    vector<Type> nu = exp(par_mat.col(1).array());
-    vector<Type> omega_fixed = par_mat.col(2).array();
-    vector<Type> D0 = exp(par_mat.col(3).array());
+    matrix<Type> mu = par_mat.block(0, 0, n, 2).array();
+    vector<Type> tau = exp(par_mat.col(2).array());
+    vector<Type> nu = exp(par_mat.col(3).array());
+    vector<Type> omega = par_mat.col(4).array();
     vector<Type> beta = 1/tau;
     vector<Type> sigma = 2 * nu / sqrt(M_PI * tau);
-    vector<Type> omega = omega_fixed*exp(-DistanceShore/D0);
-    
-
 
     //================================//
     // Likelihood using Kalman filter //
@@ -207,7 +97,7 @@ Type nllk_crcvm_test(objective_function<Type>* obj) {
     Z.setZero();
     Z(0,0)=1;
     Z(1,1)=1;
-    matrix<Type> H = makeH_crcvm_test(sigma_obs);
+    matrix<Type> H = makeH_racvm_ssm(sigma_obs);
     matrix<Type> T(4, 4);
     matrix<Type> Q(4, 4);
     matrix<Type> F(2, 2);
@@ -248,12 +138,17 @@ Type nllk_crcvm_test(objective_function<Type>* obj) {
             if(H_array.size() > 1) {
                 H = H_array.col(i).matrix();
             }
-            matrix<Type> T = makeT_crcvm_test(beta(i),omega(i),dtimes(i));
-            matrix<Type> Q = makeQ_crcvm_test(beta(i), sigma(i), omega(i), dtimes(i));
+            matrix<Type> T = makeT_racvm(beta(i),omega(i),dtimes(i));
+            matrix<Type> Q = makeQ_racvm(beta(i), sigma(i), omega(i), dtimes(i));
+            matrix<Type> B = makeB_racvm(beta(i),omega(i),dtimes(i));
+
+            // Mean velocity component of state update
+            vector<Type> mu_i = mu.row(i).transpose();
+            vector<Type> B_times_mu = B * mu_i;
 
             if(R_IsNA(asDouble(obs(i,0)))) {
                 // If missing observation
-                aest = T * aest ;
+                aest = T * aest + B_times_mu;
                 Pest = T * Pest * T.transpose() + Q;
             } else {
                 // Measurement residual
@@ -264,7 +159,7 @@ Type nllk_crcvm_test(objective_function<Type>* obj) {
                 detF = det(F);
 
                 if(detF <= 0) {
-                    aest = T * aest ;
+                    aest = T * aest;
                     Pest = T * Pest * T.transpose() + Q;
                 } else {
                     // Update log-likelihood
@@ -275,7 +170,7 @@ Type nllk_crcvm_test(objective_function<Type>* obj) {
                     // Kalman gain
                     K = T * Pest * Z.transpose() * F.inverse();
                     // Update state estimate
-                    aest = T * aest + K * u ;
+                    aest = T * aest + K * u + B_times_mu;
                     // Update estimate covariance
                     L = T - K * Z;
                     Pest = T * Pest * L.transpose() + Q;

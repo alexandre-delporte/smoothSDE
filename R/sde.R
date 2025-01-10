@@ -87,10 +87,11 @@ SDE <- R6Class(
                             "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log)),
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
-                            "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                            "RACVM_SSM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log,omega=identity)),
-                            "CRCVM_cubic" = as.list(c(tau = log, nu = log,a=log,theta0=identity,D0=log)),
-                            "CRCVM_test" = as.list(c(tau = log, nu = log,omega=identity,D0=log)))
+                            "CRCVM_SSM" = as.list(c(tau = log, nu = log,omega=identity,D0=log)),
+                            "CRCVM" = as.list(c(tau = log, nu = log,a=log,b=log,D0=log,D1=log,
+                                                      sigma_D=log,sigma_theta=log)))
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -108,10 +109,11 @@ SDE <- R6Class(
                                "CTCRW" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp)),
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
-                               "RACVM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
+                               "RACVM_SSM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp,omega=identity)),
-                               "CRCVM_cubic" = as.list(c(tau = exp, nu = exp,a=exp,theta0=identity,D0=exp)),
-                               "CRCVM_test" = as.list(c(tau = exp, nu = exp,omega=identity,D0=exp)))
+                               "CRCVM_SSM" = as.list(c(tau = exp, nu = exp,omega=identity,D0=exp)),
+                               "CRCVM" = as.list(c(tau = exp, nu = exp,a=exp,b=exp,D0=exp,D1=exp,
+                                                       sigma_D=exp,sigma_theta=exp)))
             
             private$link_ <- link
             private$invlink_ <- invlink
@@ -683,7 +685,7 @@ SDE <- R6Class(
                 } else {
                     tmb_dat$H_array <- array(0)
                 }
-            } else if(self$type() %in% c("RACVM","CRCVM_cubic","CRCVM_test")) {
+            } else if(self$type() %in% c("RACVM_SSM","CRCVM_SSM")) {
               # Define initial state and covariance for Kalman filter
               # First index for each ID
               i0 <- c(1, which(self$data()$ID[-n] != self$data()$ID[-1]) + 1)
@@ -717,15 +719,15 @@ SDE <- R6Class(
                 tmb_dat$H_array <- array(0)
               }
               
-              if (self$type() %in% c("CRCVM_cubic","CRCVM_test")) {
+              if (self$type() %in% c("CRCVM_SSM")) {
                   
                   if (is.null(self$data()$theta)) {
-                      stop(paste0("Data must contain a column theta for ",self$type))
+                      stop(paste("Data must contain a column theta for ",self$type()))
                   }
                   tmb_dat$theta=self$data()$theta
                   
                   if (is.null(self$data()$DistanceShore)) {
-                      stop(paste0("Data must contain a column DistanceShore for ",self$type))
+                      stop(paste("Data must contain a column DistanceShore for ",self$type()))
                   }
                   tmb_dat$DistanceShore=self$data()$DistanceShore
               }
@@ -745,7 +747,19 @@ SDE <- R6Class(
                 tmb_dat$h <- self$data()$h
                 # Non-lipid tissue mass
                 tmb_dat$R <- self$data()$R
-            } else {
+            } else if (self$type() =="CRCVM") {
+                
+                if (is.null(self$data()$theta)) {
+                    stop(paste("Data must contain a column theta for ",self$type()))
+                }
+                tmb_dat$theta=self$data()$theta
+                
+                if (is.null(self$data()$DistanceShore)) {
+                    stop(paste("Data must contain a column DistanceShore for ",self$type()))
+                }
+                tmb_dat$DistanceShore=self$data()$DistanceShore
+                }
+            else {
                 # Unused for BM, OU, CIR...
                 tmb_dat$other_data <- 0
             }
@@ -1833,7 +1847,7 @@ SDE <- R6Class(
             }
             
             
-            if (self$type() %in% c("CTCRW","RACVM","CRCVM_cubic") && n_dim==2) {
+            if (self$type() %in% c("CTCRW","RACVM_SSM","CRCVM_SSM","CRCVM") && n_dim==2) {
               
               # Initialize vector of simulated observations
               n=length(data$time)
@@ -1859,7 +1873,7 @@ SDE <- R6Class(
                                   dimnames = list(NULL, c("z1","z2", "v1","v2")))
                 
                 # Unpack parameters
-                if (self$type =="CTCRW") {
+                if (self$type() =="CTCRW") {
                     mu1s <- sub_par[, 1]
                     mu2s <- sub_par[,2]
                     taus <- sub_par[, 3]
@@ -1869,7 +1883,7 @@ SDE <- R6Class(
                     omegas <- rep(0,sub_n)
                     }
     
-                if (self$type =="RACVM") {
+                if (self$type() =="RACVM_SSM") {
                     mu1s <- sub_par[, 1]
                     mu2s <- sub_par[,2]
                     taus <- sub_par[, 3]
@@ -1879,14 +1893,19 @@ SDE <- R6Class(
                     omegas <- omega_times*sub_par[, 5]
                 }
                 
-                else if (self$type=="CRCVM_cubic") {
+                else if (self$type() %in% c("CRCVM","CRCVM_SSM")) {
                     
                     taus <- sub_par[, 1]
                     nus <- sub_par[, 2]
                     a <- sub_par[,3]
-                    theta0 <- sub_par[,4]
+                    b <- sub_par[,4]
                     D0 <- sub_par[,5]
-                    omegas <- a*(data$theta-theta0)*(data$theta+theta0)*exp(-data$DistanceShore/D0)
+                    D1 <- sub_par[,6]
+                    sigma_D <- sub_par[,7]
+                    sigma_theta <- sub_par[,8]
+                    omegas <- a*(data$theta-pi/2)*(data$theta+pi/2)*exp(-(data$DistanceShore/D0)^2)+
+                        b*(exp(-1/2*(((data$theta+pi/2/sqrt(3))/sigma_theta)^2+((data$DistanceShore-D1)/sigma_D)^2))-
+                                 exp(-1/2*(((data$theta-pi/2/sqrt(3))/sigma_theta)^2+((data$DistanceShore-D1)/sigma_D)^2)))
                     betas<- 1/taus
                     sigmas <- 2 * nus / sqrt(taus * pi)
                     mu1s <-rep(0,sub_n)
@@ -1938,15 +1957,36 @@ SDE <- R6Class(
                     
                     #get new value of the parameters 
                     new_par=self$par(new_data=new_data)
-                    mu=matrix(c(new_par[1,"mu1"],new_par[1,"mu2"]),ncol=1,nrow=2,byrow=TRUE)
-                    tau=new_par[1,"tau"]
-                    nu=new_par[1,"nu"]
+                    
                     if (self$type()=="CTCRW") {
+                        mu=matrix(c(new_par[1,"mu1"],new_par[1,"mu2"]),ncol=1,nrow=2,byrow=TRUE)
+                        tau=new_par[1,"tau"]
+                        nu=new_par[1,"nu"]
                         omega=0
                     }
-                    else {
+                    else if (self$type()=="RACVM_SSM") {
+                        mu=matrix(c(new_par[1,"mu1"],new_par[1,"mu2"]),ncol=1,nrow=2,byrow=TRUE)
+                        tau=new_par[1,"tau"]
+                        nu=new_par[1,"nu"]
                         omega=omega_times*new_par[1,"omega"]
                     }
+                    
+                    else if (self$type() %in% c("CRCVM","CRCVM_SSM")) {
+                        mu=matrix(c(0,0),ncol=1,nrow=2,byrow=TRUE)
+                        tau=new_par[1,"tau"]
+                        nu=new_par[1,"nu"]
+                        a=new_par[1,"a"]
+                        b=new_par[1,"b"]
+                        D0=new_par[1,"D0"]
+                        D1=new_par[1,"D1"]
+                        sigma_D=new_par[1,"sigma_D"]
+                        sigma_theta=new_par[1,"sigma_theta"]
+                        omega <- a*(new_data$theta-pi/2)*(new_data$theta+pi/2)*exp(-(new_data$DistanceShore/D0)^2)+
+                            b*(exp(-1/2*(((new_data$theta+pi/2/sqrt(3))/sigma_theta)^2+((new_data$DistanceShore-D1)/sigma_D)^2))-
+                                   exp(-1/2*(((new_data$theta-pi/2/sqrt(3))/sigma_theta)^2+((new_data$DistanceShore-D1)/sigma_D)^2)))
+                    }
+                    
+                    
                     beta<- 1/tau
                     sigma <- 2 * nu / sqrt(tau * pi)
                     
