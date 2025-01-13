@@ -7,7 +7,6 @@
 #include "nllk/nllk_e_seal_ssm.hpp"
 #include "nllk/nllk_racvm_ssm.hpp"
 #include "nllk/nllk_crcvm_ssm.hpp"
-#include "nllk/nllk_crcvm.hpp"
 
 template<class Type>
 Type objective_function<Type>::operator() () {
@@ -26,10 +25,7 @@ Type objective_function<Type>::operator() () {
         return nllk_eseal_ssm(this);
     } else if (type=="RACVM_SSM") {
         return nllk_racvm_ssm(this);
-    } else if (type=="CRCVM_SSM") {
-        return nllk_crcvm_ssm(this);
-         } else if (type=="CRCVM") {
-        return nllk_crcvm(this);
+    } else if (type=="CRCVM_SSM")
     }else {
         error ("Unknown SDE type");
     }
