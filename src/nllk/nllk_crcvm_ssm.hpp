@@ -89,14 +89,14 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     vector<Type> a = exp(par_mat.col(2).array());
     vector<Type> b = exp(par_mat.col(3).array());
     vector<Type> D0 = exp(par_mat.col(4).array());
-    vector<Type> D1 = exp(par_mat.col(4).array());
-    vector<Type> sigma_D = exp(par_mat.col(5).array());
-    vector<Type> sigma_theta = exp(par_mat.col(6).array());
+    vector<Type> D1 = exp(par_mat.col(5).array());
+    vector<Type> sigma_D = exp(par_mat.col(6).array());
+    vector<Type> sigma_theta = exp(par_mat.col(7).array());
     vector<Type> beta = 1/tau;
     vector<Type> sigma = 2 * nu / sqrt(M_PI * tau);
-    vector<Type> omega= a*theta*(theta-M_PI/2)*(theta+pi/2)*exp(-DistanceShore/D0)/DistanceShore+
-    b*(exp(-1/2*(((theta+M_PI/2/sqrt(3))/sigma_theta)^2+((Dshore-D1)/sigma_D)^2))-
-         exp(-1/2*(((theta-M_PI/2/sqrt(3))/sigma_theta)^2+((Dshore-D1)/sigma_D)^2)))
+    vector<Type> omega= a*theta*(theta-M_PI/2)*(theta+M_PI/2)*exp(-DistanceShore/D0)/DistanceShore+
+    b*(exp(-1/2*((theta+M_PI/2/sqrt(3))*(theta+M_PI/2/sqrt(3))/sigma_theta/sigma_theta)+((DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D))-
+         exp(-1/2*(theta-M_PI/2/sqrt(3))*(theta+M_PI/2/sqrt(3))/sigma_theta/sigma_theta+((DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D)));
          
     //================================//
     // Likelihood using Kalman filter //

@@ -20,13 +20,14 @@ Type objective_function<Type>::operator() () {
     } else if (type == "OU_SSM") {
         return(nllk_ou_ssm(this));
     } else if (type == "CTCRW") {
-        return nllk_ctcrw(this);
+        return (nllk_ctcrw(this));
     } else if (type == "ESEAL_SSM") {
-        return nllk_eseal_ssm(this);
+        return (nllk_eseal_ssm(this));
     } else if (type=="RACVM_SSM") {
-        return nllk_racvm_ssm(this);
-    } else if (type=="CRCVM_SSM")
-    }else {
+        return (nllk_racvm_ssm(this));
+    } else if (type=="CRCVM_SSM") {
+    	return (nllk_crcvm_ssm(this));
+    } else {
         error ("Unknown SDE type");
     }
     return 0;
