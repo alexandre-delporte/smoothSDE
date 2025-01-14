@@ -26,15 +26,9 @@ matrix<Type> makeH_crcvm_ssm(Type sigma_obs) {
 }
 
 
-//' Penalised negative log-likelihood for CTCRW
-//'
-//' This function was inspired by the source code of the package
-//' crawl, authored by Devin Johnson and Josh London
-//'
-//' All derivations, including for the matrices T and Q defined above, are detailed
-//' in Section 6.2.2 of Michelot (2019), Stochastic models of animal movement and
-//' habitat selection. PhD thesis, University of Sheffield.
-//' (etheses.whiterose.ac.uk/23688/1/TheoMichelot_PhD_thesis_April2019.pdf)
+//' Penalised negative log-likelihood for CRCVM
+
+
 template <class Type>
 Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     //======//
@@ -96,7 +90,7 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     vector<Type> sigma = 2 * nu / sqrt(M_PI * tau);
     vector<Type> omega= a*theta*(theta-M_PI/2)*(theta+M_PI/2)*exp(-DistanceShore/D0)/DistanceShore+
     b*(exp(-1/2*((theta+M_PI/2/sqrt(3))*(theta+M_PI/2/sqrt(3))/sigma_theta/sigma_theta)+((DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D))-
-         exp(-1/2*(theta-M_PI/2/sqrt(3))*(theta+M_PI/2/sqrt(3))/sigma_theta/sigma_theta+((DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D)));
+         exp(-1/2*(theta-M_PI/2/sqrt(3))*(theta-M_PI/2/sqrt(3))/sigma_theta/sigma_theta+((DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D)));
          
     //================================//
     // Likelihood using Kalman filter //
