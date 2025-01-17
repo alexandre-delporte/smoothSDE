@@ -1,3 +1,4 @@
+
 #ifndef _CRCVM_SSM_
 #define _CRCVM_SSM_
 
@@ -89,8 +90,8 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     vector<Type> beta = 1/tau;
     vector<Type> sigma = 2 * nu / sqrt(M_PI * tau);
     vector<Type> omega= a*theta*(theta-M_PI/2)*(theta+M_PI/2)*exp(-DistanceShore/D0)/DistanceShore+
-    b*(exp(-1/2*((theta+M_PI/2/sqrt(3))*(theta+M_PI/2/sqrt(3))/sigma_theta/sigma_theta)+((DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D))-
-         exp(-1/2*(theta-M_PI/2/sqrt(3))*(theta-M_PI/2/sqrt(3))/sigma_theta/sigma_theta+((DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D)));
+    b*(exp(-1/2*((theta+M_PI/2/sqrt(3))*(theta+M_PI/2/sqrt(3))/sigma_theta/sigma_theta+(DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D))-
+         exp(-1/2*((theta-M_PI/2/sqrt(3))*(theta-M_PI/2/sqrt(3))/sigma_theta/sigma_theta+(DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D)));
          
     //================================//
     // Likelihood using Kalman filter //
@@ -179,7 +180,11 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
         aest_all.row(i) = aest;
     }
 
-    REPORT(aest_all)
+    REPORT(aest_all);
+    REPORT(omega);
+    REPORT(theta);
+    REPORT(DistanceShore);
+
 
    //===================//
     // Smoothing penalty //
