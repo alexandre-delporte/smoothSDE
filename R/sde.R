@@ -745,21 +745,6 @@ SDE <- R6Class(
                 tmb_dat$h <- self$data()$h
                 # Non-lipid tissue mass
                 tmb_dat$R <- self$data()$R
-            } else if (self$type() =="CRCVM") {
-                
-                if (is.null(self$data()$theta)) {
-                    stop(paste("Data must contain a column theta for ",self$type()))
-                }
-                tmb_dat$theta=self$data()$theta
-                
-                if (is.null(self$data()$DistanceShore)) {
-                    stop(paste("Data must contain a column DistanceShore for ",self$type()))
-                }
-                tmb_dat$DistanceShore=self$data()$DistanceShore
-                }
-            else {
-                # Unused for BM, OU, CIR...
-                tmb_dat$other_data <- 0
             }
             
             # Setup fixed parameters
@@ -1845,7 +1830,7 @@ SDE <- R6Class(
             }
             
             
-            if (self$type() %in% c("CTCRW","RACVM_SSM","CRCVM_SSM","CRCVM") && n_dim==2) {
+            if (self$type() %in% c("CTCRW","RACVM_SSM","CRCVM_SSM") && n_dim==2) {
               
               # Initialize vector of simulated observations
               n=length(data$time)
@@ -1891,7 +1876,7 @@ SDE <- R6Class(
                     omegas <- omega_times*sub_par[, 5]
                 }
                 
-                else if (self$type() %in% c("CRCVM","CRCVM_SSM")) {
+                else if (self$type() %in% c("CRCVM_SSM")) {
                     
                     taus <- sub_par[, 1]
                     nus <- sub_par[, 2]
@@ -1901,7 +1886,7 @@ SDE <- R6Class(
                     D1 <- sub_par[,6]
                     sigma_D <- sub_par[,7]
                     sigma_theta <- sub_par[,8]
-                    omegas <- a*(data$theta-pi/2)*(data$theta+pi/2)*exp(-(data$DistanceShore/D0)^2)+
+                    omegas <- a*(data$theta-pi/2)*(data$theta+pi/2)*exp(-data$DistanceShore/D0)/data$DistanceShore+
                         b*(exp(-1/2*(((data$theta+pi/2/sqrt(3))/sigma_theta)^2+((data$DistanceShore-D1)/sigma_D)^2))-
                                  exp(-1/2*(((data$theta-pi/2/sqrt(3))/sigma_theta)^2+((data$DistanceShore-D1)/sigma_D)^2)))
                     betas<- 1/taus
@@ -1979,7 +1964,7 @@ SDE <- R6Class(
                         D1=new_par[1,"D1"]
                         sigma_D=new_par[1,"sigma_D"]
                         sigma_theta=new_par[1,"sigma_theta"]
-                        omega <- a*(new_data$theta-pi/2)*(new_data$theta+pi/2)*exp(-(new_data$DistanceShore/D0)^2)+
+                        omega <- a*(new_data$theta-pi/2)*(new_data$theta+pi/2)*exp(-new_data$DistanceShore/D0)/new_data$DistanceShore+
                             b*(exp(-1/2*(((new_data$theta+pi/2/sqrt(3))/sigma_theta)^2+((new_data$DistanceShore-D1)/sigma_D)^2))-
                                    exp(-1/2*(((new_data$theta-pi/2/sqrt(3))/sigma_theta)^2+((new_data$DistanceShore-D1)/sigma_D)^2)))
                     }
