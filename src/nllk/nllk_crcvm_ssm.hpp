@@ -89,9 +89,9 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     vector<Type> sigma_theta = exp(par_mat.col(7).array());
     vector<Type> beta = 1/tau;
     vector<Type> sigma = 2 * nu / sqrt(M_PI * tau);
-    vector<Type> omega= a*theta*(theta-M_PI/2)*(theta+M_PI/2)*exp(-DistanceShore/D0)/DistanceShore+
-    b*(exp(-1/2*((theta+M_PI/2/sqrt(3))*(theta+M_PI/2/sqrt(3))/sigma_theta/sigma_theta+(DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D))-
-         exp(-1/2*((theta-M_PI/2/sqrt(3))*(theta-M_PI/2/sqrt(3))/sigma_theta/sigma_theta+(DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D)));
+    vector<Type> omega= a*theta*(theta-0.5*M_PI)*(theta+0.5*M_PI)*exp(-DistanceShore/D0)/DistanceShore+
+    b*(exp(-0.5*((theta+0.5*M_PI/sqrt(3))*(theta+0.5*M_PI/sqrt(3))/sigma_theta/sigma_theta+(DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D))-
+         exp(-0.5*((theta-0.5*M_PI/sqrt(3))*(theta-0.5*M_PI/sqrt(3))/sigma_theta/sigma_theta+(DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D)));
          
     //================================//
     // Likelihood using Kalman filter //
@@ -184,6 +184,7 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     REPORT(omega);
     REPORT(theta);
     REPORT(DistanceShore);
+    REPORT(par_mat);
 
 
    //===================//
