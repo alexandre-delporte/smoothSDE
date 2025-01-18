@@ -26,7 +26,7 @@ SDE <- R6Class(
         ## Constructor ##
         #################
         #' @description Create a SDE object
-        #' 
+        #'de
         #' @param formulas List of formulas for model parameters, with one element
         #' for each SDE parameter. Formulas can use standard R syntax, as well
         #' as mgcv-style syntax for splines and random effects.
