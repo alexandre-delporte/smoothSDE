@@ -1783,7 +1783,8 @@ SDE <- R6Class(
         #' @param verbose If TRUE, verbose mode
         #' 
         #' @return Input data frame with extra column for simulated time series
-        simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,reflect=FALSE,omega_times=1,verbose=FALSE) {
+        simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,
+                            reflect=FALSE,omega_times=1,verbose=FALSE) {
           
             # Check that data includes times of observations
             if(is.null(data$time)) {
@@ -1839,9 +1840,8 @@ SDE <- R6Class(
               # Loop over IDs
               for(id in seq_along(unique(data$ID))) {
                   
-                  if (verbose) {
-                      cat("Track simulation for",unique(data$ID)[id],"...","\n")
-                  }
+                cat("Track simulation for",unique(data$ID)[id],"...","\n")
+                  
                 
                 # Get relevant rows of data
                 ind <- which(data$ID == unique(data$ID)[id])
@@ -1866,7 +1866,7 @@ SDE <- R6Class(
                     omegas <- rep(0,sub_n)
                     }
     
-                if (self$type() =="RACVM_SSM") {
+                else if (self$type() =="RACVM_SSM") {
                     mu1s <- sub_par[, 1]
                     mu2s <- sub_par[,2]
                     taus <- sub_par[, 3]
@@ -1876,7 +1876,7 @@ SDE <- R6Class(
                     omegas <- omega_times*sub_par[, 5]
                 }
                 
-                else if (self$type() %in% c("CRCVM_SSM")) {
+                else {
                     
                     taus <- sub_par[, 1]
                     nus <- sub_par[, 2]
@@ -1937,6 +1937,12 @@ SDE <- R6Class(
                         new_data[,var]=fn(z,v,p)
                       }
                     }
+                    if (self$type()=="CRCVM_SSM") {
+                        fn_Dshore=atw[["DistanceShore"]]
+                        new_data[,"DistanceShore"]=fn_Dshore(z,v,p)
+                        fn_theta=atw[["theta"]]
+                        new_data[,"theta"]=fn_theta(z,v,p)
+                    }
                     
                     #get new value of the parameters 
                     new_par=self$par(new_data=new_data)
@@ -1954,7 +1960,8 @@ SDE <- R6Class(
                         omega=omega_times*new_par[1,"omega"]
                     }
                     
-                    else if (self$type() %in% c("CRCVM","CRCVM_SSM")) {
+                    else {
+                        
                         mu=matrix(c(0,0),ncol=1,nrow=2,byrow=TRUE)
                         tau=new_par[1,"tau"]
                         nu=new_par[1,"nu"]
@@ -1975,7 +1982,8 @@ SDE <- R6Class(
                     
                     if (verbose) {
                         cat("\n Covariates after update : \n")
-                        print(new_data)
+                        print(new_data[1,])
+                        
                         cat("\n Parameters update :"," omega=",round(omega,2)," tau=",round(tau,2),"\n")
                     }
                   }
