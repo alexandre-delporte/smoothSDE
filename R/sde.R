@@ -1840,7 +1840,7 @@ SDE <- R6Class(
               # Loop over IDs
               for(id in seq_along(unique(data$ID))) {
                   
-                cat("Track simulation for",unique(data$ID)[id],"...","\n")
+                message("Track simulation for",unique(data$ID)[id],"...","\n")
                   
                 
                 # Get relevant rows of data
