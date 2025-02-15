@@ -41,6 +41,7 @@ distribution.
 \item \href{#method-SDE-coeff_re}{\code{SDE$coeff_re()}}
 \item \href{#method-SDE-lambda}{\code{SDE$lambda()}}
 \item \href{#method-SDE-knots}{\code{SDE$knots()}}
+\item \href{#method-SDE-border}{\code{SDE$border()}}
 \item \href{#method-SDE-sdev}{\code{SDE$sdev()}}
 \item \href{#method-SDE-rho}{\code{SDE$rho()}}
 \item \href{#method-SDE-terms}{\code{SDE$terms()}}
@@ -92,6 +93,7 @@ distribution.
 \if{latex}{\out{\hypertarget{method-SDE-new}{}}}
 \subsection{Method \code{new()}}{
 Create a SDE object
+de
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$new(
   formulas = NULL,
@@ -119,8 +121,10 @@ time, and ID}
 Uhlenbeck process), "CTCRW" (continuous-time correlated random walk, a.k.a.
 integrated Ornstein-Uhlenbeck process), "CIR" (Cox-Ingersoll-Ross process),
 "BM_SSM" (BM with measurement error), "OU_SSM" (OU with measurement error),
-"BM_t" (BM with Student's t-distributed increments) and "RACVM" (Rotational correlated
-velocity model with measurement error).}
+"BM_t" (BM with Student's t-distributed increments), "RACVM_SSM" (Rotational
+ Advective Correlated Velocity Model with measurement error) and 
+ CRCVM_SSM (Constrained Rotational Correlated Velocity
+model with measurement error)}
 
 \item{\code{response}}{Name of response variable, correspond to a column name in
 \code{data}. Can be a vector of names if multiple response variables}
@@ -282,6 +286,16 @@ Smoothness parameters
 Knots
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{SDE$knots()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-SDE-border"></a>}}
+\if{latex}{\out{\hypertarget{method-SDE-border}{}}}
+\subsection{Method \code{border()}}{
+Border
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{SDE$border()}\if{html}{\out{</div>}}
 }
 
 }
