@@ -381,6 +381,17 @@ get_variables=function(formula) {
   return (unique(covariates))
 }
 
+#' Check if two columns of a dataframe are orthogonal
+#' @param data dataframe
+#' @param C1 column name
+#' @param C2 column name
+#' 
+#' @return boolean
+#' @export
+are_orthogonals=function(data,C1,C2){
+    inner_product=data[,C1]*data[,C2]
+    return (all(inner_product==0))
+}
 
 
 #' Compute signed angle in [-pi,pi] that rotates first vector into second vector
@@ -405,67 +416,210 @@ signed_angle <- function(u, v) {
   return(result) 
 } 
 
-#' Check whether a point is on land or not
+#' Check whether a point is on border or not
 #' 
-#' @param point the location we want to tell if it is on land or not
-#' @param land sf object (list of polygons) defining the land
-#' @return boolean TRUE if it is on land, FALSE otherwise
+#' @param point the location we want to tell if it is on border or not
+#' @param border sf object (list of polygons) defining the border
+#' @return boolean TRUE if it is on border, FALSE otherwise
 #' 
 #' @export
 
-is_in_land=function(point,land) {
-    return (length(st_intersects(point,land$geometry)[[1]])>0)
+is_in_border=function(point,border) {
+    return (length(st_intersects(point,border$geometry)[[1]])>0)
 }
 
 
-#' Compute nearest point on the shoreline
+
+#' Compute nearest points on the shoreline
 #' 
-#' @param point the location from which we want to find the nearest point on land
-#' @param land sf object (list of polygons) defining the land
-#' @return matrix with on row and two columns that are the coordinates of the nearest point in land
-#' 
+#' @param point the location from which we want to find the nearest point on border
+#' @param border sf object (list of polygons) defining the border
+#' @return matrix with on row and two columns that are the coordinates of the nearest point in border
 #' @export
 
-nearest_boundary_point <- function(point, land) {
-    # Initialize variables to store the minimum distance and nearest boundary point
-    min_distance <- Inf
-    nearest_point <- NULL
+nearest_boundary_points <- function(points, border) {
     
-    # Iterate over each polygon in land
-    for (j in 1:length(land$geometry)) {
+    nearest_points=matrix(0,ncol=2,nrow=nrow(points))
+    colnames(nearest_points)=c("p1","p2")
+    
+    for (i in 1:nrow(nearest_points)) {
         
-        # Get the boundary of the current polygon
-        boundary <- st_boundary(land$geometry[[j]])
+        point=st_point(points[i,])
         
-        # Calculate distance and nearest point to the boundary
-        distance <- st_distance(point, boundary)
-        candidate <- st_nearest_points(point, boundary)
+        # Initialize variables to store the minimum distance and nearest boundary point
+        min_distance <- Inf
+        nearest_point <- NULL
         
-        # Ensure that the candidate is not empty
-        if (!st_is_empty(candidate)) {
-            coordinates <- st_coordinates(candidate)[2, c("X", "Y")]
+        # Iterate over each polygon in border
+        for (j in 1:length(border$geometry)) {
             
-            # Update the nearest point if this boundary point is closer
-            if (distance < min_distance) {
-                min_distance <- distance
-                nearest_point <- coordinates
+            # Get the boundary of the current polygon
+            boundary <- st_boundary(border$geometry[[j]])
+            
+            # Calculate distance and nearest point to the boundary
+            distance <- st_distance(point, boundary)
+            candidate <- st_nearest_points(point, boundary)
+            
+            # Ensure that the candidate is not empty
+            if (!st_is_empty(candidate)) {
+                coordinates <- st_coordinates(candidate)[2, c("X", "Y")]
+                
+                # Update the nearest point if this boundary point is closer
+                if (distance < min_distance) {
+                    min_distance <- distance
+                    nearest_point <- coordinates
+                }
             }
         }
+        nearest_points[i,]=nearest_point
     }
     
-    return(as.matrix(nearest_point))
+    return(as.matrix(nearest_points))
 }
 
-#' Check if two columns of a dataframe are orthogonal
-#' @param data dataframe
-#' @param C1 column name
-#' @param C2 column name
+#' Compute distance to boundary and angle for CRCVM_SSM sde type
+#' @param data dataframe with columns time, ID and response for response variable (such as animal positions)
+#' @param response name of response variables
+#' @param border sf object with polygons geometry defining zones that the process cannot reach.
+#' @param n_cores number of cores to use for parallelization
 #' 
-#' @return boolean
-#' @export
-are_orthogonals=function(data,C1,C2){
-    inner_product=data[,C1]*data[,C2]
-    return (all(inner_product==0))
+#' @return dataframe with the same number of rows as data, and two columns BoundaryDistance and BoundaryAngle.
+#' @export 
+get_BoundaryMetrics <- function(data,response,border,n_cores = NULL) {
+    
+    # Start parallel cluster only if n_cores is not NULL
+    if (!is.null(n_cores) && n_cores > 1) {
+        cl <- makeCluster(n_cores)
+        registerDoParallel(cl)
+        message("Running in parallel mode with ", n_cores, " cores.")
+    } else {
+        registerDoSEQ() 
+        message("Running in sequential mode.")
+    }
+    
+    ids <- unique(data$ID)
+    
+    # compute each ID in parallel
+    results <- foreach(id = ids, .combine = rbind, .packages = c("sf"),
+                       .export = c("nearest_boundary_points", "is_in_border","signed_angle")  ) %dopar% {
+                                       #Filter data for the current ID
+                                       sub_data <- data[data$ID == id, c("time",response)]
+                                       n_sub <- nrow(sub_data)
+                                       
+                                       
+                                       # Empirical velocity
+                                       vexp<- sapply(sub_data[, response],diff)/diff(sub_data[,"time"])
+                                       
+                                       # Nearest points on boundary
+                                       nearest_boundary_points<- nearest_boundary_points(as.matrix(sub_data[, response]), border)
+                                       
+                                       # Normal vectors
+                                       normal <- as.matrix(sub_data[2:n_sub, response] - nearest_boundary_points[2:n_sub,])
+                                       
+                                       # Angle between velocity and normal vector
+                                       BoundaryAngles <- signed_angle(normal, vexp)
+                                       BoundaryAngles <- c(0,BoundaryAngles)  # adjust length
+                                       
+                                       # Initialize distances vector
+                                       BoundaryDistances <- rep(0, n_sub)
+                                       
+                                       for (i in 1:n_sub) {
+                                           obs <- as.numeric(sub_data[i, response])
+                                           if (!is_in_border(st_point(obs), border)) {
+                                               BoundaryDistances[i] <- sqrt(sum((obs-nearest_boundary_points[i,])^2))
+                                           }
+                                           else {
+                                               BoundaryDistances[i]<-0
+                                           }
+                                       }
+                                       
+                                       # Make dataframe
+                                       df<-data.frame("BoundaryDistance"=BoundaryDistances,
+                                                      "BoundaryAngle"=BoundaryAngles)
+                                       
+                                       return(df)
+                                   }
+    
+    # Stop the cluster if running in parallel mode
+    if (!is.null(n_cores) && n_cores > 1) {
+        stopCluster(cl)
+    }
+    
+    
+    return(results)
 }
 
 
+
+
+#' Interpolate BoundaryDistance and BoundaryAngle for CRCVM
+#' @param data Dataframe with the columns time, ID, BoundaryDistance, and BoundaryAngle
+#' @param response name of response variables
+#' @param border Boundary of the domain as a sf object with geometry 
+#' @param n_step Number of intervals to subdivise between two observations
+#' @param sp smoothing penalty for the smoothing of the trajectories
+#' @param k degree of freedom of the splines
+#' @param n_cores number of cores to use for computation in parallel model
+#' @return List with matrices of size nrow(data) x n_step that contain interpolated positions, distances
+#' angles and interpolation times
+#' @export
+interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NULL, k=NULL,n_cores = NULL) {
+    
+    smooth_interpolate <- function(df, n_step) {
+        n <- nrow(df)
+        interpolated_x <- matrix(rep(df[[response[1]]],each=n_step),ncol=n_step,byrow=TRUE)
+        interpolated_y <- matrix(rep(df[[response[2]]],each=n_step),ncol=n_step,byrow=TRUE)
+        interpolation_time <- matrix(rep(df$time,each=n_step),ncol=n_step,byrow=TRUE)
+        
+        # Fit GAM models instead of smooth.spline
+        formula<- ifelse(is.null(k),"~ s(time, bs='cs')",paste0("~ s(time, bs='cs', k=", k, ")"))
+        
+        gam_x <- gam(as.formula(paste(response[1],formula)), data = df,sp=sp)
+        gam_y <- gam(as.formula(paste(response[2],formula)), data = df,sp=sp)
+        
+        for (i in 1:(n - 1)) {
+            t1 <- df$time[i]
+            t2 <- df$time[i + 1]
+            
+            # Create time sequence for interpolation
+            time_seq <- seq(t1, t2, length.out = n_step + 1)[-length(seq(t1, t2, length.out = n_step + 1))]
+            
+            # Predict using GAM models
+            interp_x <- predict(gam_x, newdata = data.frame(time = time_seq))
+            interp_y <- predict(gam_y, newdata = data.frame(time = time_seq))
+            
+            # Store results
+            interpolation_time[i, ] <- time_seq
+            interpolated_x[i, ] <- interp_x
+            interpolated_y[i, ] <- interp_y
+        }
+        
+        interpolated_x[n] <- interpolated_x[n-1]
+        interpolated_y[n] <- interpolated_y[n-1]
+        interpolation_time[n, ] <- rep(df$time[n],n_step)
+        
+        return(data.frame(
+            ID = unique(df$ID),
+            time = as.vector(t(interpolation_time)),
+            x = as.vector(t(interpolated_x)),
+            y = as.vector(t(interpolated_y))
+        ))
+    }
+    
+    # Apply the function per ID
+    interpolated_data <- do.call(rbind, lapply(split(data, data$ID), smooth_interpolate, n_step))
+    rownames(interpolated_data) <- NULL
+    
+    # Compute boundary metrics from interpolated positions
+    interpolated_metrics <- get_BoundaryMetrics(interpolated_data, c("x","y"), border, n_cores)
+    
+    # Combine results
+    result_df <- cbind(interpolated_data[, c("x", "y", "time")], interpolated_metrics)
+    
+    # Convert to matrices
+    result_matrices <- lapply(as.list(result_df), function(vec) {
+        matrix(vec, ncol = n_step, byrow = TRUE)
+    })
+    
+    return(result_matrices)
+}
