@@ -2,7 +2,7 @@
 #ifndef _CRCVM_SSM_
 #define _CRCVM_SSM_
 
-#include "make_RACVM_matrix.hpp"
+#include "utility.hpp"
 
 #undef TMB_OBJECTIVE_PTR
 #define TMB_OBJECTIVE_PTR obj
@@ -10,21 +10,6 @@
 using namespace R_inla;
 using namespace density;
 using namespace Eigen;
-
-
-//' Make H matrix for Kalman filter
-//'
-//' @param sigma_obs SD of measurement error
-//' @param n_dim Number of dimensions
-template<class Type>
-matrix<Type> makeH_crcvm_ssm(Type sigma_obs) {
-    matrix<Type> H(2, 2);
-    H.setZero();
-    for(int i = 0; i < 2; i ++) {
-        H(i, i) = sigma_obs * sigma_obs;
-    }
-    return H;
-}
 
 
 //' Penalised negative log-likelihood for CRCVM
@@ -36,10 +21,10 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     // DATA //
     //======//
     DATA_VECTOR(ID); // Time series ID
-    DATA_VECTOR(times); // Observation times
-    DATA_VECTOR(theta); // Observed angles
-    DATA_VECTOR(DistanceShore); // Observed distances to boundary
+    DATA_VECTOR(times); // // Observation times
     DATA_MATRIX(obs); // Response variables
+    DATA_MATRIX(interpolated_BoundaryDistance); // Interpolated BoundaryDistance values
+    DATA_MATRIX(interpolated_BoundaryAngle); // Interpolated BoundaryAngle values
     DATA_SPARSE_MATRIX(X_fe); // Design matrix for fixed effects
     DATA_SPARSE_MATRIX(X_re); // Design matrix for random effects
     DATA_SPARSE_MATRIX(S); // Penalty matrix
@@ -51,6 +36,12 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
 
     // Number of observations
     int n = obs.rows();
+
+    // Number of interpolations
+    int m = interpolated_BoundaryDistance.cols();
+
+    // Number of dimensions
+    int n_dim = obs.cols();
 
     // Time intervals (needs to be of length n)
     vector<Type> dtimes(n);
@@ -89,9 +80,6 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     vector<Type> sigma_theta = exp(par_mat.col(7).array());
     vector<Type> beta = 1/tau;
     vector<Type> sigma = 2 * nu / sqrt(M_PI * tau);
-    vector<Type> omega= a*theta*(theta-0.5*M_PI)*(theta+0.5*M_PI)*exp(-DistanceShore/D0)/DistanceShore+
-    b*(exp(-0.5*((theta+0.5*M_PI/sqrt(3))*(theta+0.5*M_PI/sqrt(3))/sigma_theta/sigma_theta+(DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D))-
-         exp(-0.5*((theta-0.5*M_PI/sqrt(3))*(theta-0.5*M_PI/sqrt(3))/sigma_theta/sigma_theta+(DistanceShore-D1)*(DistanceShore-D1)/sigma_D/sigma_D)));
          
     //================================//
     // Likelihood using Kalman filter //
@@ -101,9 +89,7 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     Z.setZero();
     Z(0,0)=1;
     Z(1,1)=1;
-    matrix<Type> H = makeH_crcvm_ssm(sigma_obs);
-    matrix<Type> T(4, 4);
-    matrix<Type> Q(4, 4);
+    matrix<Type> H = makeH(sigma_obs,n_dim);
     matrix<Type> F(2, 2);
     F.setZero();
     matrix<Type> K(4, 2);
@@ -129,7 +115,21 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     Type llk = 0;
     matrix<Type> aest_all(n, 4);
     aest_all.setZero();
-    aest_all.row(0) = aest;
+    aest_all.row(0) = aest; 
+
+    matrix<Type> omega_all(n,m);
+    omega_all.setZero();
+
+    array<Type> T_matrices(4, 4, n);
+    array<Type> Q_matrices(4, 4, n);
+
+
+    matrix<Type> dtimes_all(n,m);
+    dtimes_all.setZero();
+
+
+    Type omega_size = 0;
+
     for(int i = 1; i < n; i++) {
         if(ID(i) != ID(i-1)) {
             // If first location of track, re-initialise state vector
@@ -137,14 +137,50 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
             aest = a0.row(k);
             k = k + 1;
             Pest = P0;
+
+            
         } else {
             // Compute Kalman filter matrices
             if(H_array.size() > 1) {
                 H = H_array.col(i).matrix();
             }
-            matrix<Type> T = makeT_racvm(beta(i),omega(i),dtimes(i));
-            matrix<Type> Q = makeQ_racvm(beta(i), sigma(i), omega(i), dtimes(i));
 
+
+            vector<Type> angle = interpolated_BoundaryAngle.row(i);
+            vector<Type> distance = interpolated_BoundaryDistance.row(i);
+
+            vector<Type> omega= a(i)*angle*(angle-0.5*M_PI)*(angle+0.5*M_PI)*exp(-distance/D0(i))/distance+
+                b(i)*(exp(-0.5*((angle+0.5*M_PI/sqrt(3))*(angle+0.5*M_PI/sqrt(3))/sigma_theta(i)/sigma_theta(i)+(distance-D1(i))*(distance-D1(i))/sigma_D(i)/sigma_D(i)))-
+                    exp(-0.5*((angle-0.5*M_PI/sqrt(3))*(angle-0.5*M_PI/sqrt(3))/sigma_theta(i)/sigma_theta(i)+(distance-D1(i))*(distance-D1(i))/sigma_D(i)/sigma_D(i))));
+
+            omega_size=omega.size();
+            omega_all.row(i) = omega;
+
+            vector<Type> dtimes_i (m);
+
+            // Fill the vector with values from 0 to dtimes(i)
+            for (int j = 0 ; j < m; j++) {
+                dtimes_i(j) = dtimes(i)/Type(m);
+            }
+
+            dtimes_all.row(i)=dtimes_i;
+
+            matrix<Type> T = makeT_crcvm(beta(i),omega,dtimes_i);
+            for (int r = 0; r < 4; r++) {
+                for (int c = 0; c < 4; c++) {
+                 T_matrices(r, c, i) = T(r,c);
+                }
+            }
+
+            matrix<Type> Q = makeQ_crcvm(beta(i), sigma(i), omega, dtimes_i);
+
+            for (int r = 0; r < 4; r++) {
+                for (int c = 0; c < 4; c++) {
+                 Q_matrices(r, c, i) = Q(r,c);
+                }
+            }
+
+            
             if(R_IsNA(asDouble(obs(i,0)))) {
                 // If missing observation
                 aest = T * aest ;
@@ -181,10 +217,15 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     }
 
     REPORT(aest_all);
-    REPORT(omega);
-    REPORT(theta);
-    REPORT(DistanceShore);
+    REPORT(interpolated_BoundaryDistance); 
+    REPORT(interpolated_BoundaryAngle);
+    REPORT(omega_all);   
     REPORT(par_mat);
+    REPORT(T_matrices);
+    REPORT(Q_matrices);
+    REPORT(dtimes_all);
+    REPORT(omega_size);
+   
 
 
    //===================//
@@ -216,7 +257,9 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
             // Increase index
             S_start = S_start + Sn;
         }
-    }  
+    }
+
+    REPORT(nllk);  
     
     return nllk;
 }

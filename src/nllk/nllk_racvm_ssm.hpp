@@ -1,7 +1,7 @@
 #ifndef _RACVM_SSM_
 #define _RACVM_SSM_
 
-#include "make_RACVM_matrix.hpp"
+#include "utility.hpp"
 
 #undef TMB_OBJECTIVE_PTR
 #define TMB_OBJECTIVE_PTR obj
@@ -10,21 +10,6 @@ using namespace R_inla;
 using namespace density;
 using namespace Eigen;
 
-
-
-//' Make H matrix for Kalman filter
-//'
-//' @param sigma_obs SD of measurement error
-//' @param n_dim Number of dimensions
-template<class Type>
-matrix<Type> makeH_racvm_ssm(Type sigma_obs) {
-    matrix<Type> H(2, 2);
-    H.setZero();
-    for(int i = 0; i < 2; i ++) {
-        H(i, i) = sigma_obs * sigma_obs;
-    }
-    return H;
-}
 
 //' Penalised negative log-likelihood for CTCRW
 //'
@@ -54,6 +39,9 @@ Type nllk_racvm_ssm(objective_function<Type>* obj) {
 
     // Number of observations
     int n = obs.rows();
+
+    // Number of dimensions
+    int n_dim = obs.cols();
 
     // Time intervals (needs to be of length n)
     vector<Type> dtimes(n);
@@ -97,7 +85,7 @@ Type nllk_racvm_ssm(objective_function<Type>* obj) {
     Z.setZero();
     Z(0,0)=1;
     Z(1,1)=1;
-    matrix<Type> H = makeH_racvm_ssm(sigma_obs);
+    matrix<Type> H = makeH(sigma_obs,n_dim);
     matrix<Type> T(4, 4);
     matrix<Type> Q(4, 4);
     matrix<Type> F(2, 2);

@@ -4,91 +4,11 @@
 #undef TMB_OBJECTIVE_PTR
 #define TMB_OBJECTIVE_PTR obj
 
+#include "utility.hpp"
+
 using namespace R_inla; 
 using namespace density; 
 using namespace Eigen; 
-
-//' Matrix determinant
-template<class Type>
-Type det(matrix<Type> M) {
-    int n_dim = M.cols();
-    Type det = 0;
-    if(n_dim == 1) {
-        det = M(0, 0);
-    } else if(n_dim == 2) {
-        det = M(0,0) * M(1,1) - M(1,0) * M(0,1);        
-    } else {
-        det = exp(atomic::logdet(M));
-    }
-    return det;
-}
-
-//' Make H matrix for Kalman filter
-//'
-//' @param sigma_obs SD of measurement error
-//' @param n_dim Number of dimensions
-template<class Type>
-matrix<Type> makeH_ctcrw(Type sigma_obs, int n_dim) {
-    matrix<Type> H(n_dim, n_dim);
-    H.setZero();
-    for(int i = 0; i < n_dim; i ++) {
-        H(i, i) = sigma_obs * sigma_obs;
-    }
-    return H;
-}
-
-//' Make T matrix for Kalman filter
-//' 
-//' @param beta Parameter beta of OU velocity process
-//' @param dt Length of time interval
-//' @param n_dim Number of dimensions of CTCRW process
-template<class Type>
-matrix<Type> makeT_ctcrw(Type beta, Type dt, int n_dim) {
-    matrix<Type> T(2*n_dim, 2*n_dim);
-    T.setZero();
-    for(int i = 0; i < n_dim; i++) {
-        T(2*i, 2*i) = 1;
-        T(2*i, 2*i + 1) = (1-exp(-beta*dt))/beta;
-        T(2*i + 1, 2*i + 1) = exp(-beta*dt);
-    }
-    return T;
-}
-
-//' Make Q matrix for Kalman filter
-//' 
-//' @param beta Parameter beta of OU velocity process
-//' @param sigma Parameter sigma of OU velocity process
-//' @param dt Length of time interval
-//' @param n_dim Number of dimensions of CTCRW process
-template<class Type>
-matrix<Type> makeQ_ctcrw(Type beta, Type sigma, Type dt, int n_dim) {
-    matrix<Type> Q(2*n_dim, 2*n_dim);
-    Q.setZero();
-    for(int i = 0; i < n_dim; i++) {
-        Q(2*i, 2*i) = (sigma/beta)*(sigma/beta)*(dt - 2/beta*(1-exp(-beta*dt)) + 
-            1/(2*beta)*(1-exp(-2*beta*dt)));
-        Q(2*i, 2*i + 1) = sigma*sigma/(2*beta*beta) * (1 - 2*exp(-beta*dt) + exp(-2*beta*dt));
-        Q(2*i + 1, 2*i) = Q(2*i, 2*i + 1);
-        Q(2*i + 1, 2*i + 1) = sigma*sigma/(2*beta) * (1-exp(-2*beta*dt));
-    }
-    return Q;
-}
-
-//' Make B matrix for Kalman filter
-//' 
-//' @param beta Parameter beta of OU velocity process
-//' @param dt Length of time interval
-//' @param n_dim Number of dimensions of CTCRW process
-template<class Type>
-matrix<Type> makeB_ctcrw(Type beta, Type dt, int n_dim) {
-    matrix<Type> B(2*n_dim, n_dim);
-    B.setZero();
-    for(int i = 0; i < n_dim; i++) {
-        B(2*i, i) = dt - (1 - exp(-beta*dt))/beta;
-        B(2*i + 1, i) = 1 - exp(-beta*dt);
-    }
-    return B;
-}
 
 
 //' Penalised negative log-likelihood for CTCRW
@@ -165,9 +85,7 @@ Type nllk_ctcrw(objective_function<Type>* obj) {
     for(int i = 0; i < n_dim; i++) {
         Z(i, 2*i) = 1;
     }
-    matrix<Type> H = makeH_ctcrw(sigma_obs, n_dim);
-    matrix<Type> T(2*n_dim, 2*n_dim);
-    matrix<Type> Q(2*n_dim, 2*n_dim);
+    matrix<Type> H = makeH(sigma_obs, n_dim);
     matrix<Type> F(n_dim, n_dim);
     F.setZero();
     matrix<Type> K(2*n_dim, n_dim);
