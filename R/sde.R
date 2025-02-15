@@ -9,9 +9,13 @@
 #' facet_wrap label_bquote xlab ylab ggtitle element_blank element_text geom_point
 #' geom_ribbon scale_size_manual geom_histogram geom_vline
 #' @importFrom plotly plot_ly layout colorbar
-#' @importFrom htmlwidgets saveWidget
 #' @importFrom TMB MakeADFun sdreport
 #' @importFrom Hmisc smean.sdl
+#' @importFrom parallel detectCores makeCluster stopCluster
+#' @importFrom doParallel registerDoParallel
+#' @importFrom foreach foreach %dopar% registerDoSEQ
+#' @importFrom sf st_point st_boundary st_intersects st_distance st_nearest_points
+#' st_coordinates
 
 #' 
 #' 
@@ -36,8 +40,10 @@ SDE <- R6Class(
         #' Uhlenbeck process), "CTCRW" (continuous-time correlated random walk, a.k.a.
         #' integrated Ornstein-Uhlenbeck process), "CIR" (Cox-Ingersoll-Ross process),
         #' "BM_SSM" (BM with measurement error), "OU_SSM" (OU with measurement error),
-        #' "BM_t" (BM with Student's t-distributed increments) and "RACVM" (Rotational correlated
-        #' velocity model with measurement error).
+        #' "BM_t" (BM with Student's t-distributed increments), "RACVM_SSM" (Rotational
+        #'  Advective Correlated Velocity Model with measurement error) and 
+        #'  CRCVM_SSM (Constrained Rotational Correlated Velocity
+        #' model with measurement error)
         #' @param response Name of response variable, correspond to a column name in
         #' \code{data}. Can be a vector of names if multiple response variables
         #' @param par0 Vector of initial values for SDE parameters, with one value
@@ -57,8 +63,6 @@ SDE <- R6Class(
             private$response_ <- response
             private$fixpar_ <- fixpar
             
-           
-            
             if(any(!response %in% colnames(data)))
                 stop("'response' not found in 'data'")
             
@@ -67,8 +71,14 @@ SDE <- R6Class(
             
             
             #If it is RACVM model, check that dimension of response is 2
-            if (self$type()=="RACVM" && n_dim!=2) {
-              stop("For 'RACVM', dimension of response must be 2")
+            if (type %in% c("RACVM_SSM","CRCVM_SSM") && n_dim!=2) {
+              stop("Dimension of response must be 2 for the model",type)
+            }
+            
+            if (type %in% c("CRCVM_SSM")
+                && (is.null(data$BoundaryDistance) || is.null(data$BoundaryAngle))) {
+                stop("Data should contain columns BoundaryDistance and BoundaryAngle for CRCVM_SSM.
+                         Use function get_BoundaryMetrics to compute them from the boundary geometry.")
             }
             
             
@@ -213,7 +223,9 @@ SDE <- R6Class(
                 private$rho_ <- 1
             }
             private$other_data_ <- other_data
-        },
+            
+            
+            },
         
         ###############
         ## Accessors ##
@@ -259,6 +271,9 @@ SDE <- R6Class(
         
         #' @description Knots
         knots = function() {return(private$knots_)},
+        
+        #' @description Border
+        border = function() {return(private$border_)},
         
         #' @description Standard deviations of smooth terms
         #' 
@@ -719,15 +734,22 @@ SDE <- R6Class(
               
               if (self$type() %in% c("CRCVM_SSM")) {
                   
-                  if (is.null(self$data()$theta)) {
-                      stop(paste("Data must contain a column theta for ",self$type()))
+                  # Use interpolated distances and angles if provided
+                  if (!is.null(self$other_data()$interpolated_distance)
+                      && !is.null(self$other_data()$interpolated_angle)) {
+                      
+                      tmb_dat$interpolated_BoundaryAngle<-self$other_data()$interpolated_angle
+                      tmb_dat$interpolated_BoundaryDistance<-self$other_data()$interpolated_distance
+                      
                   }
-                  tmb_dat$theta=self$data()$theta
+                  # Use observed distances and angles otherwise
+                  else {
+                      
+                      tmb_dat$interpolated_BoundaryDistance<-as.matrix(self$data()$BoundaryDistance)
+                      tmb_dat$interpolated_BoundaryAngle<-as.matrix(self$data()$BoundaryAngle)
+                        
+                  }
                   
-                  if (is.null(self$data()$DistanceShore)) {
-                      stop(paste("Data must contain a column DistanceShore for ",self$type()))
-                  }
-                  tmb_dat$DistanceShore=self$data()$DistanceShore
               }
             } else if(self$type() == "ESEAL_SSM") {
                 # Define initial state and covariance for Kalman filter
@@ -1786,6 +1808,7 @@ SDE <- R6Class(
         simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,
                             reflect=FALSE,omega_times=1,verbose=FALSE) {
           
+            
             # Check that data includes times of observations
             if(is.null(data$time)) {
                 stop("'data' should have a column named 'time'")
@@ -1830,7 +1853,6 @@ SDE <- R6Class(
               stop("z0 must be scalar or a matrix with rows containing an initial position for each ID")
             }
             
-            
             if (self$type() %in% c("CTCRW","RACVM_SSM","CRCVM_SSM") && n_dim==2) {
               
               # Initialize vector of simulated observations
@@ -1840,7 +1862,8 @@ SDE <- R6Class(
               # Loop over IDs
               for(id in seq_along(unique(data$ID))) {
                   
-                message("Track simulation for",unique(data$ID)[id],"...","\n")
+                  
+                cat("Track simulation for",unique(data$ID)[id],"...","\n")
                   
                 
                 # Get relevant rows of data
@@ -1886,9 +1909,9 @@ SDE <- R6Class(
                     D1 <- sub_par[,6]
                     sigma_D <- sub_par[,7]
                     sigma_theta <- sub_par[,8]
-                    omegas <- a*(data$theta-pi/2)*(data$theta+pi/2)*exp(-data$DistanceShore/D0)/data$DistanceShore+
-                        b*(exp(-1/2*(((data$theta+pi/2/sqrt(3))/sigma_theta)^2+((data$DistanceShore-D1)/sigma_D)^2))-
-                                 exp(-1/2*(((data$theta-pi/2/sqrt(3))/sigma_theta)^2+((data$DistanceShore-D1)/sigma_D)^2)))
+                    omegas <- a*(data$BoundaryAngle-pi/2)*(data$BoundaryAngle+pi/2)*exp(-data$BoundaryDistance/D0)/data$BoundaryDistance+
+                        b*(exp(-1/2*(((data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((data$BoundaryDistance-D1)/sigma_D)^2))-
+                                 exp(-1/2*(((data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((data$BoundaryDistance-D1)/sigma_D)^2)))
                     betas<- 1/taus
                     sigmas <- 2 * nus / sqrt(taus * pi)
                     mu1s <-rep(0,sub_n)
@@ -1923,10 +1946,6 @@ SDE <- R6Class(
                     #compute nearest shore point
                     p=nearest_boundary_point(st_point(z),land)
                     
-                    if (verbose) {
-                        cat("Distance to shore :",sqrt((p[1]-z[1])^2+(p[2]-z[2])^2),"\n")
-                    }
-                    
                     #loop over covariates
                     for (var in all_vars) {
                         
@@ -1938,10 +1957,10 @@ SDE <- R6Class(
                       }
                     }
                     if (self$type()=="CRCVM_SSM") {
-                        fn_Dshore=atw[["DistanceShore"]]
-                        new_data[,"DistanceShore"]=fn_Dshore(z,v,p)
-                        fn_theta=atw[["theta"]]
-                        new_data[,"theta"]=fn_theta(z,v,p)
+                        fn_Dshore=atw[["BoundaryDistance"]]
+                        new_data[,"BoundaryDistance"]=fn_Dshore(z,v,p)
+                        fn_theta=atw[["BoundaryAngle"]]
+                        new_data[,"BoundaryAngle"]=fn_theta(z,v,p)
                     }
                     
                     #get new value of the parameters 
@@ -1971,9 +1990,9 @@ SDE <- R6Class(
                         D1=new_par[1,"D1"]
                         sigma_D=new_par[1,"sigma_D"]
                         sigma_theta=new_par[1,"sigma_theta"]
-                        omega <- a*(new_data$theta-pi/2)*(new_data$theta+pi/2)*exp(-new_data$DistanceShore/D0)/new_data$DistanceShore+
-                            b*(exp(-1/2*(((new_data$theta+pi/2/sqrt(3))/sigma_theta)^2+((new_data$DistanceShore-D1)/sigma_D)^2))-
-                                   exp(-1/2*(((new_data$theta-pi/2/sqrt(3))/sigma_theta)^2+((new_data$DistanceShore-D1)/sigma_D)^2)))
+                        omega <- a*(new_data$theta-pi/2)*(new_data$BoundaryAngle+pi/2)*exp(-new_data$BoundaryDistance/D0)/new_data$BoundaryDistance+
+                            b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2))-
+                                   exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2)))
                     }
                     
                     
@@ -1982,9 +2001,10 @@ SDE <- R6Class(
                     
                     if (verbose) {
                         cat("\n Covariates after update : \n")
-                        print(new_data[1,])
+                        print("Distance to shore",new_data$DistanceShore,"thet",new_data$theta)
                         
-                        cat("\n Parameters update :"," omega=",round(omega,2)," tau=",round(tau,2),"\n")
+                        cat("\n Parameters update :"," omega=",round(omega,2),
+                            " tau=",round(tau,2)," nu=",round(nu,2),"\n")
                     }
                   }
                   
@@ -3004,7 +3024,7 @@ SDE <- R6Class(
                     
                     if (length(fe_vars)>2) {
                         stop("The function only handles plots up to two fixed effect covariates.
-                             Please consider using another plot_par instead.")
+                             Please consider using plot_par instead.")
                     }
                     
                     #random effect factor covariate
