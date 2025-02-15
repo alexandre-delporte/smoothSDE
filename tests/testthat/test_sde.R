@@ -70,3 +70,4 @@ test_that("SDE members are correct size", {
     expect_equal(length(sde$lambda()), 3)
     expect_equal(length(sde$sdev()), 3)
 })
+
