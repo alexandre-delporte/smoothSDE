@@ -432,7 +432,7 @@ is_in_border=function(point,border) {
 
 #' Compute nearest points on the shoreline
 #' 
-#' @param point the location from which we want to find the nearest point on border
+#' @param points a matrix of points from which we want to find the nearest point on border
 #' @param border sf object (list of polygons) defining the border
 #' @return matrix with on row and two columns that are the coordinates of the nearest point in border
 #' @export
@@ -552,7 +552,7 @@ get_BoundaryMetrics <- function(data,response,border,n_cores = NULL) {
 
 
 
-#' Interpolate BoundaryDistance and BoundaryAngle for CRCVM
+#' Interpolate BoundaryDistance and BoundaryAngle for CRCVM (need response with dimension 2)
 #' @param data Dataframe with the columns time, ID, BoundaryDistance, and BoundaryAngle
 #' @param response name of response variables
 #' @param border Boundary of the domain as a sf object with geometry 
@@ -598,12 +598,16 @@ interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NUL
         interpolated_y[n] <- interpolated_y[n-1]
         interpolation_time[n, ] <- rep(df$time[n],n_step)
         
-        return(data.frame(
-            ID = unique(df$ID),
+        result<- data.frame(
+            ID= unique(df$ID),
             time = as.vector(t(interpolation_time)),
             x = as.vector(t(interpolated_x)),
             y = as.vector(t(interpolated_y))
-        ))
+            
+        #use the same names as in the original data
+        colnames(result)[colnames(result) %in% c("x","y")]<- response
+        
+        return(result)
     }
     
     # Apply the function per ID
@@ -614,7 +618,7 @@ interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NUL
     interpolated_metrics <- get_BoundaryMetrics(interpolated_data, c("x","y"), border, n_cores)
     
     # Combine results
-    result_df <- cbind(interpolated_data[, c("x", "y", "time")], interpolated_metrics)
+    result_df <- cbind(interpolated_data[, c("ID", "time","x","y")], interpolated_metrics)
     
     # Convert to matrices
     result_matrices <- lapply(as.list(result_df), function(vec) {
