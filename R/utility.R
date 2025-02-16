@@ -602,7 +602,7 @@ interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NUL
             ID= unique(df$ID),
             time = as.vector(t(interpolation_time)),
             x = as.vector(t(interpolated_x)),
-            y = as.vector(t(interpolated_y))
+            y = as.vector(t(interpolated_y)))
             
         #use the same names as in the original data
         colnames(result)[colnames(result) %in% c("x","y")]<- response
