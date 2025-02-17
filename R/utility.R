@@ -558,12 +558,12 @@ get_BoundaryMetrics <- function(data,response,border,n_cores = NULL) {
 #' @param border Boundary of the domain as a sf object with geometry 
 #' @param n_step Number of intervals to subdivise between two observations
 #' @param sp smoothing penalty for the smoothing of the trajectories
-#' @param k degree of freedom of the splines
-#' @param n_cores number of cores to use for computation in parallel model
+#' @param df_ratio ratio of degree of freedom over number of data points to use, must be <1
+#' @param n_cores number of cores to use for computation in parallel mode
 #' @return List with matrices of size nrow(data) x n_step that contain interpolated positions, distances
 #' angles and interpolation times
 #' @export
-interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NULL, k=NULL,n_cores = NULL) {
+interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NULL, df_ratio=NULL,n_cores = NULL) {
     
     smooth_interpolate <- function(df, n_step) {
         n <- nrow(df)
@@ -572,7 +572,8 @@ interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NUL
         interpolation_time <- matrix(rep(df$time,each=n_step),ncol=n_step,byrow=TRUE)
         
         # Fit GAM models instead of smooth.spline
-        formula<- ifelse(is.null(k),"~ s(time, bs='cs')",paste0("~ s(time, bs='cs', k=", k, ")"))
+        formula<- ifelse(is.null(df_ratio),"~ s(time, bs='cs')",paste0("~ s(time, bs='cs', k=",
+                                                                       as.integer(df_ratio*n), ")"))
         
         gam_x <- gam(as.formula(paste(response[1],formula)), data = df,sp=sp)
         gam_y <- gam(as.formula(paste(response[2],formula)), data = df,sp=sp)
