@@ -615,10 +615,10 @@ interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NUL
     rownames(interpolated_data) <- NULL
     
     # Compute boundary metrics from interpolated positions
-    interpolated_metrics <- get_BoundaryMetrics(interpolated_data, c("x","y"), border, n_cores)
+    interpolated_metrics <- get_BoundaryMetrics(interpolated_data, response, border, n_cores)
     
     # Combine results
-    result_df <- cbind(interpolated_data[, c("ID", "time","x","y")], interpolated_metrics)
+    result_df <- cbind(interpolated_data[, c("ID", "time",response)], interpolated_metrics)
     
     # Convert to matrices
     result_matrices <- lapply(as.list(result_df), function(vec) {
