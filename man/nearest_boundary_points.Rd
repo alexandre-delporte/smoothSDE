@@ -7,9 +7,9 @@
 nearest_boundary_points(points, border)
 }
 \arguments{
-\item{border}{sf object (list of polygons) defining the border}
+\item{points}{a matrix of points from which we want to find the nearest point on border}
 
-\item{point}{the location from which we want to find the nearest point on border}
+\item{border}{sf object (list of polygons) defining the border}
 }
 \value{
 matrix with on row and two columns that are the coordinates of the nearest point in border

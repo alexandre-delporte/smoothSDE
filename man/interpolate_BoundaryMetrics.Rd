@@ -2,7 +2,7 @@
 % Please edit documentation in R/utility.R
 \name{interpolate_BoundaryMetrics}
 \alias{interpolate_BoundaryMetrics}
-\title{Interpolate BoundaryDistance and BoundaryAngle for CRCVM}
+\title{Interpolate BoundaryDistance and BoundaryAngle for CRCVM (need response with dimension 2)}
 \usage{
 interpolate_BoundaryMetrics(
   data,
@@ -10,7 +10,7 @@ interpolate_BoundaryMetrics(
   border,
   n_step = 1,
   sp = NULL,
-  k = NULL,
+  df_ratio = NULL,
   n_cores = NULL
 )
 }
@@ -25,7 +25,7 @@ interpolate_BoundaryMetrics(
 
 \item{sp}{smoothing penalty for the smoothing of the trajectories}
 
-\item{k}{degree of freedom of the splines}
+\item{df_ratio}{ratio of degree of freedom over number of data points to use, must be <1}
 
 \item{n_cores}{number of cores to use for computation in parallel model}
 }
@@ -34,5 +34,5 @@ List with matrices of size nrow(data) x n_step that contain interpolated positio
 angles and interpolation times
 }
 \description{
-Interpolate BoundaryDistance and BoundaryAngle for CRCVM
+Interpolate BoundaryDistance and BoundaryAngle for CRCVM (need response with dimension 2)
 }
