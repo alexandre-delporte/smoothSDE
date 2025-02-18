@@ -27,7 +27,7 @@ interpolate_BoundaryMetrics(
 
 \item{df_ratio}{ratio of degree of freedom over number of data points to use, must be <1}
 
-\item{n_cores}{number of cores to use for computation in parallel model}
+\item{n_cores}{number of cores to use for computation in parallel mode}
 }
 \value{
 List with matrices of size nrow(data) x n_step that contain interpolated positions, distances
