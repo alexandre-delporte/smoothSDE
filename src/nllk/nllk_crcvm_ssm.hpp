@@ -130,8 +130,8 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
 
     Type omega_size = 0;
 
-    for(int i = 1; i < n; i++) {
-        if(ID(i) != ID(i-1)) {
+    for(int i = 0 ; i < n-1; i++) {
+        if(ID(i) != ID(i+1)) {
             // If first location of track, re-initialise state vector
 
             aest = a0.row(k);
