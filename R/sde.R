@@ -100,7 +100,8 @@ SDE <- R6Class(
                             "RACVM_SSM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log,omega=identity)),
                             "CRCVM_SSM" = as.list(c(tau = log, nu = log,a=log,b=log,D0=log,D1=log,
-                                                    sigma_D=log,sigma_theta=log)))
+                                                    sigma_D=log,sigma_theta=log))
+                            )
             
             # Inverse link functions for SDE parameters
             invlink <- switch (type,
@@ -732,7 +733,7 @@ SDE <- R6Class(
                 tmb_dat$H_array <- array(0)
               }
               
-              if (self$type() %in% c("CRCVM_SSM")) {
+              if (self$type() %in% c("CRCVM_SSM","CRCVM_SSM")) {
                   
                   # Use interpolated distances and angles if provided
                   if (!is.null(self$other_data()$interpolated_distance)
@@ -1790,10 +1791,9 @@ SDE <- R6Class(
         #' are drawn from their posterior distribution using \code{SDE$post_coeff}, 
         #' therefore accounting for uncertainty.
         #' @param land sf polygon data defining a spatial domain that is needed to compute the covariates along the way. 
-        #' For instance, it could be the shore for marine mammals with covariate distance to shore. If specified, we 
-        #' reproject the positions on the boundary when land is reached.       
+        #' For instance, it could be the shore for marine mammals with covariate distance to shore.
         #' Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position.
-        #' @param atw (along the way) "Covariates" to recompute along the way using the previous velocity and position.
+        #' @param atw (along the way) Covariates to recompute along the way using the previous velocity and position.
         #' This should be a list with names matching some covariates in \code{self$formulas()} and with elements that 
         #' are functions to compute the new covariate value based the last position, velocity and nearest point on the land (if needed)
         #' in this order .
@@ -1802,11 +1802,12 @@ SDE <- R6Class(
         #' @param sd_noise standard deviation to add gaussian noise in the observations. Default: NULL (no noise)
         #' @param reflect Boolean : whether or not to reflect on the land boundary when land is not NULL
         #' @param omega_times coefficient to multiply omega in RACVM.Default: 1
+        #' @param n_cores number of cores to use for the simulation in parallel. 
         #' @param verbose If TRUE, verbose mode
         #' 
         #' @return Input data frame with extra column for simulated time series
         simulate = function(data, z0 = 0, posterior = FALSE,atw=NULL,land=NULL,sd_noise=NULL,
-                            reflect=FALSE,omega_times=1,verbose=FALSE) {
+                            reflect=FALSE,omega_times=1,n_cores=NULL,verbose=FALSE) {
           
             
             # Check that data includes times of observations
@@ -1853,14 +1854,25 @@ SDE <- R6Class(
               stop("z0 must be scalar or a matrix with rows containing an initial position for each ID")
             }
             
+            # Start parallel cluster only if n_cores is not NULL
+            if (!is.null(n_cores) && n_cores > 1) {
+                cl <- makeCluster(n_cores)
+                registerDoParallel(cl)
+                message("Running in parallel mode with ", n_cores, " cores.")
+            } else {
+                registerDoSEQ() 
+                message("Running in sequential mode.")
+            }
+            
+            
             if (self$type() %in% c("CTCRW","RACVM_SSM","CRCVM_SSM") && n_dim==2) {
               
               # Initialize vector of simulated observations
               n=length(data$time)
-              obs <- data.frame("z1"=rep(NA,n),"z2"=rep(NA,n))
               
               # Loop over IDs
-              for(id in seq_along(unique(data$ID))) {
+              obs <- foreach(id = seq_along(unique(data$ID)), .combine = rbind, .packages = c("sf"),
+                      .export = c("nearest_boundary_points", "is_in_border","self")  ) %dopar% {
                   
                   
                 cat("Track simulation for",unique(data$ID)[id],"...","\n")
@@ -1944,7 +1956,7 @@ SDE <- R6Class(
                     v=as.numeric(sub_dat[i-1,c("v1","v2")])
                     
                     #compute nearest shore point
-                    p=nearest_boundary_point(st_point(z),land)
+                    p=nearest_boundary_points(matrix(z,ncol=2),land)
                     
                     #loop over covariates
                     for (var in all_vars) {
@@ -1956,7 +1968,7 @@ SDE <- R6Class(
                         new_data[,var]=fn(z,v,p)
                       }
                     }
-                    if (self$type()=="CRCVM_SSM") {
+                    if (self$type() %in% c("CRCVM_SSM")) {
                         fn_Dshore=atw[["BoundaryDistance"]]
                         new_data[,"BoundaryDistance"]=fn_Dshore(z,v,p)
                         fn_theta=atw[["BoundaryAngle"]]
@@ -1979,6 +1991,22 @@ SDE <- R6Class(
                         omega=omega_times*new_par[1,"omega"]
                     }
                     
+                    else  if (self$type()=="CRCVM_SSM"){
+                        
+                        mu=matrix(c(0,0),ncol=1,nrow=2,byrow=TRUE)
+                        tau=new_par[1,"tau"]
+                        nu=new_par[1,"nu"]
+                        a=new_par[1,"a"]
+                        b=new_par[1,"b"]
+                        D0=new_par[1,"D0"]
+                        D1=new_par[1,"D1"]
+                        sigma_D=new_par[1,"sigma_D"]
+                        sigma_theta=new_par[1,"sigma_theta"]
+                        omega <- a*new_data$BoundaryAngle*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)*exp(-new_data$BoundaryDistance/D0)/new_data$BoundaryDistance+
+                            b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2))-
+                                   exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2)))
+                    }
+                    
                     else {
                         
                         mu=matrix(c(0,0),ncol=1,nrow=2,byrow=TRUE)
@@ -1990,7 +2018,7 @@ SDE <- R6Class(
                         D1=new_par[1,"D1"]
                         sigma_D=new_par[1,"sigma_D"]
                         sigma_theta=new_par[1,"sigma_theta"]
-                        omega <- a*(new_data$theta-pi/2)*(new_data$BoundaryAngle+pi/2)*exp(-new_data$BoundaryDistance/D0)/new_data$BoundaryDistance+
+                        omega <- a*new_data$BoundaryAngle^3*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)*exp(-new_data$BoundaryDistance/D0)/new_data$BoundaryDistance+
                             b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2))-
                                    exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2)))
                     }
@@ -2029,11 +2057,11 @@ SDE <- R6Class(
                   if (!(is.null(land)))  {
                     new_z=as.numeric(new_state[1:2])
                     
-                    if (reflect && is_in_land(st_point(new_z),land)) {
+                    if (reflect && is_in_border(st_point(new_z),land)) {
                         #get last position 
                         z=as.numeric(sub_dat[i-1,c("z1","z2")])
                         #project new position on boundary
-                        new_p=nearest_boundary_point(st_point(new_z),land)
+                        new_p=nearest_boundary_points(matrix(new_z,ncol=2),land)
                         new_state<-c(new_p,(new_p-z)/delta)
                     }
                   }
@@ -2053,11 +2081,17 @@ SDE <- R6Class(
                   sub_obs=sub_obs+epsilon
                 }
               
-                # Update observation vector
-                obs[ind,] <- sub_obs
+                sub_obs
+             }
+              
+              # Stop the cluster if running in parallel mode
+              if (!is.null(n_cores) && n_cores > 1) {
+                  stopCluster(cl)
               }
-              # Add simulated variable to data frame
-              data[,self$response()] <- obs
+              
+              
+              data <- cbind(data,obs)
+            
             }
             
             else {
