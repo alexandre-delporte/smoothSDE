@@ -212,8 +212,6 @@ RACVM_cov <- function(beta, sigma,omega,dt) {
   
   #relevant matrices
   C=beta^2+omega^2
-  A=matrix(c(beta,-omega,omega,beta),nrow=2,byrow=TRUE)
-  invA=1/C*matrix(c(beta,omega,-omega,beta),nrow=2,byrow=TRUE)
   R=matrix(c(cos(omega*dt),sin(omega*dt),-sin(omega*dt),cos(omega*dt)),byrow=TRUE,nrow=2)
   expAdt=exp(-beta*dt)*R
   
@@ -245,7 +243,6 @@ RACVM_link <- function(beta,omega,dt) {
   
   #relevant matrices
   C=beta^2+omega^2
-  A=matrix(c(beta,-omega,omega,beta),nrow=2,byrow=TRUE)
   invA=1/C*matrix(c(beta,omega,-omega,beta),nrow=2,byrow=TRUE)
   R=matrix(c(cos(omega*dt),sin(omega*dt),-sin(omega*dt),cos(omega*dt)),byrow=TRUE,nrow=2)
   expAdt=exp(-beta*dt)*R
@@ -275,7 +272,6 @@ RACVM_drift <- function(beta,omega,dt) {
   
   #relevant matrices
   C=beta^2+omega^2
-  A=matrix(c(beta,-omega,omega,beta),nrow=2,byrow=TRUE)
   invA=1/C*matrix(c(beta,omega,-omega,beta),nrow=2,byrow=TRUE)
   R=matrix(c(cos(omega*dt),sin(omega*dt),-sin(omega*dt),cos(omega*dt)),byrow=TRUE,nrow=2)
   expAdt=exp(-beta*dt)*R
@@ -612,7 +608,11 @@ interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NUL
     }
     
     # Apply the function per ID
-    interpolated_data <- do.call(rbind, lapply(split(data, data$ID), smooth_interpolate, n_step))
+    id_list <- unique(data$ID) 
+    interpolated_list <- lapply(id_list, function(id) {
+        smooth_interpolate(data[data$ID == id, ], n_step)
+    })
+    interpolated_data <- do.call(rbind, interpolated_list)
     rownames(interpolated_data) <- NULL
     
     # Compute boundary metrics from interpolated positions
