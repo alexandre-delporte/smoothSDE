@@ -1873,7 +1873,7 @@ SDE <- R6Class(
               # Loop over IDs
               obs <- foreach(id = seq_along(unique(data$ID)), .combine = rbind, .packages = c("sf","mgcv","stringr"),
                       .export = c("nearest_boundary_points", "is_in_border","self","get_variables",
-                                  "RACVM_link","RACVM_drift","RACVM_cov","str_extract")  ) %dopar% {
+                                  "RACVM_link","RACVM_drift","RACVM_cov","str_extract","split_term")  ) %dopar% {
                   
                   
                 cat("Track simulation for",unique(data$ID)[id],"...","\n")
