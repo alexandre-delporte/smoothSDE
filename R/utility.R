@@ -560,6 +560,9 @@ get_BoundaryMetrics <- function(data,response,border,n_cores = NULL) {
 #' angles and interpolation times
 #' @export
 interpolate_BoundaryMetrics <- function(data, response,border, n_step = 1,sp=NULL, df_ratio=NULL,n_cores = NULL) {
+        
+    if(any(!response %in% colnames(data)))
+        stop("'response' not found in 'data'")
     
     smooth_interpolate <- function(df, n_step) {
         n <- nrow(df)

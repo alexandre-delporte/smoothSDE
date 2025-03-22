@@ -1871,8 +1871,8 @@ SDE <- R6Class(
               n=length(data$time)
               
               # Loop over IDs
-              obs <- foreach(id = seq_along(unique(data$ID)), .combine = rbind, .packages = c("sf"),
-                      .export = c("nearest_boundary_points", "is_in_border","self")  ) %dopar% {
+              obs <- foreach(id = seq_along(unique(data$ID)), .combine = rbind, .packages = c("sf","smoothSDE"),
+                      .export = c("nearest_boundary_points", "is_in_border","self","get_variables")  ) %dopar% {
                   
                   
                 cat("Track simulation for",unique(data$ID)[id],"...","\n")
@@ -1921,7 +1921,7 @@ SDE <- R6Class(
                     D1 <- sub_par[,6]
                     sigma_D <- sub_par[,7]
                     sigma_theta <- sub_par[,8]
-                    omegas <- a*(data$BoundaryAngle-pi/2)*(data$BoundaryAngle+pi/2)*exp(-data$BoundaryDistance/D0)/data$BoundaryDistance+
+                    omegas <- a*data$BoundaryAngle*(data$BoundaryAngle-pi/2)*(data$BoundaryAngle+pi/2)*exp(-data$BoundaryDistance/D0)/data$BoundaryDistance+
                         b*(exp(-1/2*(((data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((data$BoundaryDistance-D1)/sigma_D)^2))-
                                  exp(-1/2*(((data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((data$BoundaryDistance-D1)/sigma_D)^2)))
                     betas<- 1/taus
