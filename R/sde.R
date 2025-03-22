@@ -1871,8 +1871,9 @@ SDE <- R6Class(
               n=length(data$time)
               
               # Loop over IDs
-              obs <- foreach(id = seq_along(unique(data$ID)), .combine = rbind, .packages = c("sf","smoothSDE"),
-                      .export = c("nearest_boundary_points", "is_in_border","self","get_variables")  ) %dopar% {
+              obs <- foreach(id = seq_along(unique(data$ID)), .combine = rbind, .packages = c("sf","mgcv"),
+                      .export = c("nearest_boundary_points", "is_in_border","self","get_variables",
+                                  "RACVM_link","RACVM_drift","RACVM_cov")  ) %dopar% {
                   
                   
                 cat("Track simulation for",unique(data$ID)[id],"...","\n")
