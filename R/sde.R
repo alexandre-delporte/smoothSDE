@@ -1870,6 +1870,10 @@ SDE <- R6Class(
               # Initialize vector of simulated observations
               n=length(data$time)
               
+              
+              #Find the package smoothSDE (for calculation on cluster)
+              .libPaths(c(system.file(package = "smoothSDE"), .libPaths()))
+              
               # Loop over IDs
               obs <- foreach(id = seq_along(unique(data$ID)), .combine = rbind, .packages = c("sf","mgcv","stringr"),
                       .export = c("nearest_boundary_points", "is_in_border","self","get_variables",
