@@ -1883,7 +1883,7 @@ SDE <- R6Class(
               
               # Loop over IDs
               obs <- foreach(id = seq_along(unique(data$ID)), 
-                             .combine = rbind, .packages = c("sf","mgcv","stringr")) %dopar% {
+                             .combine = rbind, .packages = c("sf","mgcv","stringr","smoothSDE")) %dopar% {
                   
                   
                 cat("Track simulation for",unique(data$ID)[id],"...","\n")
