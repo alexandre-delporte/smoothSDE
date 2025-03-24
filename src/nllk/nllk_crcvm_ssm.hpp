@@ -74,8 +74,8 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
     vector<Type> nu = exp(par_mat.col(1).array());
     vector<Type> a = exp(par_mat.col(2).array());
     vector<Type> b = exp(par_mat.col(3).array());
-    vector<Type> D0 = exp(par_mat.col(4).array());
-    vector<Type> D1 = exp(par_mat.col(5).array());
+    vector<Type> Dr = exp(par_mat.col(4).array());
+    vector<Type> Da = exp(par_mat.col(5).array());
     vector<Type> sigma_D = exp(par_mat.col(6).array());
     vector<Type> sigma_theta = exp(par_mat.col(7).array());
     vector<Type> beta = 1/tau;
@@ -149,9 +149,9 @@ Type nllk_crcvm_ssm(objective_function<Type>* obj) {
             vector<Type> angle = interpolated_BoundaryAngle.row(i);
             vector<Type> distance = interpolated_BoundaryDistance.row(i);
 
-            vector<Type> omega= a(i)*angle*(angle-0.5*M_PI)*(angle+0.5*M_PI)*exp(-distance/D0(i))/distance+
-                b(i)*(exp(-0.5*((angle+0.5*M_PI/sqrt(3))*(angle+0.5*M_PI/sqrt(3))/sigma_theta(i)/sigma_theta(i)+(distance-D1(i))*(distance-D1(i))/sigma_D(i)/sigma_D(i)))-
-                    exp(-0.5*((angle-0.5*M_PI/sqrt(3))*(angle-0.5*M_PI/sqrt(3))/sigma_theta(i)/sigma_theta(i)+(distance-D1(i))*(distance-D1(i))/sigma_D(i)/sigma_D(i))));
+            vector<Type> omega= a(i)*angle*(angle-0.5*M_PI)*(angle+0.5*M_PI)*exp(-distance/Dr(i))*Dr(i)/distance+
+                b(i)*(exp(-0.5*((angle+0.5*M_PI/sqrt(3))*(angle+0.5*M_PI/sqrt(3))/sigma_theta(i)/sigma_theta(i)+(distance-Da(i))*(distance-Da(i))/sigma_D(i)/sigma_D(i)))-
+                    exp(-0.5*((angle-0.5*M_PI/sqrt(3))*(angle-0.5*M_PI/sqrt(3))/sigma_theta(i)/sigma_theta(i)+(distance-Da(i))*(distance-Da(i))/sigma_D(i)/sigma_D(i))));
 
             omega_size=omega.size();
             omega_all.row(i) = omega;
