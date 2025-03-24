@@ -99,7 +99,7 @@ SDE <- R6Class(
                             "ESEAL_SSM" = list(mu = identity, sigma = log),
                             "RACVM_SSM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                 tau = log, nu = log,omega=identity)),
-                            "CRCVM_SSM" = as.list(c(tau = log, nu = log,a=log,b=log,D0=log,D1=log,
+                            "CRCVM_SSM" = as.list(c(tau = log, nu = log,a=log,b=log,Dr=log,Da=log,
                                                     sigma_D=log,sigma_theta=log))
                             )
             
@@ -121,7 +121,7 @@ SDE <- R6Class(
                                "ESEAL_SSM" = list(mu = identity, sigma = exp),
                                "RACVM_SSM" = as.list(c(mu = lapply(1:n_dim, function(i) identity), 
                                                    tau = exp, nu = exp,omega=identity)),
-                               "CRCVM_SSM" = as.list(c(tau = exp, nu = exp,a=exp,b=exp,D0=exp,D1=exp,
+                               "CRCVM_SSM" = as.list(c(tau = exp, nu = exp,a=exp,b=exp,Dr=exp,Da=exp,
                                                        sigma_D=exp,sigma_theta=exp)))
             
             private$link_ <- link
@@ -1925,13 +1925,13 @@ SDE <- R6Class(
                     nus <- sub_par[, 2]
                     a <- sub_par[,3]
                     b <- sub_par[,4]
-                    D0 <- sub_par[,5]
-                    D1 <- sub_par[,6]
+                    Dr <- sub_par[,5]
+                    Da <- sub_par[,6]
                     sigma_D <- sub_par[,7]
                     sigma_theta <- sub_par[,8]
-                    omegas <- a*data$BoundaryAngle*(data$BoundaryAngle-pi/2)*(data$BoundaryAngle+pi/2)*exp(-data$BoundaryDistance/D0)/data$BoundaryDistance+
-                        b*(exp(-1/2*(((data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((data$BoundaryDistance-D1)/sigma_D)^2))-
-                                 exp(-1/2*(((data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((data$BoundaryDistance-D1)/sigma_D)^2)))
+                    omegas <- a*data$BoundaryAngle*(data$BoundaryAngle-pi/2)*(data$BoundaryAngle+pi/2)*exp(-data$BoundaryDistance/Dr)*Dr/data$BoundaryDistance+
+                        b*(exp(-1/2*(((data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((data$BoundaryDistance-Da)/sigma_D)^2))-
+                                 exp(-1/2*(((data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((data$BoundaryDistance-Da)/sigma_D)^2)))
                     betas<- 1/taus
                     sigmas <- 2 * nus / sqrt(taus * pi)
                     mu1s <-rep(0,sub_n)
@@ -2006,13 +2006,14 @@ SDE <- R6Class(
                         nu=new_par[1,"nu"]
                         a=new_par[1,"a"]
                         b=new_par[1,"b"]
-                        D0=new_par[1,"D0"]
-                        D1=new_par[1,"D1"]
+                        Dr=new_par[1,"Dr"]
+                        Da=new_par[1,"Da"]
                         sigma_D=new_par[1,"sigma_D"]
                         sigma_theta=new_par[1,"sigma_theta"]
-                        omega <- a*new_data$BoundaryAngle*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)*exp(-new_data$BoundaryDistance/D0)/new_data$BoundaryDistance+
-                            b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2))-
-                                   exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2)))
+                        omega <- a*new_data$BoundaryAngle*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)
+                        *exp(-new_data$BoundaryDistance/Dr)*Dr/new_data$BoundaryDistance+
+                            b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-Da)/sigma_D)^2))-
+                                   exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-Da)/sigma_D)^2)))
                     }
                     
                     else {
@@ -2022,13 +2023,14 @@ SDE <- R6Class(
                         nu=new_par[1,"nu"]
                         a=new_par[1,"a"]
                         b=new_par[1,"b"]
-                        D0=new_par[1,"D0"]
-                        D1=new_par[1,"D1"]
+                        Dr=new_par[1,"Dr"]
+                        Da=new_par[1,"Da"]
                         sigma_D=new_par[1,"sigma_D"]
                         sigma_theta=new_par[1,"sigma_theta"]
-                        omega <- a*new_data$BoundaryAngle^3*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)*exp(-new_data$BoundaryDistance/D0)/new_data$BoundaryDistance+
-                            b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2))-
-                                   exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-D1)/sigma_D)^2)))
+                        omega <- a*new_data$BoundaryAngle^3*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)*
+                            exp(-new_data$BoundaryDistance/Dr)*Dr/new_data$BoundaryDistance+
+                            b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-Da)/sigma_D)^2))-
+                                   exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-Da)/sigma_D)^2)))
                     }
                     
                     
