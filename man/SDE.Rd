@@ -1136,6 +1136,7 @@ Simulate from SDE model
   sd_noise = NULL,
   reflect = FALSE,
   omega_times = 1,
+  n_cores = NULL,
   verbose = FALSE
 )}\if{html}{\out{</div>}}
 }
@@ -1155,7 +1156,7 @@ Default: 0.}
 are drawn from their posterior distribution using \code{SDE$post_coeff}, 
 therefore accounting for uncertainty.}
 
-\item{\code{atw}}{(along the way) "Covariates" to recompute along the way using the previous velocity and position.
+\item{\code{atw}}{(along the way) Covariates to recompute along the way using the previous velocity and position.
 This should be a list with names matching some covariates in \code{self$formulas()} and with elements that 
 are functions to compute the new covariate value based the last position, velocity and nearest point on the land (if needed)
 in this order .
@@ -1163,8 +1164,7 @@ If some covariate is not in the list, values in argument "data" are used.
 If NULL, covariate values in "data" are used.}
 
 \item{\code{land}}{sf polygon data defining a spatial domain that is needed to compute the covariates along the way. 
-For instance, it could be the shore for marine mammals with covariate distance to shore. If specified, we 
-reproject the positions on the boundary when land is reached.       
+For instance, it could be the shore for marine mammals with covariate distance to shore.
 Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land polygons and initial position.}
 
 \item{\code{sd_noise}}{standard deviation to add gaussian noise in the observations. Default: NULL (no noise)}
@@ -1172,6 +1172,8 @@ Coordinates should be in the same CRS and same unit (UTM or Long Lat) for land p
 \item{\code{reflect}}{Boolean : whether or not to reflect on the land boundary when land is not NULL}
 
 \item{\code{omega_times}}{coefficient to multiply omega in RACVM.Default: 1}
+
+\item{\code{n_cores}}{number of cores to use for the simulation in parallel.}
 
 \item{\code{verbose}}{If TRUE, verbose mode}
 }
