@@ -1860,11 +1860,6 @@ SDE <- R6Class(
                 registerDoParallel(cl)
                 message("Running in parallel mode with ", n_cores, " cores.")
                 
-                # Export necessary objects to the cluster
-                clusterExport(cl, varlist = c("nearest_boundary_points", "is_in_border","self","get_variables",
-                                              "RACVM_link","RACVM_drift","RACVM_cov","str_extract","split_term"))
-                
-                
                 
             } else {
                 registerDoSEQ() 
@@ -1883,7 +1878,9 @@ SDE <- R6Class(
               
               # Loop over IDs
               obs <- foreach(id = seq_along(unique(data$ID)), 
-                             .combine = rbind, .packages = c("sf","mgcv","stringr","smoothSDE")) %dopar% {
+                             .combine = rbind, .packages = c("sf","mgcv","stringr","smoothSDE"),
+                             .export=c("nearest_boundary_points", "is_in_border","self","get_variables",
+                                       "RACVM_link","RACVM_drift","RACVM_cov","str_extract","split_term")) %dopar% {
                   
                   
                 cat("Track simulation for",unique(data$ID)[id],"...","\n")
