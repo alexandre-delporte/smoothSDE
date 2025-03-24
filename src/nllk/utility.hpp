@@ -21,49 +21,6 @@ Type det(matrix<Type> M) {
     return det;
 }
 
-
-//' Slice a vector
-//'
-//' @param v vector
-//' @param start_idx integer
-//' @param end_idx integer
-template<class Type>
-vector<Type> slice(vector<Type> v, int start_idx, int end_idx) {
-    
-
-    // Return empty vector if indices are invalid
-    if (start_idx > end_idx) {
-        return vector<Type>(0);
-    }
-
-    vector<Type> subvector(end_idx - start_idx + 1);
-    
-    for (int i = start_idx; i <= end_idx; ++i) {
-        subvector(i - start_idx) = v(i); 
-    }
-
-    return subvector;
-}
-
-//' Cumulative sum of a vector
-//'
-//' @param v vector
-template <class Type>
-vector<Type> cumsum(vector<Type> v) {
-    int n = v.size();
-    vector<Type> result(n);
-    
-    if (n == 0) return result;
-    
-    result[0] = v[0];
-    
-    for (int i = 1; i < n; ++i) {
-        result[i] = result[i - 1] + v[i];
-    }
-
-    return result;
-}
-
 //' Make size 2 rotation matrix
 //'
 //' @param angle 
@@ -319,107 +276,30 @@ matrix<Type> makeQ_crcvm(Type beta, Type sigma,vector<Type> omega, vector<Type> 
 
     int n = omega.size();
     Type tau = 1 / beta;
-    matrix<Type> I(2, 2);
-    I << 1, 0, 0, 1;
+   
 
     // Block matrices initialization
-    matrix<Type> top_left_block(2, 2), top_right_block(2, 2);
-    top_left_block.setZero(); top_right_block.setZero();
-
-    matrix<Type> bottom_right_block = sigma * sigma * tau / 2 * (1 - exp(-2 * dt.sum() / tau))*I;
-
-     // Make last rotation matrix
-     matrix<Type> R_n=makeRotationMatrix(-omega(n-1)*dt(n-1));
-
-    // // Loop through time steps
-     for(int j = 1; j < n+1; j++) {
-
-        Type C_j = beta * beta + omega(j-1) * omega(j-1);
-
-        // Compute q1_j and q2_j terms
-        Type q1_j = sigma * sigma / C_j * (
-            dt(j-1) + (omega(j-1) * omega(j-1) - 3 / (tau * tau)) / (2 / tau * C_j) -
-            exp(-2 * dt(j-1) / tau) / (2 / tau) +
-            2 * exp(-dt(j-1) / tau) * (1 / tau * cos(omega(j-1)*dt(j-1)) - omega(j-1) * sin(omega(j-1)*dt(j-1))) / C_j
-        );
-
-        Type q2_j = sigma * sigma * tau / 2 * (1 - exp(-2 * dt(j-1) / tau));
-
-        // Compute covariance matrix Gamma_j
-        matrix<Type> Gamma_j(2, 2);
-        Gamma_j.setZero();
-        Gamma_j(0, 0) = Gamma_j(1, 1) = sigma * sigma / (2 * C_j) * (1 + exp(-2 * dt(j-1) / tau) - 2 * exp(-dt(j-1) / tau) * cos(omega(j-1)*dt(j-1)));
-        Gamma_j(0, 1) = sigma * sigma / C_j * (exp(-dt(j-1) / tau) * sin(omega(j-1)*dt(j-1)) - omega(j-1)/ (2 / tau) * (1 - exp(-2 * dt(j-1)/ tau)));
-        Gamma_j(1, 0) = -Gamma_j(0, 1);
-        
-        // Compute M_j
-        matrix<Type> M_j(2,2);
-        M_j.setZero();
-
-        for(int k = j; k < n; k++) {
-
-            // Compute Pjk
-            matrix<Type> P_jk = I;
-
-            for(int i = j; i < k; i++) {
-
-                matrix <Type> R =makeRotationMatrix(-omega(i)*dt(i));
-
-                P_jk=P_jk * exp(-beta*dt(i))*R;
-
-            }
-
-            // Compute S_k
-            matrix<Type> A_k(2,2);
-            A_k << beta,-omega(k),omega(k),beta;
-            Type C_k = beta*beta+omega(k)*omega(k);
-            matrix<Type> invA_k(2,2);
-            invA_k << beta/C_k,omega(k)/C_k,-omega(k)/C_k,beta/C_k;
-
-            matrix<Type> R_k = makeRotationMatrix(-omega(k)*dt(k));
-            matrix<Type> S_k = invA_k*(I-exp(-beta*dt(k))*R_k);
-
-            M_j = M_j + P_jk * S_k;
-        }
-
-        top_left_block = top_left_block + q1_j*I+M_j.transpose()*Gamma_j+Gamma_j.transpose()*M_j+
-                        M_j*M_j.transpose()*q2_j*I;
-
-       
-        
-        //Compute P_nj and factor in velocity variance
-        matrix<Type> P_jn = I;
-
-        for(int i = j; i < n; i++) {
-
-            matrix <Type> R =makeRotationMatrix(-omega(i)*dt(i));
-
-            P_jn=P_jn * exp(-beta*dt(i))*R;
-        }
-
-        top_right_block = top_right_block+P_jn.transpose()*Gamma_j
-                        + M_j*P_jn.transpose()*q2_j*I;
-        
-     }
-
-
-    matrix<Type> bottom_left_block=top_right_block.transpose();
-
-    //initialize matrix with zeros
     matrix<Type> Q(4, 4);
     Q.setZero();
 
-    // diagonal elements
-    Q(0, 0) = Q(1, 1) = top_left_block(0,0);
-    Q(2, 2) = Q(3, 3) = bottom_right_block(0,0);
-    
-    //non-zero off diagonal elements
-    Q(0, 2) = Q(2, 0) = top_right_block(0,0);
-    Q(1, 3) = Q(3, 1) = top_right_block(1,1);
-    Q(0, 3) = Q(3, 0) = top_right_block(0,1);
-    Q(1, 2) = Q(2, 1) = top_right_block(1,0);
+    // // Loop through time steps
+     for(int k = 0; k < n; k++) {
+
+        matrix<Type> Pk(4, 4);
+        Pk << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1;
+
+        for (int j = k+1; j <n; j++) {
+
+            matrix<Type> Tj=makeT_racvm(beta,omega(j),dt(j));
+            Pk =  Pk * Tj;
+        }
 
 
+        matrix<Type> Qk= makeQ_racvm(beta,sigma,omega(k),dt(k));
+
+        Q=Q+Pk*Qk*Pk.transpose();
+    }
+        
     return Q;
 
 }
