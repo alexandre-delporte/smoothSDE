@@ -503,7 +503,7 @@ SDE <- R6Class(
                 ncol_fe <- c(ncol_fe, gam_setup$nsdf)
                 
                 #if new data is not null, gam_setup has no attribute S and we don't enter the loop
-                #This chunk of code is copied from hmmtmp package https://github.com/TheoMichelot/hmmTMB
+                #This chunk of code is taken from hmmtmb package https://github.com/TheoMichelot/hmmTMB
                 if(length(gam_setup$S) > 0) {
                   sub_ncol_re <- matrix(1, nrow = 2, ncol = length(gam_setup$S))
                   colnames(sub_ncol_re) <- 1:ncol(sub_ncol_re)
@@ -850,16 +850,21 @@ SDE <- R6Class(
             }
   
             sys_time <- system.time({
-                # Fit model
-                private$out_ <- ifelse(optimizer=="optim",
-                                       yes=optim(par = private$tmb_obj_$par,fn = private$tmb_obj_$fn,
-                                                 gr = private$tmb_obj_$gr,control=list(trace=trace),
-                                       method=method,lower=lower,upper=upper),
-                                       no=nlminb(start=private$tmb_obj_$par,objective= private$tmb_obj_$fn,
-                                                 gradient=private$tmb_obj_$gr,control=list(trace=trace),
-                                                 lower=lower,upper=upper))
-                # private$out_ <- do.call(optim, private$tmb_obj_)
+                if (optimizer == "optim") {
+                    private$out_ <- optim(par = private$tmb_obj_$par,
+                                 fn = private$tmb_obj_$fn,
+                                 gr = private$tmb_obj_$gr,
+                                 control = list(trace = trace),
+                                 method = method,lower=lower,upper=upper)
+                } else {
+                    private$out_ <- nlminb(start = self$tmb_obj_$par,
+                                  objective = self$tmb_obj_$fn,
+                                  gradient = self$tmb_obj_$gr,
+                                  control = list(trace = trace)
+                                  ,lower=lower,upper=upper)
+                }
             })
+            
             private$out_$systime <- sys_time
             # Get estimates and precision matrix for all parameters
             private$tmb_rep_ <- sdreport(private$tmb_obj_, 
@@ -1873,12 +1878,9 @@ SDE <- R6Class(
               n=length(data$time)
               
               
-              #Find the package smoothSDE (for calculation on cluster)
-              .libPaths(c(system.file(package = "smoothSDE"), .libPaths()))
-              
               # Loop over IDs
               obs <- foreach(id = seq_along(unique(data$ID)), 
-                             .combine = rbind, .packages = c("sf","mgcv","stringr","smoothSDE"),
+                             .combine = rbind, .packages = c("sf","mgcv","stringr"),
                              .export=c("nearest_boundary_points", "is_in_border","self","get_variables",
                                        "RACVM_link","RACVM_drift","RACVM_cov","str_extract","split_term")) %dopar% {
                   
@@ -2010,8 +2012,7 @@ SDE <- R6Class(
                         Da=new_par[1,"Da"]
                         sigma_D=new_par[1,"sigma_D"]
                         sigma_theta=new_par[1,"sigma_theta"]
-                        omega <- a*new_data$BoundaryAngle*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)
-                        *exp(-new_data$BoundaryDistance/Dr)*Dr/new_data$BoundaryDistance+
+                        omega <- a*new_data$BoundaryAngle*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)*exp(-new_data$BoundaryDistance/Dr)*Dr/new_data$BoundaryDistance+
                             b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-Da)/sigma_D)^2))-
                                    exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-Da)/sigma_D)^2)))
                     }
@@ -2027,8 +2028,7 @@ SDE <- R6Class(
                         Da=new_par[1,"Da"]
                         sigma_D=new_par[1,"sigma_D"]
                         sigma_theta=new_par[1,"sigma_theta"]
-                        omega <- a*new_data$BoundaryAngle^3*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)*
-                            exp(-new_data$BoundaryDistance/Dr)*Dr/new_data$BoundaryDistance+
+                        omega <- a*new_data$BoundaryAngle^3*(new_data$BoundaryAngle-pi/2)*(new_data$BoundaryAngle+pi/2)*exp(-new_data$BoundaryDistance/Dr)*Dr/new_data$BoundaryDistance+
                             b*(exp(-1/2*(((new_data$BoundaryAngle+pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-Da)/sigma_D)^2))-
                                    exp(-1/2*(((new_data$BoundaryAngle-pi/2/sqrt(3))/sigma_theta)^2+((new_data$BoundaryDistance-Da)/sigma_D)^2)))
                     }
