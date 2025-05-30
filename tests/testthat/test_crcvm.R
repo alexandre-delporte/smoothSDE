@@ -50,7 +50,7 @@ test_that("Interpolation has the right number of time steps",{
 })
 
 
-formulas=list("tau"=~1,"nu"=~1,"a"=~1,"b"=~1,"D0"=~1,"D1"=~1,"sigma_D"=~1,
+formulas=list("tau"=~1,"nu"=~1,"a"=~1,"b"=~1,"Dr"=~1,"Da"=~1,"sigma_D"=~1,
               "sigma_theta"=~1)
 
 par0<-rep(1,8)
