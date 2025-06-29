@@ -1781,6 +1781,29 @@ SDE <- R6Class(
             return(edf)
         },
         
+        #' Bayesian Information Criterion
+        #' 
+        #' The BIC is defined as BIC = - 2L + kln(n) where L is the
+        #' maximum marginal log-likelihood (of fixed 
+        #' effects), and k is the number of degrees
+        #' of freedom of the fixed effect component of
+        #' the model, and n is the number of data points
+        #' 
+        #' @return BIC marginal
+        BIC_marginal = function() {
+            # Fixed effect DF
+            edf <- length(self$out()$par) - length(self$lambda())
+            
+            # Marginal likelihood
+            llk <- - self$out()$value
+            
+            #number of data points
+            n<- nrow(self$data())
+            
+            bic <- - 2 * llk +  edf*log(n)
+            return(bic)
+        },
+        
         ################
         ## Simulation ##
         ################
