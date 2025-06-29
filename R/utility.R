@@ -425,52 +425,77 @@ is_in_border=function(point,border) {
 }
 
 
-
-#' Compute nearest points on the shoreline
-#' 
+#' Compute nearest points on the shoreline with neighborhood optimization
+#' We search the nearest point locally based on the previous nearest point.
 #' @param points a matrix of points from which we want to find the nearest point on border
 #' @param border sf object (list of polygons) defining the border
-#' @return matrix with on row and two columns that are the coordinates of the nearest point in border
+#' @param neighborhood_radius search radius around previous nearest point (in the same unit as points and
+#' border)
+#' @return matrix with one row per point and two columns with coordinates of the nearest point in border
 #' @export
 
-nearest_boundary_points <- function(points, border) {
+nearest_boundary_points<- function(points, border, neighborhood_radius = 20) {
+    require(sf)
     
-    nearest_points=matrix(0,ncol=2,nrow=nrow(points))
-    colnames(nearest_points)=c("p1","p2")
+    nearest_points <- matrix(0, ncol = 2, nrow = nrow(points))
+    colnames(nearest_points) <- c("p1", "p2")
+    prev_nearest <- NULL
+    
+    boundaries <- lapply(border$geometry, st_boundary)
     
     for (i in 1:nrow(nearest_points)) {
+        point <- st_point(points[i, ])
         
-        point=st_point(points[i,])
-        
-        # Initialize variables to store the minimum distance and nearest boundary point
         min_distance <- Inf
         nearest_point <- NULL
         
-        # Iterate over each polygon in border
-        for (j in 1:length(border$geometry)) {
+      
+        if (!is.null(prev_nearest)) {
+            # Create a buffer around the previous nearest point
+            search_area <- st_buffer(prev_nearest, neighborhood_radius)
             
-            # Get the boundary of the current polygon
-            boundary <- st_boundary(border$geometry[[j]])
+            # Check which boundaries intersect with the search area
+            for (j in seq_along(boundaries)) {
+                if (st_intersects(boundaries[[j]], search_area, sparse = FALSE)[1,1]) {
+                    distance <- st_distance(point, boundaries[[j]])
+                    candidate <- st_nearest_points(point, boundaries[[j]])
+                    
+                    if (!st_is_empty(candidate)) {
+                        coordinates <- st_coordinates(candidate)[2, c("X", "Y")]
+                        if (distance < min_distance) {
+                            min_distance <- distance
+                            nearest_point <- coordinates
+                        }
+                    }
+                }
+            }
             
-            # Calculate distance and nearest point to the boundary
-            distance <- st_distance(point, boundary)
-            candidate <- st_nearest_points(point, boundary)
+            if (!is.null(nearest_point)) {
+                nearest_points[i, ] <- nearest_point
+                prev_nearest <- st_point(nearest_point)
+                next
+            }
+        }
+        
+        # Full search if neighborhood search failed or first point
+        for (j in seq_along(boundaries)) {
+            distance <- st_distance(point, boundaries[[j]])
+            candidate <- st_nearest_points(point, boundaries[[j]])
             
-            # Ensure that the candidate is not empty
             if (!st_is_empty(candidate)) {
                 coordinates <- st_coordinates(candidate)[2, c("X", "Y")]
-                
-                # Update the nearest point if this boundary point is closer
                 if (distance < min_distance) {
                     min_distance <- distance
                     nearest_point <- coordinates
                 }
             }
         }
-        nearest_points[i,]=nearest_point
+        
+        nearest_points[i, ] <- nearest_point
+        prev_nearest <- st_point(nearest_point)
     }
     
-    return(as.matrix(nearest_points))
+    return(nearest_points)
 }
 
 #' Compute distance to boundary and angle for CRCVM_SSM sde type
